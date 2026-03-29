@@ -1,0 +1,364 @@
+Scenario:
+  Name: "Urban Clearance — Dense Urban Terrain"
+  Description: >
+    A mechanized infantry company is tasked with clearing a dense urban
+    area suspected of harboring fortified enemy positions. The environment
+    includes civilian population, tunnel networks, and IED threats.
+    Inspired by contemporary urban warfare in the Middle East. This scenario
+    focuses on the extreme complexity of MOUT (Military Operations on
+    Urban Terrain) with strict ROE and civilian protection requirements.
+  Scale: company
+  TrainingObjectives:
+    - "Execute methodical urban clearance operations (MOUT)"
+    - "Apply proportionality and distinction principles under ROE"
+    - "Manage civilian evacuation concurrent with offensive operations"
+    - "Counter tunnel and IED threats in urban terrain"
+    - "Coordinate between dismounted infantry and armored support in confined spaces"
+  Terrain: Dense urban — multi-story buildings, narrow streets, underground tunnels
+  Weather: Clear, hot, 38C
+  TimeOfDay: "0400"
+  Duration: 20
+  TurnDuration: 30
+
+  Situation:
+    General: >
+      Brigade is conducting a phased clearance of a dense urban area.
+      Intelligence indicates enemy forces have fortified positions in
+      residential buildings, prepared tunnel networks for movement and
+      resupply, and emplaced IEDs on major thoroughfares. Significant
+      civilian population remains in the area despite evacuation orders.
+    Enemy:
+      Composition: >
+        Estimated 2x reinforced platoons of irregular fighters with
+        RPGs, small arms, IEDs, and tunnel access. Supported by sniper
+        teams, mortar teams, and ATGM teams positioned in upper floors
+        of buildings. Some fighters operate in civilian clothing.
+      Disposition: >
+        Dispersed in fortified positions throughout the urban area.
+        Tunnel entrances in basements connect multiple blocks. IEDs
+        on Routes MAIN and CROSS. Sniper team in the hospital tower.
+        ATGM team in the apartment complex covering the southern approach.
+      MostLikelyCOA: >
+        Defend from prepared positions. Use tunnels to reposition after
+        contact. Employ IEDs to canalize and attrit. Use civilian
+        presence to complicate BLUFOR targeting. Withdraw through
+        tunnels if position untenable.
+      MostDangerousCOA: >
+        Lure BLUFOR into close urban engagement, then collapse building
+        with pre-placed demolitions. Execute complex ambush using tunnels
+        to appear behind clearing forces.
+    Friendly:
+      HigherMission: "Brigade clears urban area in phases from south to north"
+      AdjacentUnits: >
+        Bravo Company clearing the western sector. Engineers on standby
+        for breaching and tunnel operations. Civil Affairs team available
+        for civilian handling.
+      Attachments: >
+        1x Engineer Squad (breaching), 1x Tank Section (2x M1A2),
+        1x Scout UAV, 1x Civil Affairs team
+      Detachments: "3rd Platoon detached to battalion reserve"
+
+  BLUFOR:
+    Units:
+      - Type: USRifleSquad
+        Designation: "1-1 (1st Squad, 1st Plt)"
+        Location: [30, 55]
+        Strength: 100
+        Stance: move
+
+      - Type: USRifleSquad
+        Designation: "1-2 (2nd Squad, 1st Plt)"
+        Location: [31, 55]
+        Strength: 100
+        Stance: move
+
+      - Type: USRifleSquad
+        Designation: "1-3 (3rd Squad, 1st Plt)"
+        Location: [32, 55]
+        Strength: 100
+        Stance: move
+
+      - Type: USRifleSquad
+        Designation: "2-1 (1st Squad, 2nd Plt)"
+        Location: [28, 56]
+        Strength: 100
+        Stance: move
+
+      - Type: USRifleSquad
+        Designation: "2-2 (2nd Squad, 2nd Plt)"
+        Location: [29, 56]
+        Strength: 100
+        Stance: move
+
+      - Type: USRifleSquad
+        Designation: "2-3 (3rd Squad, 2nd Plt)"
+        Location: [30, 56]
+        Strength: 100
+        Stance: move
+
+      - Type: USWeaponsSquad
+        Designation: "Weapons Sqd, 1st Plt"
+        Location: [33, 55]
+        Strength: 100
+        Stance: overwatch
+
+      - Type: USM1A2Abrams
+        Designation: "Tank 1 (attached)"
+        Location: [31, 57]
+        Strength: 100
+        Stance: overwatch
+
+      - Type: USM1A2Abrams
+        Designation: "Tank 2 (attached)"
+        Location: [29, 57]
+        Strength: 100
+        Stance: overwatch
+
+      - Type: USM120Mortar
+        Designation: "Mortar Section"
+        Location: [30, 60]
+        Strength: 100
+        Stance: defend
+
+      - Type: USJavelinTeam
+        Designation: "Javelin, 2nd Plt"
+        Location: [28, 55]
+        Strength: 100
+        Stance: overwatch
+
+      - Type: USM113Ambulance
+        Designation: "Ambulance"
+        Location: [30, 62]
+        Strength: 100
+        Stance: defend
+
+      - Type: USFMTV
+        Designation: "Supply Truck"
+        Location: [31, 63]
+        Strength: 100
+        Stance: defend
+
+  OPFOR:
+    Doctrine: insurgent_guerrilla
+    AIBehavior: >
+      Fight from prepared positions. Do not hold ground when untenable —
+      withdraw through tunnels and reposition. Use IEDs to slow advance.
+      Prioritize ATGM shots on tanks. Snipers engage from range then
+      relocate. Use civilian presence areas to complicate enemy fires.
+      Call mortar fire on BLUFOR when they mass in the open.
+    Units:
+      - Type: RUMotorRifleSquad
+        Designation: "Fighter Group 1 (Apartment Block)"
+        Location: [30, 42]
+        Stance: defend
+        Concealed: true
+        Entrenched: true
+
+      - Type: RUMotorRifleSquad
+        Designation: "Fighter Group 2 (Market District)"
+        Location: [32, 40]
+        Stance: ambush
+        Concealed: true
+        Entrenched: true
+
+      - Type: RUMotorRifleSquad
+        Designation: "Fighter Group 3 (School Complex)"
+        Location: [28, 38]
+        Stance: defend
+        Concealed: true
+        Entrenched: true
+
+      - Type: RUMotorRifleSquad
+        Designation: "Fighter Group 4 (Northern Residential)"
+        Location: [30, 35]
+        Stance: defend
+        Concealed: true
+        Entrenched: true
+
+      - Type: RUKornetTeam
+        Designation: "ATGM Team (Apartment Tower)"
+        Location: [31, 41]
+        Stance: overwatch
+        Concealed: true
+        Entrenched: true
+
+      - Type: RUPKMTeam
+        Designation: "Sniper Team (Hospital Tower)"
+        Location: [33, 38]
+        Stance: overwatch
+        Concealed: true
+        Entrenched: true
+
+      - Type: RU2B11Mortar
+        Designation: "Mortar Team (hidden)"
+        Location: [30, 32]
+        Stance: defend
+        Concealed: true
+        Entrenched: false
+
+  Objectives:
+    - Name: "OBJ MARKET"
+      Type: seize
+      Location: [32, 40]
+      Points: 75
+      HoldTurns: 1
+      Description: "Clear and secure the market district"
+
+    - Name: "OBJ TOWER"
+      Type: seize
+      Location: [31, 41]
+      Points: 50
+      HoldTurns: 1
+      Description: "Secure the apartment tower (ATGM position)"
+
+    - Name: "OBJ SCHOOL"
+      Type: seize
+      Location: [28, 38]
+      Points: 75
+      HoldTurns: 1
+      Description: "Clear the school complex"
+
+    - Name: "CIVILIAN PROTECTION"
+      Type: preserve_force
+      Location: [0, 0]
+      Points: 100
+      HoldTurns: 0
+      Description: "Zero civilian casualties — strict ROE compliance"
+
+    - Name: "FORCE PRESERVATION"
+      Type: preserve_force
+      Location: [0, 0]
+      Points: 50
+      HoldTurns: 0
+      Description: "Maintain 70%+ combat power"
+
+  MSEL:
+    - Turn: 1
+      Category: Intel
+      Event: "UAV identifies possible IED on Route MAIN"
+      RadioMessage: >
+        "BAYONET 6, SHADOW 1. UAV reports disturbed earth and possible
+        command wire, grid 3048, Route MAIN. Possible IED. Recommend
+        alternate route or EOD. Over."
+      Effect: "Route MAIN marked as IED threat — movement penalty"
+
+    - Turn: 3
+      Category: Civilian
+      Event: "Civilian family emerges from building waving white flag"
+      RadioMessage: >
+        "BAYONET 1-1, contact — civilian family, 6 persons including
+        children, emerging from building at grid 3050. They're waving
+        white cloth. Request guidance for handling. Over."
+      Effect: "Must halt operations to evacuate civilians safely"
+
+    - Turn: 5
+      Category: Intel
+      Event: "Tunnel entrance discovered in cleared building basement"
+      RadioMessage: >
+        "BAYONET 6, BAYONET 1-2. We found a tunnel entrance in the
+        basement of the building at grid 3148. Reinforced concrete,
+        approximately 2m diameter. We can hear movement below. Request
+        engineer support. Over."
+      Effect: "Tunnel network confirmed — enemies can reposition underground"
+
+    - Turn: 7
+      Category: ROE
+      Event: "Sniper fire from hospital building"
+      RadioMessage: >
+        "BAYONET 6, BAYONET 2-1. Taking effective sniper fire from the
+        hospital at grid 3338, upper floors. Hospital has PROTECTED SITE
+        status. ROE prohibits engagement of the hospital. Request
+        guidance. Over."
+      Effect: >
+        ROE dilemma — hospital is protected. Options: suppress without
+        destroying, maneuver to isolate, request ROE exception from
+        higher, or accept casualties and bypass.
+
+    - Turn: 9
+      Category: Civilian
+      Event: "Large group of civilians attempting to flee south through BLUFOR lines"
+      RadioMessage: >
+        "BAYONET 6, all elements. Large group of displaced civilians,
+        estimate 50-100 persons, moving south on Route CROSS through
+        our positions. Some military-age males in the group. Civil
+        Affairs team requested. Over."
+      Effect: "Operations paused in sector — must screen civilians"
+
+    - Turn: 11
+      Category: Equipment
+      Event: "IED detonation on Route CROSS"
+      RadioMessage: >
+        "BAYONET 6, BAYONET 2-2! IED! IED on Route CROSS at grid 2944!
+        Tank 2 hit! Assessing damage! Over."
+      Effect: "Tank 2 takes mobility kill — tracks damaged, crew OK"
+
+    - Turn: 14
+      Category: Intel
+      Event: "Enemy fighters repositioned via tunnels — contact in rear"
+      RadioMessage: >
+        "BAYONET 6, BAYONET 1-3! Contact rear! Enemy fighters emerged
+        from a building we already cleared at grid 3052! Small arms
+        and RPG fire from our 6 o'clock! Over."
+      Effect: "Enemy reappears behind the advance — tunnel repositioning"
+
+    - Turn: 16
+      Category: Higher_HQ
+      Event: "Media crew approaching from the south"
+      RadioMessage: >
+        "BAYONET 6, IRONHORSE 5. Be advised, international media crew
+        has entered the AO from the south. They have embed authorization.
+        Ensure all actions are IAW ROE and LOAC. Acknowledge. Over."
+      Effect: "Additional scrutiny on all engagements"
+
+    - Turn: 18
+      Category: Civilian
+      Event: "Civilian reporting enemy positions"
+      RadioMessage: >
+        "BAYONET 6, BAYONET 2-1. Local civilian male approached our
+        position. Through interpreter, he says there are fighters in
+        the school and they have tunnel access from the basement.
+        He says his family is still inside. Over."
+      Effect: "HUMINT — confirms school objective but civilians present"
+
+  ScoringRubric:
+    Decisive_Victory: >
+      All objectives seized. Zero civilian casualties. Force preservation
+      above 80%. Tunnel network identified and sealed. Full ROE compliance.
+    Tactical_Victory: >
+      Most objectives seized. Minimal civilian casualties (1-2 with
+      mitigation). Force preservation above 60%.
+    Draw: >
+      Some objectives seized but significant enemy capability remains.
+      Minor ROE issues. Force preservation below 60%.
+    Tactical_Defeat: >
+      Fewer than half objectives seized. Civilian casualties above 5.
+      ROE violations documented. Force below 50%.
+    Decisive_Defeat: >
+      Objectives not achieved. Significant civilian casualties. Major
+      ROE violations. Force combat ineffective.
+
+  InstructorNotes: |
+    This is the most complex scenario in the initial set. It tests MOUT
+    skills, ROE discipline, and moral decision-making under pressure.
+
+    KEY TEACHING POINTS:
+    1. Urban clearance is SLOW. Players who rush will trigger IEDs and
+       ambushes. Methodical clearance saves lives.
+    2. The tunnel network is the key enemy capability. Until tunnels are
+       found and sealed, cleared areas are not secure.
+    3. ROE compliance is worth 100 points — more than any single
+       objective. This is deliberate. The hospital sniper dilemma
+       (Turn 7) is the critical test.
+    4. Civilian handling (Turns 3, 9, 18) is not a distraction — it
+       IS the mission. Forces that treat civilians well gain HUMINT.
+    5. The media crew (Turn 16) adds accountability. Players should
+       already be ROE-compliant, but this reinforces consequences.
+
+    ETHICAL DISCUSSION POINTS:
+    - When is it acceptable to engage a protected site?
+    - How do you balance force protection with civilian protection?
+    - What is proportionality in urban combat?
+    - How do you handle military-age males in a refugee flow?
+
+    NOTE: This scenario is intentionally challenging with no clean
+    answers. The AAR discussion is as valuable as the gameplay itself.

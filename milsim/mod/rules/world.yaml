@@ -1,0 +1,86 @@
+# ============================================================================
+# WORLD / GLOBAL SIMULATION RULES
+# ============================================================================
+
+World:
+  SimulationSettings:
+    TurnDurationMinutes: 30    # each turn represents 30 min of real time
+    MaxTurns: 48               # 24 hours of simulated combat
+    TimeOfDay: 0600            # scenario start time (24hr)
+    Weather: Clear
+    DayNightCycle: true
+    SunriseTime: 0600
+    SunsetTime: 1800
+
+  # WEGO turn phases
+  TurnPhases:
+    - Id: planning
+      DisplayName: Planning Phase
+      Description: Issue orders to all units simultaneously
+      TimeLimit: 300           # seconds (0 = unlimited)
+      AllowOrderModification: true
+    - Id: execution
+      DisplayName: Execution Phase
+      Description: Orders execute simultaneously — observe results
+      TicksPerTurn: 60         # simulation sub-steps per turn
+      PlayerInputAllowed: false
+      PlaybackSpeed: normal    # slow (0.5x), normal (1x), fast (2x), instant
+    - Id: review
+      DisplayName: Review Phase
+      Description: Assess results before next planning phase
+      TimeLimit: 120
+      AllowReplay: true
+
+  # Victory conditions framework
+  VictoryConditions:
+    ObjectivePoints:
+      SeizeObjective: 100      # per objective captured
+      DefendObjective: 100     # per objective held for required turns
+      DestroyUnit: 10          # per enemy unit destroyed
+    ForcePreservation:
+      FriendlyLossThreshold: 0.30   # lose more than 30% = major penalty
+      FriendlyLossPenalty: -200
+    TimeBonus:
+      EarlyCompletionBonus: 50      # per turn ahead of schedule
+    CivilianCasualties:
+      PenaltyPerCivilian: -50       # ROE violations
+
+  # Global combat parameters
+  CombatRules:
+    FriendlyFireEnabled: true
+    MinEngagementRange: 0
+    MaxSimultaneousEngagements: 3    # per unit per turn
+    AmmunitionTracking: true
+    FuelTracking: true
+    MoraleSystem: true
+    SuppressionSystem: true
+    WoundedEvacuation: true
+
+  # Intelligence rules
+  IntelRules:
+    DetectionLevels:
+      - Level: 0
+        Name: No Contact
+        SymbolShown: false
+      - Level: 1
+        Name: Suspected
+        SymbolShown: true
+        SymbolOpacity: 0.25
+        InfoShown: [location_approximate]
+      - Level: 2
+        Name: Possible
+        SymbolShown: true
+        SymbolOpacity: 0.50
+        InfoShown: [location_approximate, type_general]
+      - Level: 3
+        Name: Probable
+        SymbolShown: true
+        SymbolOpacity: 0.75
+        InfoShown: [location_precise, type_specific, size_estimate]
+      - Level: 4
+        Name: Confirmed
+        SymbolShown: true
+        SymbolOpacity: 1.0
+        InfoShown: [location_precise, type_specific, size_exact, weapons, status]
+    IntelDecayRate: 1          # lose 1 level per N turns without observation
+    IntelDecayTurns: 3         # turns before decay occurs

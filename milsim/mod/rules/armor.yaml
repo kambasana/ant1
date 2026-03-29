@@ -1,0 +1,250 @@
+# ============================================================================
+# ARMORED VEHICLE UNITS
+# ============================================================================
+
+# --- US M1A2 Abrams SEPv3 ---
+USM1A2Abrams:
+  Inherits: ^ArmorUnit
+  Tooltip:
+    Name: M1A2 Abrams SEPv3
+  MilSimIdentity:
+    Echelon: Vehicle
+    Faction: BLUFOR
+    Designation: "M1A2 Abrams"
+  Health:
+    HP: 5000
+  MilSimMovement:
+    Speed: 42
+    SpeedRoad: 67
+    SpeedCrossCountry: 40
+    SpeedUrban: 15
+    FuelCapacityGallons: 500
+    FuelConsumptionPerKm: 3.8
+  MilSimCombat:
+    Armor:
+      Front: 900              # mm RHAe equivalent
+      Side: 400
+      Rear: 100
+      Top: 80
+    ActiveProtection: false    # SEPv3 has Trophy APS option
+    Weapons:
+      - Id: M256_120mm
+        Type: TankGun
+        Count: 1
+        Range: 4000
+        EffectiveRange: 3000
+        RateOfFire: 6
+        Accuracy: 0.85
+        ArmorPenetration: 750  # APFSDS
+        AmmoTypes:
+          - APFSDS              # anti-armor
+          - HEAT                # shaped charge
+          - MPAT                # multi-purpose
+          - CANISTER            # anti-personnel
+      - Id: M240C_Coax
+        Type: MediumMachineGun
+        Count: 1
+        Range: 900
+        EffectiveRange: 600
+        RateOfFire: 100
+        Accuracy: 0.3
+        SuppressionBonus: 40
+      - Id: M2HB_Commander
+        Type: HeavyMachineGun
+        Count: 1
+        Range: 1800
+        EffectiveRange: 1200
+        RateOfFire: 40
+        Accuracy: 0.25
+        ArmorPenetration: 25
+  MilSimDetection:
+    VisualSignature: 70
+    ThermalSignature: 90
+    NoiseSignature: 85
+    Sensors:
+      - Type: Thermal
+        Range: 4000
+        Accuracy: 0.9
+      - Type: Visual
+        Range: 3000
+        Accuracy: 0.8
+  MilSimLogistics:
+    MainGunRounds: 42
+    CoaxRounds: 10000
+    CommanderMGRounds: 1000
+    Crew: 4
+
+# --- US M2A3 Bradley IFV ---
+USM2A3Bradley:
+  Inherits: ^ArmorUnit
+  Tooltip:
+    Name: M2A3 Bradley IFV
+  MilSimIdentity:
+    Echelon: Vehicle
+    Faction: BLUFOR
+    Designation: "M2A3 Bradley"
+    NATOSymbol: mechanized_infantry
+  Health:
+    HP: 2500
+  MilSimMovement:
+    Speed: 35
+    SpeedRoad: 61
+    SpeedCrossCountry: 30
+    Amphibious: true
+    AmphibiousSpeed: 7
+  MilSimCombat:
+    Armor:
+      Front: 300
+      Side: 100
+      Rear: 30
+      Top: 25
+    Weapons:
+      - Id: M242_25mm
+        Type: Autocannon
+        Count: 1
+        Range: 3000
+        EffectiveRange: 2000
+        RateOfFire: 200
+        Accuracy: 0.6
+        ArmorPenetration: 70
+      - Id: TOW2B
+        Type: ATGM
+        Count: 1
+        Range: 3750
+        EffectiveRange: 3000
+        RateOfFire: 1
+        Accuracy: 0.85
+        ArmorPenetration: 900
+      - Id: M240C_Coax
+        Type: MediumMachineGun
+        Count: 1
+        Range: 900
+        EffectiveRange: 600
+        RateOfFire: 100
+        Accuracy: 0.3
+    CarriesInfantry: true
+    InfantryCapacity: 6        # dismounts
+  MilSimLogistics:
+    25mmRounds: 900
+    TOWMissiles: 7
+    Crew: 3
+    Dismounts: 6
+
+# --- Russian T-90M Proryv ---
+RUT90M:
+  Inherits: ^ArmorUnit
+  Tooltip:
+    Name: T-90M Proryv
+  MilSimIdentity:
+    Echelon: Vehicle
+    Faction: OPFOR
+    Designation: "T-90M"
+  Health:
+    HP: 4500
+  MilSimMovement:
+    Speed: 45
+    SpeedRoad: 65
+    SpeedCrossCountry: 40
+  MilSimCombat:
+    Armor:
+      Front: 850
+      Side: 350
+      Rear: 80
+      Top: 60
+    ERA: true                  # Explosive Reactive Armor (Relikt)
+    ERAProtection: 200         # additional mm RHAe vs HEAT
+    ActiveProtection: false
+    Weapons:
+      - Id: 2A46M5_125mm
+        Type: TankGun
+        Count: 1
+        Range: 4000
+        EffectiveRange: 2500
+        RateOfFire: 7
+        Accuracy: 0.75
+        ArmorPenetration: 700
+        CanFireATGM: true      # 9M119 Refleks
+        ATGMRange: 5000
+      - Id: PKT_Coax
+        Type: MediumMachineGun
+        Count: 1
+        Range: 800
+        EffectiveRange: 500
+        RateOfFire: 80
+        Accuracy: 0.25
+      - Id: Kord_AA
+        Type: HeavyMachineGun
+        Count: 1
+        Range: 1500
+        EffectiveRange: 1000
+        RateOfFire: 40
+        Accuracy: 0.2
+  MilSimDetection:
+    VisualSignature: 65
+    ThermalSignature: 85
+    NoiseSignature: 80
+    Sensors:
+      - Type: Thermal
+        Range: 3500
+        Accuracy: 0.8
+  MilSimLogistics:
+    MainGunRounds: 43
+    Crew: 3
+
+# --- Russian BMP-3 IFV ---
+RUBMP3:
+  Inherits: ^ArmorUnit
+  Tooltip:
+    Name: BMP-3 IFV
+  MilSimIdentity:
+    Echelon: Vehicle
+    Faction: OPFOR
+    Designation: "BMP-3"
+    NATOSymbol: mechanized_infantry
+  Health:
+    HP: 2000
+  MilSimMovement:
+    Speed: 40
+    SpeedRoad: 70
+    SpeedCrossCountry: 30
+    Amphibious: true
+    AmphibiousSpeed: 10
+  MilSimCombat:
+    Armor:
+      Front: 200
+      Side: 60
+      Rear: 15
+      Top: 15
+    Weapons:
+      - Id: 2A70_100mm
+        Type: GunLauncher
+        Count: 1
+        Range: 4000
+        EffectiveRange: 2000
+        RateOfFire: 10
+        Accuracy: 0.55
+        ArmorPenetration: 400
+        CanFireATGM: true
+        ATGMRange: 4000
+      - Id: 2A72_30mm
+        Type: Autocannon
+        Count: 1
+        Range: 2000
+        EffectiveRange: 1500
+        RateOfFire: 300
+        Accuracy: 0.5
+        ArmorPenetration: 50
+      - Id: PKT_Coax
+        Type: MediumMachineGun
+        Count: 1
+        Range: 800
+        EffectiveRange: 500
+        RateOfFire: 80
+        Accuracy: 0.25
+    CarriesInfantry: true
+    InfantryCapacity: 7
+  MilSimLogistics:
+    100mmRounds: 40
+    30mmRounds: 500
+    Crew: 3
+    Dismounts: 7

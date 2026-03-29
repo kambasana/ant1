@@ -1,0 +1,73 @@
+Metadata:
+  Title: MilSim — Military Simulation Wargame
+  Version: 0.1.0
+  Website: https://github.com/kambasana/ant1
+  Description: >
+    A realistic military simulation wargaming platform built on the OpenRA engine.
+    Features WEGO turn-based gameplay, probabilistic combat, graduated ISR,
+    logistics, C2 hierarchy, and LLM-powered dynamic scenarios.
+
+Engine:
+  # OpenRA engine version — will be pinned once forked
+  BaseEngine: OpenRA
+  RequiredVersion: release-20231010  # Update after fork
+
+Packages:
+  ~milsim: milsim
+  ^engine: engine
+
+Rules:
+  milsim|rules/defaults.yaml
+  milsim|rules/world.yaml
+  milsim|rules/player.yaml
+  milsim|rules/infantry.yaml
+  milsim|rules/armor.yaml
+  milsim|rules/artillery.yaml
+  milsim|rules/logistics.yaml
+  milsim|rules/aircraft.yaml
+  milsim|rules/structures.yaml
+  milsim|rules/weapons.yaml
+
+Sequences:
+  milsim|sprites/sequences.yaml
+
+TileSets:
+  milsim|maps/tilesets/temperate.yaml
+  milsim|maps/tilesets/desert.yaml
+  milsim|maps/tilesets/arctic.yaml
+  milsim|maps/tilesets/urban.yaml
+
+ScaleLevels:
+  - Id: platoon
+    DisplayName: Platoon Level
+    BaseUnit: Individual Soldier / Vehicle
+    Description: >
+      Tactical-level simulation. Each unit represents an individual
+      soldier, fire team, or single vehicle. Maximum realism.
+  - Id: company
+    DisplayName: Company Level
+    BaseUnit: Squad / Section
+    Description: >
+      Combined arms at company level. Each unit represents a squad,
+      section, or vehicle platoon. Best for training exercises.
+  - Id: brigade
+    DisplayName: Brigade Level
+    BaseUnit: Platoon / Company
+    Description: >
+      Operational-level simulation. Each unit represents a platoon
+      or company. Best for staff officer training.
+
+GameModes:
+  - Id: wego
+    DisplayName: WEGO Turn-Based
+    Description: >
+      Both sides plan simultaneously, then orders execute together.
+      Standard military wargaming mode.
+    PlanningTimeLimit: 300  # seconds, 0 = unlimited
+    ExecutionSpeed: normal  # slow, normal, fast
+    TurnDuration: 30        # minutes of simulated time per turn
+
+  - Id: realtime
+    DisplayName: Real-Time (Future)
+    Description: Planned for future implementation.
+    Enabled: false

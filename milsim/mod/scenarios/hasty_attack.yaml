@@ -1,0 +1,312 @@
+Scenario:
+  Name: "Hasty Attack — River Crossing"
+  Description: >
+    A US mechanized infantry company must seize a bridge crossing over the
+    Visla River to enable the battalion's advance. OPFOR has established a
+    hasty defense with a motor rifle platoon reinforced with AT assets.
+    Speed and fire support synchronization are critical.
+  Scale: company
+  TrainingObjectives:
+    - "Synchronize direct and indirect fire during a hasty attack"
+    - "Execute a river crossing operation under enemy observation"
+    - "Manage logistics and casualty evacuation during offensive operations"
+  Terrain: European mixed — farmland, scattered tree lines, river obstacle
+  Weather: Clear
+  TimeOfDay: "0600"
+  Duration: 16       # turns
+  TurnDuration: 30   # minutes per turn = 8 hours of simulated combat
+
+  Situation:
+    General: >
+      2nd Brigade Combat Team is conducting an attack to seize crossings
+      over the Visla River. 2-7 Infantry Battalion is the main effort.
+      Alpha Company is tasked to seize the bridge at grid 5567 3340.
+    Enemy:
+      Composition: >
+        Motor Rifle Platoon (+) from 144th Motor Rifle Division.
+        Reinforced with 1x Kornet ATGM team and supported by a
+        120mm mortar section in indirect fire support.
+      Disposition: >
+        Platoon in hasty fighting positions on the far (north) bank
+        of the river. AT team positioned to cover the bridge approach
+        from high ground to the NE. Mortar section 2km behind the
+        river in defilade.
+      MostLikelyCOA: >
+        Defend the bridge crossing, attrit attacking forces with
+        AT weapons during approach, call mortar fire on the bridge
+        and near bank, withdraw north if position becomes untenable.
+      MostDangerousCOA: >
+        Reinforce with a second platoon from battalion reserve.
+        Execute counterattack if BLUFOR secures a foothold across
+        the river.
+    Friendly:
+      HigherMission: "2-7 IN BN attacks to seize crossings over the Visla River"
+      AdjacentUnits: >
+        Bravo Company attacking a ford 3km to the west (supporting effort).
+        Charlie Company in reserve.
+      Attachments: "1x Tank Platoon (4x M1A2), 1x Mortar Section (2x M120)"
+      Detachments: "None"
+
+  BLUFOR:
+    Units:
+      - Type: USRifleSquad
+        Designation: "1st Squad, 1st Plt"
+        Location: [40, 50]
+        Strength: 100
+        Stance: move
+
+      - Type: USRifleSquad
+        Designation: "2nd Squad, 1st Plt"
+        Location: [41, 50]
+        Strength: 100
+        Stance: move
+
+      - Type: USRifleSquad
+        Designation: "3rd Squad, 1st Plt"
+        Location: [42, 50]
+        Strength: 100
+        Stance: move
+
+      - Type: USWeaponsSquad
+        Designation: "Wpns Squad, 1st Plt"
+        Location: [41, 51]
+        Strength: 100
+        Stance: overwatch
+
+      - Type: USRifleSquad
+        Designation: "1st Squad, 2nd Plt"
+        Location: [38, 52]
+        Strength: 100
+        Stance: move
+
+      - Type: USRifleSquad
+        Designation: "2nd Squad, 2nd Plt"
+        Location: [39, 52]
+        Strength: 100
+        Stance: move
+
+      - Type: USRifleSquad
+        Designation: "3rd Squad, 2nd Plt"
+        Location: [40, 52]
+        Strength: 100
+        Stance: move
+
+      - Type: USM2A3Bradley
+        Designation: "Bradley, 1st Plt"
+        Location: [43, 50]
+        Strength: 100
+        Stance: overwatch
+
+      - Type: USM2A3Bradley
+        Designation: "Bradley, 2nd Plt"
+        Location: [37, 52]
+        Strength: 100
+        Stance: overwatch
+
+      - Type: USM1A2Abrams
+        Designation: "Tank 1, Attached Plt"
+        Location: [44, 49]
+        Strength: 100
+        Stance: overwatch
+
+      - Type: USM1A2Abrams
+        Designation: "Tank 2, Attached Plt"
+        Location: [45, 49]
+        Strength: 100
+        Stance: overwatch
+
+      - Type: USM120Mortar
+        Designation: "Mortar Section"
+        Location: [40, 55]
+        Strength: 100
+        Stance: defend
+
+      - Type: USJavelinTeam
+        Designation: "Javelin Team, 1st Plt"
+        Location: [42, 51]
+        Strength: 100
+        Stance: overwatch
+
+      - Type: USFMTV
+        Designation: "Supply Truck"
+        Location: [40, 58]
+        Strength: 100
+        Stance: defend
+
+      - Type: USM113Ambulance
+        Designation: "Ambulance"
+        Location: [41, 57]
+        Strength: 100
+        Stance: defend
+
+  OPFOR:
+    Doctrine: russian_combined_arms
+    AIBehavior: >
+      Defend bridge crossing. Use AT weapons to engage armor at range.
+      Call mortar fire on approaching BLUFOR. If position untenable after
+      losing 50% strength, withdraw north along Route BEAR.
+    Units:
+      - Type: RUMotorRifleSquad
+        Designation: "1st Squad, MR Plt"
+        Location: [40, 35]
+        Stance: defend
+        Concealed: false
+        Entrenched: true
+
+      - Type: RUMotorRifleSquad
+        Designation: "2nd Squad, MR Plt"
+        Location: [42, 34]
+        Stance: defend
+        Concealed: true
+        Entrenched: true
+
+      - Type: RUMotorRifleSquad
+        Designation: "3rd Squad, MR Plt"
+        Location: [38, 35]
+        Stance: defend
+        Concealed: true
+        Entrenched: true
+
+      - Type: RUPKMTeam
+        Designation: "MG Team"
+        Location: [41, 33]
+        Stance: overwatch
+        Concealed: true
+        Entrenched: true
+
+      - Type: RUKornetTeam
+        Designation: "Kornet ATGM Team"
+        Location: [46, 32]
+        Stance: overwatch
+        Concealed: true
+        Entrenched: true
+
+      - Type: RU2B11Mortar
+        Designation: "Mortar Section"
+        Location: [41, 28]
+        Stance: defend
+        Concealed: true
+        Entrenched: false
+
+  Objectives:
+    - Name: "OBJ BRIDGE"
+      Type: seize
+      Location: [41, 38]
+      Points: 100
+      HoldTurns: 2
+      Description: "Seize and secure the bridge over the Visla River"
+
+    - Name: "OBJ NORTH BANK"
+      Type: seize
+      Location: [41, 34]
+      Points: 50
+      HoldTurns: 1
+      Description: "Establish a foothold on the north bank"
+
+    - Name: "FORCE PRESERVATION"
+      Type: preserve_force
+      Location: [0, 0]
+      Points: 50
+      HoldTurns: 0
+      Description: "Maintain at least 70% combat power"
+
+  MSEL:
+    - Turn: 2
+      Category: Intel
+      Event: "UAV reports possible enemy mortar position 2km north of river"
+      RadioMessage: >
+        "BAYONET 6, this is SHADOW 1-1. UAV spot report: possible enemy
+        indirect fire position, grid 4128. Two vehicles and dismounted
+        activity. Time observed 0700Z. Over."
+      Effect: "Reveal approximate location of OPFOR mortar"
+
+    - Turn: 4
+      Category: Higher_HQ
+      Event: "Battalion confirms Bravo Company has reached the ford"
+      RadioMessage: >
+        "BAYONET 6, IRONHORSE 6. Be advised, BAYONET RED is at the
+        ford and preparing to cross. Maintain pressure at the bridge.
+        Over."
+      Effect: "Information only — confirms supporting effort is on schedule"
+
+    - Turn: 6
+      Category: Civilian
+      Event: "Civilian vehicles approaching bridge from the south"
+      RadioMessage: >
+        "BAYONET 6, BAYONET 1-6. We have civilian vehicles, 3x sedans,
+        approaching the bridge from the south. ROE check — request
+        guidance. Over."
+      Effect: "Player must decide how to handle civilians in the engagement area"
+
+    - Turn: 8
+      Category: Intel
+      Event: "SIGINT intercept — OPFOR requesting reinforcements"
+      RadioMessage: >
+        "BAYONET 6, PHANTOM 2. SIGINT intercept indicates OPFOR element
+        at the bridge requesting reinforcement from battalion. Possible
+        platoon-size element 5km north. Time: 10 minutes ago. Over."
+      Effect: "Adds urgency — reinforcements may arrive in 4-6 turns"
+
+    - Turn: 10
+      Category: Weather
+      Event: "Fog rolling in from the river"
+      RadioMessage: >
+        "All BAYONET elements, be advised — visibility deteriorating due
+        to river fog. Estimate 500m visibility and dropping. Over."
+      Effect: "Reduce visibility to 500m for 3 turns"
+
+    - Turn: 12
+      Category: Reinforcement
+      Event: "OPFOR reinforcement platoon arrives from the north"
+      RadioMessage: ""
+      Effect: >
+        Spawn RUMotorRifleSquad x2 and RUBMP3 x1 at grid [41, 25],
+        moving south toward the bridge. Only visible if player has ISR
+        assets covering the north.
+
+    - Turn: 14
+      Category: Higher_HQ
+      Event: "Battalion orders — consolidate by 1400Z"
+      RadioMessage: >
+        "BAYONET 6, IRONHORSE 3. Commander's guidance: bridge must be
+        secure NLT 1400Z for follow-on forces. What is your status? Over."
+      Effect: "2 turns remaining to achieve objectives"
+
+  ScoringRubric:
+    Decisive_Victory: >
+      Both OBJ BRIDGE and OBJ NORTH BANK seized. BLUFOR maintains 80%+
+      combat power. OPFOR destroyed or withdrew. Bridge intact.
+    Tactical_Victory: >
+      OBJ BRIDGE seized. BLUFOR maintains 60%+ combat power. Some
+      objectives incomplete.
+    Draw: >
+      OBJ BRIDGE seized but BLUFOR below 60% strength, OR objectives
+      not seized but OPFOR forced to withdraw.
+    Tactical_Defeat: >
+      OBJ BRIDGE not seized. BLUFOR below 50% strength. OPFOR retains
+      defensive positions.
+    Decisive_Defeat: >
+      OBJ BRIDGE not seized. BLUFOR below 30% strength or forced to
+      withdraw. Bridge destroyed by OPFOR.
+
+  InstructorNotes: |
+    KEY TEACHING POINTS:
+    1. Fire support synchronization — the player must use mortars and
+       tank direct fire to suppress the defense before infantry crosses.
+    2. The Kornet team on the NE high ground is the key threat — it
+       can engage Bradleys and tanks at 4km+. Identifying and neutralizing
+       it early is critical.
+    3. The civilian vehicle event (Turn 6) tests ROE discipline. The
+       correct response is to halt civilians, search, and redirect —
+       not engage.
+    4. The OPFOR reinforcement (Turn 12) punishes slow execution. Players
+       who dither will face a much harder fight.
+    5. Logistics — the player must manage ammo for the mortar section
+       and ensure CASEVAC is planned before the assault.
+
+    COMMON MISTAKES TO WATCH FOR:
+    - Sending infantry across the bridge without suppressing the defense
+    - Ignoring the Kornet team and losing vehicles
+    - Overcommitting to one axis instead of fixing/flanking
+    - Not requesting counter-battery fire on the OPFOR mortars
+    - ROE violations against civilians

@@ -1,0 +1,106 @@
+You are a professional military wargame scenario designer. Create realistic, doctrinally sound training scenarios for military professionals and serious wargamers.
+
+## Scenario Request
+{{USER_REQUEST}}
+
+## Constraints
+- Scale: {{SCALE}} (platoon/company/brigade)
+- Available unit types: {{AVAILABLE_UNITS}}
+- Available maps: {{AVAILABLE_MAPS}}
+- Target audience: {{AUDIENCE}} (military/wargamer/mixed)
+
+## Requirements
+
+Generate a complete scenario in the following YAML structure. Every field must be populated. The scenario must be:
+1. Doctrinally realistic — based on real military operations
+2. Balanced — winnable but challenging
+3. Training-focused — teaches specific tactical skills
+4. Replayable — enough variability for multiple plays
+
+Respond with this exact YAML structure:
+
+```yaml
+Scenario:
+  Name: "[Descriptive name]"
+  Description: "[2-3 sentence overview]"
+  Scale: [platoon|company|brigade]
+  TrainingObjectives:
+    - "[Primary objective — what the player should learn]"
+    - "[Secondary objective]"
+  Terrain: "[terrain description]"
+  Weather: [Clear|Rain|Fog|Snow]
+  TimeOfDay: "[HHmm]"
+  Duration: [number of turns]
+  TurnDuration: [minutes per turn]
+
+  Situation:
+    General: "[Higher situation — what's happening in the larger operation]"
+    Enemy:
+      Composition: "[Enemy force description]"
+      Disposition: "[Where they are and what they're doing]"
+      MostLikelyCOA: "[Most likely enemy course of action]"
+      MostDangerousCOA: "[Most dangerous enemy course of action]"
+    Friendly:
+      HigherMission: "[What the higher HQ is doing]"
+      AdjacentUnits: "[What flanking units are doing]"
+      Attachments: "[Any attached units]"
+      Detachments: "[Any units detached away]"
+
+  BLUFOR:
+    Units:
+      - Type: "[unit type from available list]"
+        Designation: "[e.g., 1st Plt, A Co]"
+        Location: [x, y]
+        Strength: [percentage, usually 100]
+        Stance: [defend|move|overwatch]
+        Attachments: "[any attached assets]"
+    # ... repeat for all BLUFOR units
+
+  OPFOR:
+    Doctrine: [russian_combined_arms|chinese_pla|insurgent_guerrilla|etc]
+    AIBehavior: "[Brief description of how OPFOR should behave]"
+    Units:
+      - Type: "[unit type]"
+        Designation: "[designation]"
+        Location: [x, y]
+        Stance: [defend|patrol|ambush|counterattack]
+        Concealed: [true|false]
+        Entrenched: [true|false]
+    # ... repeat for all OPFOR units
+
+  Objectives:
+    - Name: "[OBJ name, e.g., OBJ ALPHA]"
+      Type: [seize|defend|destroy|preserve_force|route_clearance]
+      Location: [x, y]
+      Points: [number]
+      HoldTurns: [number, 0 if seize-only]
+      Description: "[What achieving this means]"
+
+  MSEL:
+    - Turn: [number]
+      Category: [Intel|Weather|Civilian|Reinforcement|ROE|Higher_HQ|Equipment]
+      Event: "[Description of what happens]"
+      RadioMessage: "[How it's communicated to the player]"
+      Effect: "[Game mechanic effect]"
+    # ... 10-20 MSEL events spread across the scenario
+
+  ScoringRubric:
+    Decisive_Victory: "[conditions]"
+    Tactical_Victory: "[conditions]"
+    Draw: "[conditions]"
+    Tactical_Defeat: "[conditions]"
+    Decisive_Defeat: "[conditions]"
+
+  InstructorNotes: |
+    [Notes for instructors running this as a training exercise.
+     Key teaching points, common mistakes to watch for,
+     and discussion questions for the AAR.]
+
+  OPORD: |
+    [Full 5-paragraph Operations Order in standard military format:
+     1. SITUATION
+     2. MISSION
+     3. EXECUTION
+     4. SUSTAINMENT
+     5. COMMAND AND SIGNAL]
+```

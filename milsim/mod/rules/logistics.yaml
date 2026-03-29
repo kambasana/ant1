@@ -1,0 +1,181 @@
+# ============================================================================
+# LOGISTICS & SUPPORT UNITS
+# ============================================================================
+
+# --- US HMMWV (Utility) ---
+USHMMWV:
+  Inherits: ^LogisticsUnit
+  Tooltip:
+    Name: HMMWV M1151 (US)
+  MilSimIdentity:
+    Echelon: Vehicle
+    Faction: BLUFOR
+    Designation: "HMMWV"
+    NATOSymbol: wheeled_vehicle
+  Health:
+    HP: 800
+  MilSimMovement:
+    Speed: 50
+    SpeedRoad: 89
+    SpeedCrossCountry: 30
+  MilSimCombat:
+    Armor:
+      Front: 10
+      Side: 10
+      Rear: 5
+      Top: 0
+    Weapons:
+      - Id: M2HB
+        Type: HeavyMachineGun
+        Count: 1
+        Range: 1800
+        EffectiveRange: 1200
+  MilSimLogistics:
+    IsSupplyUnit: false
+    CargoCapacity: 50
+    PassengerCapacity: 4
+
+# --- US M1083 FMTV (Supply Truck) ---
+USFMTV:
+  Inherits: ^LogisticsUnit
+  Tooltip:
+    Name: M1083 FMTV Supply Truck (US)
+  MilSimIdentity:
+    Echelon: Vehicle
+    Faction: BLUFOR
+    Designation: "FMTV Supply"
+    NATOSymbol: logistics
+  Health:
+    HP: 600
+  MilSimMovement:
+    Speed: 40
+    SpeedRoad: 94
+    SpeedCrossCountry: 15
+  MilSimLogistics:
+    IsSupplyUnit: true
+    CargoCapacity: 500         # supply points
+    CargoTypes:
+      - Ammunition
+      - Fuel
+      - Water
+      - Food
+      - Medical
+    Crew: 2
+
+# --- US M1120 HEMTT (Heavy Supply) ---
+USHEMTT:
+  Inherits: ^LogisticsUnit
+  Tooltip:
+    Name: M1120 HEMTT Fuel/Ammo (US)
+  MilSimIdentity:
+    Echelon: Vehicle
+    Faction: BLUFOR
+    Designation: "HEMTT Supply"
+    NATOSymbol: logistics
+  Health:
+    HP: 800
+  MilSimMovement:
+    Speed: 35
+    SpeedRoad: 88
+    SpeedCrossCountry: 10
+  MilSimLogistics:
+    IsSupplyUnit: true
+    CargoCapacity: 1000
+    Crew: 2
+
+# --- US M113 Ambulance ---
+USM113Ambulance:
+  Inherits: ^LogisticsUnit
+  Tooltip:
+    Name: M113 Ambulance (US)
+  MilSimIdentity:
+    Echelon: Vehicle
+    Faction: BLUFOR
+    Designation: "M113 Ambulance"
+    NATOSymbol: medical
+  Health:
+    HP: 1200
+  MilSimMovement:
+    Speed: 35
+    SpeedRoad: 61
+    SpeedCrossCountry: 25
+  MilSimCombat:
+    Armor:
+      Front: 40
+      Side: 30
+      Rear: 30
+      Top: 10
+    Weapons: []                # Geneva Convention — no weapons
+  MilSimLogistics:
+    IsMedical: true
+    CasualtyCapacity: 6
+    Crew: 3
+
+# --- Forward Operating Base ---
+ForwardOperatingBase:
+  Inherits: ^MilSimUnit
+  Tooltip:
+    Name: Forward Operating Base
+  MilSimIdentity:
+    Echelon: Installation
+    Branch: Logistics
+    NATOSymbol: supply_point
+  Health:
+    HP: 10000
+  MilSimMovement:
+    Speed: 0                   # fixed installation
+  MilSimLogistics:
+    IsSupplyUnit: true
+    IsDepot: true
+    StorageCapacity: 5000
+    ResupplyRate: 200          # SP generated per turn from higher
+    CanResupply:
+      - Ammunition
+      - Fuel
+      - Water
+      - Food
+      - Medical
+  MilSimDetection:
+    VisualSignature: 90
+    ThermalSignature: 70
+    NoiseSignature: 50
+
+# --- Supply Route Definition ---
+# Supply routes are defined on the map, not as units.
+# These rules govern route behavior.
+SupplyRouteRules:
+  MSR:                         # Main Supply Route
+    DisplayName: Main Supply Route
+    ConvoySpeedMultiplier: 1.0
+    Capacity: 3                # convoys per turn
+    Priority: primary
+  ASR:                         # Alternate Supply Route
+    DisplayName: Alternate Supply Route
+    ConvoySpeedMultiplier: 0.8
+    Capacity: 2
+    Priority: alternate
+  Interdiction:
+    ConvoyLossChance: 0.3      # chance per convoy when route under fire
+    ConvoyDelayTurns: 2        # delay when route is contested
+    RouteClosedThreshold: 3    # enemy units within X km closes route
+
+# --- OPFOR Logistics ---
+RUKamAZ:
+  Inherits: ^LogisticsUnit
+  Tooltip:
+    Name: KamAZ-5350 Supply Truck (RU)
+  MilSimIdentity:
+    Echelon: Vehicle
+    Faction: OPFOR
+    Designation: "KamAZ Supply"
+    NATOSymbol: logistics
+  Health:
+    HP: 500
+  MilSimMovement:
+    Speed: 35
+    SpeedRoad: 90
+    SpeedCrossCountry: 12
+  MilSimLogistics:
+    IsSupplyUnit: true
+    CargoCapacity: 400
+    Crew: 2

@@ -1,0 +1,289 @@
+Scenario:
+  Name: "Strait of Hormuz — Maritime Chokepoint Defense"
+  Description: >
+    Tensions have escalated in the Persian Gulf. Iranian IRGC naval and
+    missile forces threaten to close the Strait of Hormuz. A US-led
+    coalition task force must keep the strait open while defending against
+    fast attack craft, anti-ship missiles, and mine warfare. Based on
+    real-world geography and known Iranian military capabilities.
+  Scale: company
+  TrainingObjectives:
+    - "Defend a maritime chokepoint against asymmetric threats"
+    - "Coordinate naval, air, and ground-based fire support"
+    - "Manage rules of engagement in a high-tension, pre-war environment"
+    - "Counter fast attack craft swarm tactics"
+  Terrain: Coastal — Strait of Hormuz, islands, narrow waterways
+  Weather: Clear, 35C, high humidity
+  TimeOfDay: "0500"
+  Duration: 24
+  TurnDuration: 30
+
+  Situation:
+    General: >
+      Following the collapse of nuclear negotiations and targeted strikes
+      on Iranian nuclear facilities, Iran has declared the Strait of Hormuz
+      closed to all shipping. IRGC Navy forces have deployed fast attack
+      craft, anti-ship cruise missiles (ASCMs), and mines to enforce the
+      closure. CENTCOM has ordered the strait reopened.
+    Enemy:
+      Composition: >
+        IRGC Navy coastal defense brigade: 12x Boghammar fast attack craft
+        armed with rockets and machine guns, 3x C-802 anti-ship missile
+        launchers (mobile, shore-based), 6x mine-laying dhows, 1x Ghadir-class
+        midget submarine. Supported by shore-based 107mm rocket battery
+        and an Iranian Army air defense battery (HQ-7/SA-15).
+      Disposition: >
+        Fast attack craft dispersed in island coves on Abu Musa, Greater
+        and Lesser Tunbs. ASCM launchers mobile along the Iranian coast
+        between Bandar Abbas and Jask. Mines pre-laid in western approaches.
+        Submarine operating submerged in central strait.
+      MostLikelyCOA: >
+        Swarm attack with fast craft during transit, coordinated with
+        shore-based ASCM salvo. Use mines to channel coalition vessels
+        into kill zones. Submarine targets high-value units.
+      MostDangerousCOA: >
+        Simultaneous ASCM salvo from multiple launch sites combined with
+        fast craft swarm and submarine torpedo attack during peak traffic.
+    Friendly:
+      HigherMission: "CTF-55 will reopen the Strait of Hormuz to international shipping"
+      AdjacentUnits: >
+        USS carrier strike group operating in Gulf of Oman (CAS available
+        on 30-minute station). Royal Navy frigate HMS Argyll in southern Gulf.
+        French frigate conducting mine countermeasures.
+      Attachments: "2x MH-60R Seahawk (ASW), 1x ScanEagle UAV det"
+      Detachments: "None"
+
+  BLUFOR:
+    Units:
+      - Type: USRifleSquad
+        Designation: "VBSS Team 1 (Visit Board Search Seizure)"
+        Location: [50, 40]
+        Strength: 100
+        Stance: defend
+
+      - Type: USRifleSquad
+        Designation: "VBSS Team 2"
+        Location: [50, 41]
+        Strength: 100
+        Stance: defend
+
+      # Representing naval assets as ground units on coastal map
+      - Type: USM1A2Abrams
+        Designation: "DDG-65 USS Benfold (Destroyer — stand-in)"
+        Location: [45, 35]
+        Strength: 100
+        Stance: overwatch
+        Attachments: "SM-2, ESSM, Harpoon, 5in gun, CIWS"
+
+      - Type: USM2A3Bradley
+        Designation: "LCS-15 USS Billings (Littoral Combat — stand-in)"
+        Location: [48, 38]
+        Strength: 100
+        Stance: move
+
+      - Type: USM2A3Bradley
+        Designation: "PC-12 USS Thunderbolt (Patrol Craft — stand-in)"
+        Location: [52, 42]
+        Strength: 100
+        Stance: move
+
+      - Type: USM120Mortar
+        Designation: "Shore-based radar / C2 (stand-in)"
+        Location: [60, 50]
+        Strength: 100
+        Stance: defend
+
+      - Type: USM777
+        Designation: "CAS Stack (F/A-18 on station — stand-in)"
+        Location: [40, 20]
+        Strength: 100
+        Stance: defend
+
+  OPFOR:
+    Doctrine: iranian_hybrid
+    AIBehavior: >
+      Employ swarm tactics with fast attack craft. Use islands for cover.
+      Coordinate ASCM launches to overwhelm defenses. Deny and delay
+      rather than decisive engagement. Retreat to ports if taking heavy
+      losses. Mine warfare is passive — pre-laid.
+    Units:
+      - Type: RUMotorRifleSquad
+        Designation: "Boghammar Group 1 (4x FAC — stand-in)"
+        Location: [55, 30]
+        Stance: ambush
+        Concealed: true
+        Entrenched: false
+
+      - Type: RUMotorRifleSquad
+        Designation: "Boghammar Group 2 (4x FAC)"
+        Location: [48, 28]
+        Stance: ambush
+        Concealed: true
+        Entrenched: false
+
+      - Type: RUMotorRifleSquad
+        Designation: "Boghammar Group 3 (4x FAC)"
+        Location: [53, 25]
+        Stance: ambush
+        Concealed: true
+        Entrenched: false
+
+      - Type: RUKornetTeam
+        Designation: "C-802 Battery 1 (stand-in)"
+        Location: [62, 22]
+        Stance: overwatch
+        Concealed: true
+        Entrenched: true
+
+      - Type: RUKornetTeam
+        Designation: "C-802 Battery 2"
+        Location: [58, 18]
+        Stance: overwatch
+        Concealed: true
+        Entrenched: true
+
+      - Type: RU2B11Mortar
+        Designation: "107mm Rocket Battery"
+        Location: [60, 20]
+        Stance: defend
+        Concealed: true
+        Entrenched: true
+
+  Objectives:
+    - Name: "OBJ TRANSIT"
+      Type: route_clearance
+      Location: [50, 35]
+      Points: 100
+      HoldTurns: 0
+      Description: "Clear the strait for merchant vessel transit"
+
+    - Name: "OBJ ISLAND SWEEP"
+      Type: seize
+      Location: [55, 30]
+      Points: 50
+      HoldTurns: 1
+      Description: "Neutralize IRGC positions on Abu Musa"
+
+    - Name: "FORCE PRESERVATION"
+      Type: preserve_force
+      Location: [0, 0]
+      Points: 75
+      HoldTurns: 0
+      Description: "No coalition vessels lost"
+
+    - Name: "ROE COMPLIANCE"
+      Type: preserve_force
+      Location: [0, 0]
+      Points: 50
+      HoldTurns: 0
+      Description: "No civilian vessels engaged, no Iranian Navy (regular) targets hit"
+
+  MSEL:
+    - Turn: 1
+      Category: Intel
+      Event: "ScanEagle UAV detects fast movers departing Abu Musa harbor"
+      RadioMessage: >
+        "WARHAMMER, SHADOW 6. UAV reports multiple small fast contacts
+        departing Abu Musa, heading southeast. Estimate 4 contacts,
+        speed 35 knots. Cannot confirm hostile intent. Over."
+      Effect: "Partial detection of Boghammar Group 1"
+
+    - Turn: 3
+      Category: Civilian
+      Event: "Merchant vessel COSCO BEIJING requesting escort through strait"
+      RadioMessage: >
+        "CTF-55, this is M/V COSCO BEIJING. We are commercial container
+        vessel requesting coalition escort through the strait. Currently
+        at anchor at Fujairah. Please advise. Over."
+      Effect: "Player must decide whether to escort while threats remain"
+
+    - Turn: 5
+      Category: Intel
+      Event: "SIGINT intercepts IRGC coordination for missile launch"
+      RadioMessage: >
+        "WARHAMMER, PHANTOM. SIGINT flash: IRGC coastal missile unit
+        received launch authority from IRGCN HQ. Assess ASCM launch
+        imminent from Iranian coast. All units weapons free for inbound
+        missiles. Over."
+      Effect: "Warning of incoming ASCM attack within 1-2 turns"
+
+    - Turn: 7
+      Category: Equipment
+      Event: "ASCM salvo detected — 4 missiles inbound"
+      RadioMessage: >
+        "VAMPIRE VAMPIRE VAMPIRE! Multiple inbound ASCMs bearing 030,
+        range 40 miles, speed 600 knots. All units execute ASCM defense
+        plan. Over."
+      Effect: "4 C-802 missiles target coalition vessels"
+
+    - Turn: 9
+      Category: ROE
+      Event: "Iranian Navy frigate IRIS JAMARAN enters the strait"
+      RadioMessage: >
+        "WARHAMMER, TOPWATCH. Iranian Navy frigate JAMARAN has entered
+        the strait from Bandar Abbas. She is Iranian REGULAR Navy, not
+        IRGC. ROE restricts engagement to IRGC forces only. Monitor and
+        track. Over."
+      Effect: >
+        ROE complication — Iranian regular navy is not a valid target.
+        JAMARAN may be gathering intel or attempting to shield IRGC craft.
+
+    - Turn: 12
+      Category: Civilian
+      Event: "Fishing dhow in minefield area — possible mine layer"
+      RadioMessage: >
+        "WARHAMMER, BILLINGS. Contact: fishing dhow operating in the
+        western approach. Unable to determine if fishing or mine-laying.
+        Request VBSS authority. Over."
+      Effect: "ROE dilemma — board and search or risk mine deployment"
+
+    - Turn: 15
+      Category: Intel
+      Event: "Submarine contact detected"
+      RadioMessage: >
+        "WARHAMMER, CROSSBOW 2-1 (Seahawk). Sonobuoy hit: possible
+        submarine contact bearing 190, range 8 miles from Benfold.
+        Classifying now. Request weapons free for ASW prosecution. Over."
+      Effect: "Submarine threat requires ASW response"
+
+    - Turn: 18
+      Category: Higher_HQ
+      Event: "CENTCOM orders — prepare for merchant convoy escort"
+      RadioMessage: >
+        "WARHAMMER, CTF-55 ACTUAL. CENTCOM directive: first merchant
+        convoy will transit at 1800Z. Strait must be clear. What is
+        your assessment? Over."
+      Effect: "6 turns remaining to clear threats"
+
+  ScoringRubric:
+    Decisive_Victory: >
+      Strait cleared, convoy transits safely, no coalition losses,
+      ROE maintained. IRGC naval capability significantly degraded.
+    Tactical_Victory: >
+      Strait cleared with minor coalition damage. Convoy transits
+      with acceptable risk. Most ROE maintained.
+    Draw: >
+      Strait partially cleared. Significant IRGC capability remains.
+      Convoy transit risky but possible.
+    Tactical_Defeat: >
+      Coalition vessel damaged or lost. Strait not cleared. Convoy
+      transit not possible.
+    Decisive_Defeat: >
+      Multiple coalition vessels lost. ROE violations cause
+      international incident. Strait remains closed.
+
+  InstructorNotes: |
+    This scenario is designed to test multi-domain coordination and ROE
+    discipline in a realistic Persian Gulf setting.
+
+    KEY TEACHING POINTS:
+    1. Asymmetric threats — fast attack craft swarms are hard to detect
+       and engage with conventional naval weapons.
+    2. ASCM defense — requires layered defense (SM-2, ESSM, CIWS, chaff).
+    3. ROE complexity — distinguishing IRGC from regular Iranian Navy,
+       civilian from military dhows, requires discipline.
+    4. Mine warfare — the most dangerous long-term threat, requires MCM.
+    5. Coalition coordination — managing multiple assets across domains.
+
+    NOTE: This scenario uses ground unit stand-ins for naval assets.
+    A future naval-specific unit set will provide proper ship types.

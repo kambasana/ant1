@@ -1,0 +1,125 @@
+# ============================================================================
+# PLAYER / FACTION DEFINITIONS
+# ============================================================================
+
+Factions:
+  BLUFOR:
+    DisplayName: Blue Force (NATO / Western Coalition)
+    Color: 0055FF
+    CommandStructure:
+      - Role: CO
+        DisplayName: Commanding Officer
+        Description: Overall mission commander. Sets objectives, issues OPORD.
+        Permissions: [all_units, all_fires, all_logistics, all_intel]
+      - Role: XO
+        DisplayName: Executive Officer
+        Description: Manages internal operations, acts as deputy CO.
+        Permissions: [all_units, all_logistics]
+      - Role: S2
+        DisplayName: Intelligence Officer
+        Description: Controls ISR assets, manages common operating picture.
+        Permissions: [isr_units, intel_overlay]
+      - Role: S3
+        DisplayName: Operations Officer
+        Description: Plans and directs maneuver, synchronizes operations.
+        Permissions: [maneuver_units, phase_lines]
+      - Role: FSO
+        DisplayName: Fire Support Officer
+        Description: Coordinates artillery, mortars, and CAS.
+        Permissions: [artillery_units, fire_missions, cas_requests]
+      - Role: S4
+        DisplayName: Logistics Officer
+        Description: Manages supply routes, depots, and resupply operations.
+        Permissions: [logistics_units, supply_routes, depot_placement]
+    DoctrineName: NATO Combined Arms
+    DoctrineTraits:
+      - mission_command          # Auftragstaktik — intent-based orders
+      - combined_arms_synergy
+      - air_superiority_assumed
+      - precision_fires
+      - force_preservation
+
+  OPFOR:
+    DisplayName: Opposing Force
+    Color: FF2200
+    CommandStructure:
+      - Role: CO
+        DisplayName: Commanding Officer
+        Permissions: [all_units, all_fires, all_logistics, all_intel]
+    DoctrineName: Configurable
+    DoctrineOptions:
+      - russian_combined_arms
+      - chinese_pla
+      - iranian_hybrid
+      - insurgent_guerrilla
+      - custom
+    DoctrineTraits:
+      - centralized_command       # Detailed orders from higher
+      - mass_fires
+      - echeloned_defense
+      - maskirovka               # Deception and camouflage
+
+  Civilian:
+    DisplayName: Civilian Population
+    Color: 00AA00
+    IsPlayable: false
+    BehaviorDriver: llm          # LLM generates civilian actions
+    ROERules:
+      - PositiveID: required     # Must PID before engaging
+      - CollateralDamage: minimize
+      - ReportingRequired: true
+
+  Neutral:
+    DisplayName: Neutral Forces
+    Color: FFAA00
+    IsPlayable: false
+    Description: UN, NGO, or neutral nation forces on the battlefield
+
+# ============================================================================
+# MULTIPLAYER GAME MODES
+# ============================================================================
+
+GameModes:
+  SinglePlayer:
+    DisplayName: Single Player vs AI OPFOR
+    MinPlayers: 1
+    MaxPlayers: 1
+    OPFOR_AI: true
+    AI_Driver: llm             # LLM-powered OPFOR commander
+
+  CooperativeStaff:
+    DisplayName: Cooperative Staff Exercise
+    Description: >
+      Multiple players control different staff roles (CO, S2, S3, FSO, S4)
+      working together against AI OPFOR. Best for staff officer training.
+    MinPlayers: 2
+    MaxPlayers: 5
+    OPFOR_AI: true
+    RoleAssignment: required
+
+  ForceOnForce:
+    DisplayName: Force on Force
+    Description: >
+      Two human teams each control one side. Full adversarial wargaming.
+    MinPlayers: 2
+    MaxPlayers: 10
+    OPFOR_AI: false
+    Teams: 2
+    RoleAssignment: optional
+
+  Seminar:
+    DisplayName: Seminar Wargame
+    Description: >
+      Instructor-led exercise. Instructor controls MSEL injects and
+      can override AI decisions. Designed for classroom/PME use.
+    MinPlayers: 1
+    MaxPlayers: 20
+    InstructorRole: true
+    OPFOR_AI: true
+    AI_Driver: llm
+    InstructorOverrides:
+      - PauseExecution: true
+      - InjectEvent: true
+      - OverrideAI: true
+      - RevealIntel: true
+      - AdjustDifficulty: true

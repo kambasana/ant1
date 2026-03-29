@@ -1,0 +1,224 @@
+# ============================================================================
+# ARTILLERY & FIRE SUPPORT UNITS
+# ============================================================================
+
+# --- US M777A2 155mm Howitzer ---
+USM777:
+  Inherits: ^ArtilleryUnit
+  Tooltip:
+    Name: M777A2 155mm Howitzer (US)
+  MilSimIdentity:
+    Echelon: Section
+    Faction: BLUFOR
+    Designation: "M777A2 155mm"
+    NATOSymbol: artillery
+  Health:
+    HP: 1500
+  MilSimMovement:
+    Speed: 0                   # towed, requires prime mover
+    SetupTime: 2               # turns to emplace
+    TeardownTime: 1            # turns to displace
+  MilSimCombat:
+    Weapons:
+      - Id: M777_155mm
+        Type: Howitzer
+        Count: 1
+        MinRange: 2000
+        Range: 30000           # max range with RAP
+        EffectiveRange: 24000  # standard HE
+        RateOfFire: 5          # rounds per minute sustained
+        MaxROF: 8              # rounds per minute maximum
+        Accuracy: 0.7          # CEP-based, improves with adjust fire
+        AreaEffect: 50         # lethal radius meters
+        AmmoTypes:
+          - HE                 # high explosive
+          - SMOKE              # screening smoke
+          - ILLUM              # illumination
+          - ICM                # improved conventional munitions
+          - RAP                # rocket-assisted projectile (extended range)
+          - EXCALIBUR          # GPS-guided (CEP <2m)
+    FireMissions:
+      - Type: adjust_fire      # observer adjusts onto target
+        Delay: 1               # turns from request to first round
+      - Type: fire_for_effect  # full fire mission
+        Delay: 2
+      - Type: suppression      # sustained suppressive fire
+        Delay: 1
+        Duration: continuous
+      - Type: smoke_screen     # obscure an area
+        Delay: 1
+      - Type: illumination     # illuminate an area (night)
+        Delay: 1
+  MilSimDetection:
+    VisualSignature: 40
+    ThermalSignature: 60       # hot when firing
+    NoiseSignature: 100        # extremely loud
+    Sensors:
+      - Type: Visual
+        Range: 1000
+        Accuracy: 0.5
+  MilSimLogistics:
+    HERounds: 100
+    SMOKERounds: 20
+    ILLUMRounds: 15
+    ExcaliburRounds: 6
+    Crew: 8
+
+# --- US M109A7 Paladin SPH ---
+USM109A7:
+  Inherits: ^ArtilleryUnit
+  Tooltip:
+    Name: M109A7 Paladin 155mm SPH (US)
+  MilSimIdentity:
+    Echelon: Vehicle
+    Faction: BLUFOR
+    Designation: "M109A7 Paladin"
+    NATOSymbol: artillery_sp
+  Health:
+    HP: 3000
+  MilSimMovement:
+    Speed: 30
+    SpeedRoad: 56
+    SpeedCrossCountry: 20
+    SetupTime: 1               # faster than towed
+    TeardownTime: 0            # shoot and scoot capable
+  MilSimCombat:
+    Armor:
+      Front: 40
+      Side: 20
+      Rear: 10
+      Top: 10
+    Weapons:
+      - Id: M284_155mm
+        Type: Howitzer
+        Count: 1
+        MinRange: 2000
+        Range: 30000
+        EffectiveRange: 24000
+        RateOfFire: 4
+        MaxROF: 6
+        Accuracy: 0.7
+        AreaEffect: 50
+  MilSimLogistics:
+    HERounds: 39               # onboard
+    Crew: 4
+
+# --- US M120 120mm Mortar ---
+USM120Mortar:
+  Inherits: ^ArtilleryUnit
+  Tooltip:
+    Name: M120 120mm Mortar (US)
+  MilSimIdentity:
+    Echelon: Section
+    Faction: BLUFOR
+    Designation: "120mm Mortar"
+    NATOSymbol: mortar
+  Health:
+    HP: 500
+  MilSimMovement:
+    Speed: 0
+    SetupTime: 1
+    TeardownTime: 1
+  MilSimCombat:
+    Weapons:
+      - Id: M120_120mm
+        Type: Mortar
+        Count: 1
+        MinRange: 200
+        Range: 7200
+        EffectiveRange: 5500
+        RateOfFire: 4
+        MaxROF: 8
+        Accuracy: 0.6
+        AreaEffect: 30
+        AmmoTypes:
+          - HE
+          - SMOKE
+          - ILLUM
+          - WP                 # white phosphorus
+    FireMissions:
+      - Type: adjust_fire
+        Delay: 0               # organic mortars respond fast
+      - Type: fire_for_effect
+        Delay: 1
+      - Type: suppression
+        Delay: 0
+      - Type: smoke_screen
+        Delay: 0
+  MilSimLogistics:
+    HERounds: 60
+    SMOKERounds: 20
+    ILLUMRounds: 10
+    Crew: 5
+
+# --- Russian 2S19 Msta-S 152mm SPH ---
+RU2S19Msta:
+  Inherits: ^ArtilleryUnit
+  Tooltip:
+    Name: 2S19 Msta-S 152mm SPH (RU)
+  MilSimIdentity:
+    Echelon: Vehicle
+    Faction: OPFOR
+    Designation: "2S19 Msta-S"
+    NATOSymbol: artillery_sp
+  Health:
+    HP: 3500
+  MilSimMovement:
+    Speed: 35
+    SpeedRoad: 60
+    SpeedCrossCountry: 25
+    SetupTime: 1
+    TeardownTime: 0
+  MilSimCombat:
+    Armor:
+      Front: 30
+      Side: 15
+      Rear: 10
+      Top: 10
+    Weapons:
+      - Id: 2A64_152mm
+        Type: Howitzer
+        Count: 1
+        MinRange: 3000
+        Range: 29000
+        EffectiveRange: 24000
+        RateOfFire: 7
+        MaxROF: 10             # Russian doctrine: mass fires
+        Accuracy: 0.65
+        AreaEffect: 55
+        AmmoTypes:
+          - HE
+          - SMOKE
+          - ICM
+          - KRASNOPOL          # laser-guided (Russian Excalibur equivalent)
+  MilSimLogistics:
+    HERounds: 50
+    Crew: 5
+
+# --- Russian 2B11 120mm Mortar ---
+RU2B11Mortar:
+  Inherits: ^ArtilleryUnit
+  Tooltip:
+    Name: 2B11 120mm Mortar (RU)
+  MilSimIdentity:
+    Echelon: Section
+    Faction: OPFOR
+    Designation: "120mm Mortar"
+    NATOSymbol: mortar
+  Health:
+    HP: 400
+  MilSimCombat:
+    Weapons:
+      - Id: 2B11_120mm
+        Type: Mortar
+        Count: 1
+        MinRange: 500
+        Range: 7100
+        EffectiveRange: 5000
+        RateOfFire: 4
+        MaxROF: 10
+        Accuracy: 0.55
+        AreaEffect: 30
+  MilSimLogistics:
+    HERounds: 48
+    Crew: 4

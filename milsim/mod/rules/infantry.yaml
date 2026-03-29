@@ -1,0 +1,244 @@
+# ============================================================================
+# BLUFOR INFANTRY UNITS
+# Based on US Army / NATO organization (open source)
+# ============================================================================
+
+# --- US Army Rifle Squad (9 soldiers) ---
+USRifleSquad:
+  Inherits: ^InfantryUnit
+  Tooltip:
+    Name: Rifle Squad (US)
+  MilSimIdentity:
+    Echelon: Squad
+    Faction: BLUFOR
+    Designation: "Rifle Squad"
+  Health:
+    HP: 900                    # 100 per soldier
+  MilSimCombat:
+    Weapons:
+      - Id: M4A1
+        Type: AssaultRifle
+        Count: 7
+        Range: 500
+        EffectiveRange: 300
+        RateOfFire: 30
+        Accuracy: 0.4
+        ArmorPenetration: 0
+      - Id: M249SAW
+        Type: LightMachineGun
+        Count: 2
+        Range: 800
+        EffectiveRange: 600
+        RateOfFire: 100
+        Accuracy: 0.3
+        ArmorPenetration: 0
+        SuppressionBonus: 30
+      - Id: M320
+        Type: GrenadeLauncher
+        Count: 2
+        Range: 400
+        EffectiveRange: 350
+        RateOfFire: 5
+        Accuracy: 0.5
+        ArmorPenetration: 0
+        AreaEffect: 5          # meter radius
+  MilSimLogistics:
+    AmmoCapacity: 2100
+    AmmoConsumptionPerMinute: 50
+    WaterDays: 2
+    FoodDays: 3
+  MilSimMorale:
+    Training: Trained
+  MilSimDetection:
+    Sensors:
+      - Type: Visual
+        Range: 1500
+        Accuracy: 0.6
+      - Type: Thermal
+        Range: 500
+        Accuracy: 0.8
+
+# --- US Army Weapons Squad ---
+USWeaponsSquad:
+  Inherits: ^InfantryUnit
+  Tooltip:
+    Name: Weapons Squad (US)
+  MilSimIdentity:
+    Echelon: Squad
+    Faction: BLUFOR
+    Designation: "Weapons Squad"
+  Health:
+    HP: 600
+  MilSimCombat:
+    Weapons:
+      - Id: M240B
+        Type: MediumMachineGun
+        Count: 2
+        Range: 1100
+        EffectiveRange: 800
+        RateOfFire: 100
+        Accuracy: 0.35
+        ArmorPenetration: 0
+        SuppressionBonus: 50
+      - Id: M4A1
+        Type: AssaultRifle
+        Count: 4
+        Range: 500
+        EffectiveRange: 300
+        RateOfFire: 30
+        Accuracy: 0.4
+        ArmorPenetration: 0
+
+# --- US Army Javelin ATGM Team ---
+USJavelinTeam:
+  Inherits: ^InfantryUnit
+  Tooltip:
+    Name: Javelin ATGM Team (US)
+  MilSimIdentity:
+    Echelon: Team
+    Faction: BLUFOR
+    Designation: "Javelin Team"
+    NATOSymbol: antitank
+  Health:
+    HP: 200
+  MilSimCombat:
+    Weapons:
+      - Id: FGM148Javelin
+        Type: ATGM
+        Count: 1
+        Range: 2500
+        EffectiveRange: 2000
+        RateOfFire: 1
+        Accuracy: 0.9
+        ArmorPenetration: 800  # mm RHAe
+        TopAttack: true
+      - Id: M4A1
+        Type: AssaultRifle
+        Count: 2
+        Range: 500
+        EffectiveRange: 300
+        RateOfFire: 30
+        Accuracy: 0.4
+        ArmorPenetration: 0
+  MilSimLogistics:
+    JavelinMissiles: 4
+    JavelinMissileWeight: 22   # kg
+
+# ============================================================================
+# OPFOR INFANTRY UNITS
+# Based on Russian Army organization (open source)
+# ============================================================================
+
+# --- Russian Motor Rifle Squad (8 soldiers) ---
+RUMotorRifleSquad:
+  Inherits: ^InfantryUnit
+  Tooltip:
+    Name: Motor Rifle Squad (RU)
+  MilSimIdentity:
+    Echelon: Squad
+    Faction: OPFOR
+    Designation: "Motor Rifle Squad"
+  Health:
+    HP: 800
+  MilSimCombat:
+    Weapons:
+      - Id: AK74M
+        Type: AssaultRifle
+        Count: 5
+        Range: 500
+        EffectiveRange: 300
+        RateOfFire: 25
+        Accuracy: 0.35
+        ArmorPenetration: 0
+      - Id: RPK74
+        Type: LightMachineGun
+        Count: 1
+        Range: 600
+        EffectiveRange: 400
+        RateOfFire: 80
+        Accuracy: 0.25
+        SuppressionBonus: 25
+      - Id: RPG7V2
+        Type: RPG
+        Count: 1
+        Range: 300
+        EffectiveRange: 200
+        RateOfFire: 3
+        Accuracy: 0.4
+        ArmorPenetration: 500
+      - Id: SVD
+        Type: DMR
+        Count: 1
+        Range: 800
+        EffectiveRange: 600
+        RateOfFire: 10
+        Accuracy: 0.6
+        ArmorPenetration: 0
+  MilSimMorale:
+    Training: Trained
+  MilSimLogistics:
+    AmmoCapacity: 1800
+
+# --- Russian PKM Machine Gun Team ---
+RUPKMTeam:
+  Inherits: ^InfantryUnit
+  Tooltip:
+    Name: PKM MG Team (RU)
+  MilSimIdentity:
+    Echelon: Team
+    Faction: OPFOR
+    Designation: "PKM Team"
+    NATOSymbol: infantry
+  Health:
+    HP: 300
+  MilSimCombat:
+    Weapons:
+      - Id: PKM
+        Type: MediumMachineGun
+        Count: 1
+        Range: 1000
+        EffectiveRange: 700
+        RateOfFire: 100
+        Accuracy: 0.3
+        ArmorPenetration: 0
+        SuppressionBonus: 45
+      - Id: AK74M
+        Type: AssaultRifle
+        Count: 2
+        Range: 500
+        EffectiveRange: 300
+        RateOfFire: 25
+        Accuracy: 0.35
+
+# --- Russian Kornet ATGM Team ---
+RUKornetTeam:
+  Inherits: ^InfantryUnit
+  Tooltip:
+    Name: Kornet ATGM Team (RU)
+  MilSimIdentity:
+    Echelon: Team
+    Faction: OPFOR
+    Designation: "Kornet Team"
+    NATOSymbol: antitank
+  Health:
+    HP: 300
+  MilSimCombat:
+    Weapons:
+      - Id: Kornet
+        Type: ATGM
+        Count: 1
+        Range: 5500
+        EffectiveRange: 4000
+        RateOfFire: 1
+        Accuracy: 0.85
+        ArmorPenetration: 1200
+        TopAttack: false
+      - Id: AK74M
+        Type: AssaultRifle
+        Count: 3
+        Range: 500
+        EffectiveRange: 300
+        RateOfFire: 25
+        Accuracy: 0.35
+  MilSimLogistics:
+    KornetMissiles: 6

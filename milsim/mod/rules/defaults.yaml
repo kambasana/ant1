@@ -1,0 +1,123 @@
+# Base trait templates inherited by all military units
+# These define the common systems every unit in the simulation uses.
+
+# Base template for all military units
+^MilSimUnit:
+  MilSimIdentity:
+    Echelon: Squad             # Squad, Platoon, Company, Battalion, Brigade
+    Branch: Infantry           # Infantry, Armor, Artillery, Aviation, Logistics, Engineer
+    Faction: BLUFOR            # BLUFOR, OPFOR, Civilian, Neutral
+    NATOSymbol: infantry       # Key into NATO symbol sprite sheet
+    Designation: ""            # e.g. "1st Plt, A Co, 2-7 IN"
+  Health:
+    HP: 100
+  MilSimMovement:
+    Speed: 4                   # km/h base movement rate
+    SpeedRoad: 6               # km/h on improved roads
+    SpeedCrossCountry: 3       # km/h off-road
+    SpeedUrban: 2              # km/h in built-up areas
+    Fatigue: true
+    FatigueRate: 5             # fatigue points per hour of movement
+    FatigueMax: 100            # max fatigue before forced halt
+    FatigueRecoveryRate: 10    # recovery per hour stationary
+    Formation: column          # column, line, wedge, vee, staggered_column
+  MilSimCombat:
+    Weapons: []
+    Stance: hold_fire          # hold_fire, return_fire, fire_at_will
+    Posture: prone             # prone, kneeling, standing, mounted
+    CoverBonus: 0              # added by terrain
+    ConcealmentBonus: 0        # added by terrain
+    TrainingModifier: 1.0      # multiplier based on training level
+  MilSimMorale:
+    Morale: 100
+    MoraleMax: 100
+    Training: Trained          # Green, Trained, Veteran, Elite
+    Cohesion: 100              # unit integrity
+    CohesionMax: 100
+    SuppressionLevel: 0        # 0=none, 100=fully suppressed
+    BreakThreshold: 20         # morale below this = unit breaks
+    RecoveryRate: 5            # morale recovery per turn when not in contact
+  MilSimLogistics:
+    AmmoCapacity: 100          # abstract supply points
+    AmmoCurrent: 100
+    FuelCapacity: 100
+    FuelCurrent: 100
+    WaterDays: 3
+    FoodDays: 3
+    MaintenanceStatus: green   # green, amber, red, black
+    ConsumptionIdle: 1         # SP per turn when stationary
+    ConsumptionMoving: 2       # SP per turn when moving
+    ConsumptionCombat: 5       # SP per turn in combat
+  MilSimDetection:
+    VisualSignature: 20        # how visible (0=invisible, 100=beacon)
+    ThermalSignature: 10       # heat signature
+    NoiseSignature: 10         # acoustic signature
+    RadioSignature: 5          # electromagnetic signature
+    CamouflageRating: 0        # reduces visual signature
+    Sensors:
+      - Type: Visual
+        Range: 1500            # meters
+        Accuracy: 0.7          # probability of detection at half range
+  MilSimC2:
+    ParentUnit: ""             # unit this reports to
+    SubordinateUnits: []       # units under command
+    CommNetwork: primary       # radio net assignment
+    OrderDelay: 0              # turns for orders to propagate
+    HasRadio: true
+  Tooltip:
+    Name: Unknown Unit
+
+# Specialized base templates
+^InfantryUnit:
+  Inherits: ^MilSimUnit
+  MilSimIdentity:
+    Branch: Infantry
+    NATOSymbol: infantry
+  MilSimMovement:
+    Speed: 4
+    SpeedRoad: 6
+    SpeedCrossCountry: 3
+  MilSimDetection:
+    VisualSignature: 15
+    ThermalSignature: 5
+    NoiseSignature: 20
+
+^ArmorUnit:
+  Inherits: ^MilSimUnit
+  MilSimIdentity:
+    Branch: Armor
+    NATOSymbol: armor
+  MilSimMovement:
+    Speed: 40
+    SpeedRoad: 65
+    SpeedCrossCountry: 30
+    SpeedUrban: 15
+  MilSimDetection:
+    VisualSignature: 60
+    ThermalSignature: 80
+    NoiseSignature: 90
+
+^ArtilleryUnit:
+  Inherits: ^MilSimUnit
+  MilSimIdentity:
+    Branch: Artillery
+    NATOSymbol: artillery
+  MilSimMovement:
+    Speed: 0                   # must be towed or self-propelled
+  MilSimCombat:
+    Stance: hold_fire          # fires only on call-for-fire orders
+  MilSimDetection:
+    VisualSignature: 50
+    ThermalSignature: 40
+    NoiseSignature: 95         # very loud when firing
+
+^LogisticsUnit:
+  Inherits: ^MilSimUnit
+  MilSimIdentity:
+    Branch: Logistics
+    NATOSymbol: logistics
+  MilSimCombat:
+    Weapons: []                # generally unarmed or lightly armed
+  MilSimLogistics:
+    IsSupplyUnit: true
+    CargoCapacity: 500         # SP it can carry to resupply others

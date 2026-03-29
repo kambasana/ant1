@@ -1,0 +1,308 @@
+# ============================================================================
+# WEAPON SYSTEMS DATABASE
+# Master reference for all weapon characteristics used by units
+# All values based on open-source specifications
+# ============================================================================
+
+# --- SMALL ARMS ---
+WeaponDefs:
+  M4A1:
+    DisplayName: M4A1 Carbine (5.56mm)
+    Category: AssaultRifle
+    Caliber: 5.56x45mm
+    Range: 500
+    EffectiveRange: 300
+    MaxEffectiveRange_Point: 500
+    MaxEffectiveRange_Area: 600
+    RateOfFire_Sustained: 12
+    RateOfFire_Cyclic: 700
+    MuzzleVelocity: 910       # m/s
+    Accuracy: 0.4              # P(hit) at 50% of effective range
+    ArmorPenetration: 0
+    SuppressionValue: 10
+    Weight: 3.4                # kg
+
+  AK74M:
+    DisplayName: AK-74M (5.45mm)
+    Category: AssaultRifle
+    Caliber: 5.45x39mm
+    Range: 500
+    EffectiveRange: 300
+    RateOfFire_Sustained: 10
+    RateOfFire_Cyclic: 600
+    MuzzleVelocity: 900
+    Accuracy: 0.35
+    ArmorPenetration: 0
+    SuppressionValue: 10
+    Weight: 3.6
+
+  # --- MACHINE GUNS ---
+  M249SAW:
+    DisplayName: M249 SAW (5.56mm)
+    Category: LightMachineGun
+    Caliber: 5.56x45mm
+    Range: 800
+    EffectiveRange: 600
+    RateOfFire_Sustained: 50
+    RateOfFire_Cyclic: 850
+    Accuracy: 0.3
+    ArmorPenetration: 0
+    SuppressionValue: 30
+    Weight: 7.5
+
+  M240B:
+    DisplayName: M240B (7.62mm)
+    Category: MediumMachineGun
+    Caliber: 7.62x51mm
+    Range: 1100
+    EffectiveRange: 800
+    RateOfFire_Sustained: 50
+    RateOfFire_Cyclic: 650
+    Accuracy: 0.35
+    ArmorPenetration: 5
+    SuppressionValue: 50
+    Weight: 12.5
+
+  PKM:
+    DisplayName: PKM (7.62mm)
+    Category: MediumMachineGun
+    Caliber: 7.62x54mmR
+    Range: 1000
+    EffectiveRange: 700
+    RateOfFire_Sustained: 50
+    RateOfFire_Cyclic: 650
+    Accuracy: 0.3
+    ArmorPenetration: 5
+    SuppressionValue: 45
+    Weight: 8.4
+
+  M2HB:
+    DisplayName: M2HB (.50 cal)
+    Category: HeavyMachineGun
+    Caliber: 12.7x99mm
+    Range: 1800
+    EffectiveRange: 1200
+    RateOfFire_Sustained: 40
+    RateOfFire_Cyclic: 550
+    Accuracy: 0.25
+    ArmorPenetration: 25
+    SuppressionValue: 70
+    Weight: 38.0
+
+  # --- ANTI-TANK ---
+  FGM148Javelin:
+    DisplayName: FGM-148 Javelin
+    Category: ATGM
+    GuidanceType: infrared_fire_and_forget
+    Range: 2500
+    EffectiveRange: 2000
+    MinRange: 65
+    Accuracy: 0.9
+    ArmorPenetration: 800      # tandem HEAT
+    TopAttack: true
+    TopAttackPenetration: 800
+    Weight: 22.3               # missile + CLU
+    ReloadTime: 30             # seconds
+
+  Kornet:
+    DisplayName: 9M133 Kornet
+    Category: ATGM
+    GuidanceType: laser_beam_riding
+    Range: 5500
+    EffectiveRange: 4000
+    MinRange: 100
+    Accuracy: 0.85
+    ArmorPenetration: 1200     # tandem HEAT
+    TopAttack: false
+    Weight: 29.0
+    ReloadTime: 30
+
+  RPG7V2:
+    DisplayName: RPG-7V2
+    Category: RPG
+    Range: 300
+    EffectiveRange: 200
+    MinRange: 0
+    Accuracy: 0.4
+    ArmorPenetration: 500      # PG-7VR tandem
+    Weight: 7.9
+
+  # --- TANK GUNS ---
+  M256_120mm:
+    DisplayName: M256 120mm Smoothbore
+    Category: TankGun
+    Caliber: 120mm
+    Range: 4000
+    EffectiveRange: 3000
+    RateOfFire: 6
+    Accuracy: 0.85
+    AmmoTypes:
+      M829A4_APFSDS:
+        ArmorPenetration: 750
+        MuzzleVelocity: 1550
+      M830A1_HEAT:
+        ArmorPenetration: 600
+        MuzzleVelocity: 1140
+      M1028_CANISTER:
+        ArmorPenetration: 0
+        AreaEffect: 20
+        AntiPersonnel: true
+
+  2A46M5_125mm:
+    DisplayName: 2A46M-5 125mm Smoothbore
+    Category: TankGun
+    Caliber: 125mm
+    Range: 4000
+    EffectiveRange: 2500
+    RateOfFire: 7
+    Accuracy: 0.75
+    AmmoTypes:
+      3BM60_APFSDS:
+        ArmorPenetration: 700
+        MuzzleVelocity: 1700
+      3BK31_HEAT:
+        ArmorPenetration: 550
+        MuzzleVelocity: 905
+      9M119M_ATGM:
+        Range: 5000
+        ArmorPenetration: 900
+        GuidanceType: laser_beam_riding
+
+  # --- AUTOCANNONS ---
+  M242_25mm:
+    DisplayName: M242 Bushmaster 25mm
+    Category: Autocannon
+    Caliber: 25mm
+    Range: 3000
+    EffectiveRange: 2000
+    RateOfFire_Sustained: 100
+    RateOfFire_Cyclic: 200
+    Accuracy: 0.6
+    AmmoTypes:
+      M791_APDS:
+        ArmorPenetration: 70
+      M792_HEI:
+        ArmorPenetration: 0
+        AreaEffect: 3
+
+  # --- ARTILLERY ---
+  M777_155mm:
+    DisplayName: M777A2 155mm
+    Category: Howitzer
+    Caliber: 155mm
+    MinRange: 2000
+    Range: 30000
+    EffectiveRange: 24000
+    RateOfFire_Sustained: 5
+    RateOfFire_Max: 8
+    AmmoTypes:
+      M795_HE:
+        LethalRadius: 50
+        CEP: 100               # circular error probable in meters
+      M825A1_SMOKE:
+        ScreenRadius: 100
+        ScreenDuration: 5      # turns
+      M485A2_ILLUM:
+        IllumRadius: 1000
+        Duration: 2            # turns
+      M982_EXCALIBUR:
+        LethalRadius: 50
+        CEP: 2                 # GPS guided
+        Range: 40000
+
+# ============================================================================
+# COMBAT RESOLUTION TABLES
+# ============================================================================
+
+TerrainModifiers:
+  Open:
+    CoverBonus: 0
+    ConcealmentBonus: 0
+    MovementCost: 1.0
+  LightVegetation:
+    CoverBonus: 10
+    ConcealmentBonus: 30
+    MovementCost: 1.2
+  HeavyForest:
+    CoverBonus: 30
+    ConcealmentBonus: 60
+    MovementCost: 2.0
+    MaxVehicleSpeed: 15
+  Urban:
+    CoverBonus: 50
+    ConcealmentBonus: 40
+    MovementCost: 1.5
+  Fortified:
+    CoverBonus: 80
+    ConcealmentBonus: 50
+    MovementCost: 0            # stationary position
+  Trench:
+    CoverBonus: 70
+    ConcealmentBonus: 20
+    MovementCost: 1.3
+
+PostureModifiers:
+  Prone:
+    HitReduction: 0.6          # 60% harder to hit
+    AccuracyBonus: 0.1
+    MovementPenalty: 0.3       # 30% speed
+  Kneeling:
+    HitReduction: 0.3
+    AccuracyBonus: 0.05
+    MovementPenalty: 0.6
+  Standing:
+    HitReduction: 0.0
+    AccuracyBonus: 0.0
+    MovementPenalty: 1.0
+  Mounted:
+    HitReduction: -0.2         # bigger target in vehicle
+    AccuracyBonus: 0.15        # stabilized sights
+    MovementPenalty: 1.0
+
+TrainingModifiers:
+  Green:
+    AccuracyMod: 0.6
+    MoraleMod: 0.7
+    ReactionTime: 2.0          # multiplier (slower)
+    SuppressionResist: 0.5
+  Trained:
+    AccuracyMod: 1.0
+    MoraleMod: 1.0
+    ReactionTime: 1.0
+    SuppressionResist: 1.0
+  Veteran:
+    AccuracyMod: 1.2
+    MoraleMod: 1.3
+    ReactionTime: 0.8
+    SuppressionResist: 1.4
+  Elite:
+    AccuracyMod: 1.5
+    MoraleMod: 1.6
+    ReactionTime: 0.6
+    SuppressionResist: 1.8
+
+WeatherModifiers:
+  Clear:
+    VisibilityMod: 1.0
+    MovementMod: 1.0
+    AirOpsMod: 1.0
+  Rain:
+    VisibilityMod: 0.6
+    MovementMod: 0.8
+    AirOpsMod: 0.7
+    ThermalDegraded: true
+  Fog:
+    VisibilityMod: 0.2
+    MovementMod: 0.9
+    AirOpsMod: 0.3
+  Snow:
+    VisibilityMod: 0.7
+    MovementMod: 0.6
+    AirOpsMod: 0.8
+    ThermalEnhanced: true      # contrast against cold background
+  Night:
+    VisibilityMod: 0.1
+    MovementMod: 0.7
+    AirOpsMod: 0.5
+    NVGVisibilityMod: 0.6
+    ThermalEnhanced: true

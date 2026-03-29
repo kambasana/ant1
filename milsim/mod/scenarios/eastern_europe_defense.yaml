@@ -1,0 +1,442 @@
+Scenario:
+  Name: "Suwalki Gap — NATO Forward Defense"
+  Description: >
+    A Russian Battalion Tactical Group (BTG) has crossed the Lithuanian
+    border in a surprise offensive to link Kaliningrad with Belarus via
+    the Suwalki Gap — NATO's most vulnerable corridor. A US mechanized
+    infantry company, part of the NATO Enhanced Forward Presence, must
+    delay the Russian advance until brigade reinforcements arrive.
+    Based on real-world NATO contingency planning for the Suwalki Corridor.
+  Scale: company
+  TrainingObjectives:
+    - "Execute a delay operation against a numerically superior force"
+    - "Fight successive positions and manage disengagement"
+    - "Coordinate with coalition partners and joint fires"
+    - "Manage logistics in a contested environment with limited resupply"
+  Terrain: >
+    Lithuanian-Polish border — rolling farmland, scattered forests,
+    small villages, road network connecting Kaliningrad to Grodno.
+    The Suwalki Gap is 100km of open terrain between Kaliningrad and Belarus.
+  Weather: Overcast, 5C, rain expected Turn 8
+  TimeOfDay: "0300"
+  Duration: 24
+  TurnDuration: 30
+
+  Situation:
+    General: >
+      At 0200Z, Russian forces launched a multi-axis offensive from
+      Kaliningrad and Belarus. EW jamming is degrading communications.
+      NATO Article 5 has been invoked. Brigade is mobilizing from Germany
+      but earliest reinforcement is 12 hours (Turn 24). Your company
+      is the forward screening force — you must delay, not defeat, the enemy.
+    Enemy:
+      Composition: >
+        Russian BTG from 11th Army Corps (Kaliningrad): 1x Motor Rifle
+        Company (BMP-3), 1x Tank Company (T-90M), 1x Artillery Battery
+        (2S19 Msta-S), 1x Mortar Battery (2B11), 1x Recon Platoon,
+        AT platoon (Kornet), EW section. Estimated 800 personnel.
+      Disposition: >
+        Recon elements already across the border. Main body 10km east,
+        advancing on two axes: Route NORTH (main road) and Route SOUTH
+        (secondary road). Artillery in march column behind main body.
+        EW jamming active — comms degraded.
+      MostLikelyCOA: >
+        Recon pull — recon finds gaps, main body exploits. Artillery
+        prep on identified positions. Tank company leads on Route NORTH,
+        motor rifle company on Route SOUTH. Standard Russian echeloned
+        attack doctrine.
+      MostDangerousCOA: >
+        Bypass company positions entirely using Route SOUTH while fixing
+        with fires on Route NORTH. Airborne/air assault element lands
+        behind our positions to cut withdrawal routes.
+    Friendly:
+      HigherMission: >
+        NATO EFBP Battlegroup delays Russian advance through the Suwalki
+        Gap for 12 hours to enable brigade deployment.
+      AdjacentUnits: >
+        Lithuanian Territorial Defense platoon covering Route SOUTH (light
+        infantry, limited heavy weapons). Polish reconnaissance company
+        arriving at T+8 hours. NATO air support limited — Russian IADS active.
+      Attachments: >
+        1x Tank Platoon (4x M1A2 Abrams), 1x Mortar Section (2x M120),
+        1x Javelin team, 1x Engineer squad (obstacles/demolition)
+      Detachments: "None"
+
+  BLUFOR:
+    Units:
+      - Type: USRifleSquad
+        Designation: "1-1 (1st Plt, 1st Squad)"
+        Location: [50, 40]
+        Strength: 100
+        Stance: defend
+
+      - Type: USRifleSquad
+        Designation: "1-2"
+        Location: [52, 40]
+        Strength: 100
+        Stance: defend
+
+      - Type: USRifleSquad
+        Designation: "1-3"
+        Location: [54, 40]
+        Strength: 100
+        Stance: defend
+
+      - Type: USRifleSquad
+        Designation: "2-1 (2nd Plt)"
+        Location: [48, 45]
+        Strength: 100
+        Stance: defend
+
+      - Type: USRifleSquad
+        Designation: "2-2"
+        Location: [50, 45]
+        Strength: 100
+        Stance: defend
+
+      - Type: USRifleSquad
+        Designation: "2-3"
+        Location: [52, 45]
+        Strength: 100
+        Stance: defend
+
+      - Type: USWeaponsSquad
+        Designation: "Wpns, 1st Plt"
+        Location: [56, 40]
+        Strength: 100
+        Stance: overwatch
+
+      - Type: USWeaponsSquad
+        Designation: "Wpns, 2nd Plt"
+        Location: [46, 45]
+        Strength: 100
+        Stance: overwatch
+
+      - Type: USM1A2Abrams
+        Designation: "Tank 1 (attached)"
+        Location: [55, 38]
+        Strength: 100
+        Stance: overwatch
+
+      - Type: USM1A2Abrams
+        Designation: "Tank 2"
+        Location: [57, 38]
+        Strength: 100
+        Stance: overwatch
+
+      - Type: USM1A2Abrams
+        Designation: "Tank 3"
+        Location: [47, 43]
+        Strength: 100
+        Stance: overwatch
+
+      - Type: USM1A2Abrams
+        Designation: "Tank 4"
+        Location: [49, 43]
+        Strength: 100
+        Stance: overwatch
+
+      - Type: USM2A3Bradley
+        Designation: "Bradley 1"
+        Location: [51, 39]
+        Strength: 100
+        Stance: overwatch
+
+      - Type: USM2A3Bradley
+        Designation: "Bradley 2"
+        Location: [49, 44]
+        Strength: 100
+        Stance: overwatch
+
+      - Type: USJavelinTeam
+        Designation: "Javelin, 1st Plt"
+        Location: [53, 39]
+        Strength: 100
+        Stance: overwatch
+
+      - Type: USJavelinTeam
+        Designation: "Javelin, 2nd Plt"
+        Location: [51, 44]
+        Strength: 100
+        Stance: overwatch
+
+      - Type: USM120Mortar
+        Designation: "Mortar Section"
+        Location: [50, 50]
+        Strength: 100
+        Stance: defend
+
+      - Type: USFMTV
+        Designation: "Supply Truck"
+        Location: [50, 55]
+        Strength: 100
+        Stance: defend
+
+      - Type: USM113Ambulance
+        Designation: "Ambulance"
+        Location: [51, 54]
+        Strength: 100
+        Stance: defend
+
+  OPFOR:
+    Doctrine: russian_combined_arms
+    AIBehavior: >
+      Execute standard BTG attack. Recon forward, artillery prep on
+      identified positions, then combined arms assault. Lead with tanks
+      on Route NORTH. Motor rifle on Route SOUTH to fix/flank. If
+      stalled, call additional artillery and attempt bypass. Aggressive
+      tempo — this is a time-critical operation to link Kaliningrad.
+    Units:
+      # Recon element (already forward)
+      - Type: RUMotorRifleSquad
+        Designation: "Recon Squad 1"
+        Location: [50, 30]
+        Stance: move
+        Concealed: true
+        Entrenched: false
+
+      - Type: RUMotorRifleSquad
+        Designation: "Recon Squad 2"
+        Location: [55, 28]
+        Stance: move
+        Concealed: true
+        Entrenched: false
+
+      # Main body - arrives in waves
+      - Type: RUT90M
+        Designation: "Tank 1, 1st Tank Plt"
+        Location: [50, 20]
+        Stance: move
+        Concealed: false
+        Entrenched: false
+
+      - Type: RUT90M
+        Designation: "Tank 2, 1st Tank Plt"
+        Location: [52, 20]
+        Stance: move
+        Concealed: false
+        Entrenched: false
+
+      - Type: RUT90M
+        Designation: "Tank 3, 2nd Tank Plt"
+        Location: [54, 20]
+        Stance: move
+        Concealed: false
+        Entrenched: false
+
+      - Type: RUBMP3
+        Designation: "BMP-3 1, MR Plt"
+        Location: [45, 22]
+        Stance: move
+        Concealed: false
+        Entrenched: false
+
+      - Type: RUBMP3
+        Designation: "BMP-3 2, MR Plt"
+        Location: [47, 22]
+        Stance: move
+        Concealed: false
+        Entrenched: false
+
+      - Type: RUMotorRifleSquad
+        Designation: "MR Squad 1 (dismounted)"
+        Location: [45, 22]
+        Stance: move
+        Concealed: false
+        Entrenched: false
+
+      - Type: RUMotorRifleSquad
+        Designation: "MR Squad 2"
+        Location: [47, 22]
+        Stance: move
+        Concealed: false
+        Entrenched: false
+
+      - Type: RUKornetTeam
+        Designation: "Kornet Team"
+        Location: [48, 24]
+        Stance: overwatch
+        Concealed: true
+        Entrenched: false
+
+      - Type: RU2S19Msta
+        Designation: "Msta Battery (6 guns)"
+        Location: [50, 15]
+        Stance: defend
+        Concealed: true
+        Entrenched: false
+
+      - Type: RU2B11Mortar
+        Designation: "Mortar Battery"
+        Location: [48, 18]
+        Stance: defend
+        Concealed: true
+        Entrenched: false
+
+  Objectives:
+    - Name: "DELAY LINE ALPHA"
+      Type: defend
+      Location: [50, 40]
+      Points: 50
+      HoldTurns: 6
+      Description: "Hold first delay position for 3 hours"
+
+    - Name: "DELAY LINE BRAVO"
+      Type: defend
+      Location: [50, 50]
+      Points: 50
+      HoldTurns: 6
+      Description: "Hold second delay position for 3 hours"
+
+    - Name: "DELAY 12 HOURS"
+      Type: defend
+      Location: [50, 55]
+      Points: 100
+      HoldTurns: 24
+      Description: "Delay enemy advance for full 12 hours"
+
+    - Name: "FORCE PRESERVATION"
+      Type: preserve_force
+      Location: [0, 0]
+      Points: 75
+      HoldTurns: 0
+      Description: "Preserve company for follow-on operations (50%+ required)"
+
+    - Name: "DESTROY ENEMY ARMOR"
+      Type: destroy
+      Location: [0, 0]
+      Points: 25
+      HoldTurns: 0
+      Description: "Destroy 3+ enemy armored vehicles"
+
+  MSEL:
+    - Turn: 2
+      Category: Intel
+      Event: "EW jamming intensifies — comms degraded"
+      RadioMessage: >
+        "All BAYONET elements... [static] ...IRONHORSE 6... heavy jamming
+        on... [static] ...primary freq. Switch to... [static] ...alternate.
+        Over."
+      Effect: "Communication delay — orders take +1 turn to propagate"
+
+    - Turn: 4
+      Category: Intel
+      Event: "Recon squad detected by thermal sensors"
+      RadioMessage: >
+        "BAYONET 6, BAYONET 1-6. Thermal contact: two dismounted squads,
+        grid 5030 and 5528. Moving toward our positions. Recon elements.
+        Holding fire per SOP — observing. Over."
+      Effect: "Enemy recon detected — main body 2-3 turns behind"
+
+    - Turn: 6
+      Category: Equipment
+      Event: "Russian artillery prep begins"
+      RadioMessage: >
+        "INCOMING INCOMING INCOMING! All elements take cover! Artillery
+        impacting vicinity Delay Line ALPHA! Over!"
+      Effect: "6-gun Msta battery fires 3-turn prep on 1st Plt positions"
+
+    - Turn: 8
+      Category: Weather
+      Event: "Rain begins — visibility reduced"
+      RadioMessage: >
+        "All elements, weather update — rain moving in. Visibility
+        dropping to 2000m and falling. Thermal still effective. Over."
+      Effect: "Visual detection range halved. Thermal unaffected."
+
+    - Turn: 10
+      Category: Civilian
+      Event: "Lithuanian civilian refugees on Route NORTH"
+      RadioMessage: >
+        "BAYONET 6, BAYONET 1-1. Civilian vehicles and foot traffic on
+        Route NORTH heading west. Estimate 20-30 civilians, including
+        families. They're heading right through our engagement area. Over."
+      Effect: "Must manage civilian flow through the battlefield"
+
+    - Turn: 12
+      Category: Higher_HQ
+      Event: "NATO CAS available — limited"
+      RadioMessage: >
+        "BAYONET 6, IRONHORSE 3. Good news — NATO has established a
+        limited air corridor. One flight of F-16s available for CAS,
+        callsign VIPER 1-1. 30-minute station time. Type 2 controls
+        authorized. Enemy SHORAD active — high threat. Over."
+      Effect: "One CAS sortie available — must be used wisely"
+
+    - Turn: 14
+      Category: Intel
+      Event: "Second echelon detected — additional armor approaching"
+      RadioMessage: >
+        "BAYONET 6, IRONHORSE 2. Brigade ISR reports second echelon:
+        additional tank company, 10km east of your position, moving
+        west on Route NORTH. ETA your positions 5 turns. Over."
+      Effect: "Reinforcements arriving — time pressure to displace to Line BRAVO"
+
+    - Turn: 16
+      Category: Reinforcement
+      Event: "Polish recon company arriving from the south"
+      RadioMessage: >
+        "BAYONET 6, this is HUSSAR 6 — Polish 1st Recon Company. We are
+        arriving from the south, grid 5060. Reporting to your tactical
+        control. What are your orders? Over."
+      Effect: "Polish Rosomak IFVs available — fresh unit"
+
+    - Turn: 20
+      Category: Higher_HQ
+      Event: "Brigade lead elements 2 hours out"
+      RadioMessage: >
+        "BAYONET 6, IRONHORSE 6 ACTUAL. Stryker battalion lead elements
+        are 2 hours from your position. Hold for 4 more turns. Help
+        is coming. Out."
+      Effect: "4 turns remaining — end state in sight"
+
+    - Turn: 22
+      Category: Intel
+      Event: "Russian forces attempting bypass to the south"
+      RadioMessage: >
+        "BAYONET 6, HUSSAR 6. Contact — enemy recon vehicles on Route
+        SOUTH attempting to bypass your positions. Engaging. Over."
+      Effect: "Bypass attempt — Polish recon engages"
+
+  ScoringRubric:
+    Decisive_Victory: >
+      Delayed enemy for full 12 hours. Preserved 60%+ of company.
+      Destroyed 5+ enemy vehicles. Successfully transitioned between
+      delay positions. Polish forces integrated.
+    Tactical_Victory: >
+      Delayed enemy 9+ hours. Preserved 50%+ of company. Destroyed
+      3+ enemy vehicles.
+    Draw: >
+      Delayed enemy 6-9 hours. Company below 50% but still functional.
+      Second delay line not held.
+    Tactical_Defeat: >
+      Delayed enemy less than 6 hours. Company combat ineffective.
+      Enemy broke through to rear area.
+    Decisive_Defeat: >
+      Company destroyed or forced to retreat within 4 hours.
+      Enemy advance unimpeded.
+
+  InstructorNotes: |
+    This is the most operationally realistic scenario — based on actual
+    NATO contingency planning for the Suwalki Gap.
+
+    KEY TEACHING POINTS:
+    1. DELAY is not DEFEND. The company must trade space for time.
+       Players who try to hold the first position to the death will
+       fail — they must plan successive positions.
+    2. Disengagement is the hardest maneuver. Planning withdrawal routes,
+       covering force, and rally points BEFORE contact is critical.
+    3. The artillery prep (Turn 6) punishes static positions. Players
+       must be prepared to displace when fires shift.
+    4. Coalition interoperability — integrating the Polish company
+       (Turn 16) under pressure tests C2 skills.
+    5. Logistics — no resupply for 12 hours. Ammo management is critical.
+       The mortar section will run out of rounds if used liberally.
+    6. EW jamming (Turn 2) degrades C2 — plans must be robust enough
+       to survive comms loss.
+
+    DISCUSSION QUESTIONS:
+    - When should you displace from a delay position?
+    - How do you balance attrition of the enemy with force preservation?
+    - What is the role of obstacles in a delay?
+    - How does limited CAS change your plan?
