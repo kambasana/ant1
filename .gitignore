@@ -7,3 +7,6 @@
 /src/Properties/ServiceDependencies/azurenamingtool-dev - Zip Deploy
 /src/.vs
 /src/bin
+
+# OpenRA-RL (external dependency — clone separately)
+/openra-rl/
