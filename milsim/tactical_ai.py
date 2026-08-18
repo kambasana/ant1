@@ -1,0 +1,475 @@
+"""Tactical AI that plays through the Commander interface.
+
+Implements a doctrine-driven decision loop that:
+  1. Reads the Commander briefing (SITREP + ISR)
+  2. Assesses the situation against doctrine rules
+  3. Issues tactical orders
+  4. Reviews results and adapts
+
+This is the slot where an LLM commander plugs in — replace
+the rule-based `decide()` method with LLM inference over the
+structured briefing text.
+
+Usage:
+    ai = TacticalAI(commander, isr, scenario_runner)
+    await ai.play_game()
+    print(ai.get_aar())
+"""
+
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Optional
+
+from milsim.commander import (
+    Commander,
+    CommanderBriefing,
+    TacticalOrder,
+    OrderType,
+    Stance,
+)
+from milsim.isr import ISRManager, IntelLevel, IntelSummary
+from milsim.scenario import ScenarioRunner, MSELEvent
+from milsim.wego import TurnResult
+
+
+class Phase(str, Enum):
+    ESTABLISH = "establish"
+    BUILD = "build"
+    SCOUT = "scout"
+    MASS = "mass"
+    ATTACK = "attack"
+    EXPLOIT = "exploit"
+
+
+# Build order priority
+BUILD_ORDER = ["powr", "tent", "barr", "proc", "weap", "powr"]
+
+# Unit production priority by phase
+PRODUCTION_PRIORITY = {
+    Phase.ESTABLISH: [],
+    Phase.BUILD: ["e1", "e1", "e1"],
+    Phase.SCOUT: ["e1"],
+    Phase.MASS: ["e1", "e1", "e3", "e1", "e1"],
+    Phase.ATTACK: ["e1", "e3"],
+    Phase.EXPLOIT: ["e1"],
+}
+
+
+@dataclass
+class AIState:
+    """Internal state for tactical decision-making."""
+
+    phase: Phase = Phase.ESTABLISH
+    build_index: int = 0
+    scouts_sent: int = 0
+    attack_launched: bool = False
+    enemy_base_x: int = -1
+    enemy_base_y: int = -1
+    last_unit_count: int = 0
+    consecutive_idle_turns: int = 0
+    turn_log: list[str] = field(default_factory=list)
+
+
+class TacticalAI:
+    """Rule-based tactical AI demonstrating the full milsim pipeline.
+
+    Decision loop per turn:
+      1. Process ISR (update intelligence picture)
+      2. Check MSEL events (if scenario loaded)
+      3. Assess phase (establish → build → scout → mass → attack)
+      4. Issue orders based on phase + situation
+      5. Log decisions for AAR
+
+    Replace `decide()` with LLM inference for AI-powered C2.
+    """
+
+    def __init__(
+        self,
+        commander: Commander,
+        isr: ISRManager,
+        scenario: Optional[ScenarioRunner] = None,
+        max_turns: int = 60,
+        verbose: bool = True,
+    ):
+        self._commander = commander
+        self._isr = isr
+        self._scenario = scenario
+        self._max_turns = max_turns
+        self._verbose = verbose
+        self._state = AIState()
+        self._turn = 0
+
+    @property
+    def phase(self) -> Phase:
+        return self._state.phase
+
+    @property
+    def turn(self) -> int:
+        return self._turn
+
+    async def play_game(self) -> str:
+        """Play a complete game and return the AAR."""
+        briefing = await self._commander.start_game()
+        self._log(f"Game started. Map: {briefing.turn_number}")
+
+        while self._turn < self._max_turns and not self._commander.is_game_over:
+            self._turn += 1
+
+            # Get current situation
+            briefing = self._commander.get_briefing()
+            obs = briefing
+
+            # Process ISR
+            from milsim.wego import WEGOTurnManager
+            wego_sit = None
+            try:
+                wego_sit = self._commander._wego.get_situation()
+                intel = self._isr.process_observation(wego_sit.observation, self._turn)
+            except Exception:
+                intel = self._isr.get_summary()
+
+            # Check MSEL events
+            if self._scenario:
+                events, _ = self._scenario.advance_turn()
+                for ev in events:
+                    self._log(f"MSEL [{ev.category}]: {ev.event}")
+
+            # Decide and act
+            orders = self.decide(briefing, intel)
+
+            if orders:
+                self._log(f"T{self._turn} [{self._state.phase.value}] "
+                         f"Orders: {len(orders)}")
+                result, briefing = await self._commander.issue_orders(
+                    orders, interrupt_on_contact=(self._state.phase == Phase.SCOUT)
+                )
+            else:
+                result, briefing = await self._commander.advance_time()
+                self._log(f"T{self._turn} [{self._state.phase.value}] Advancing time")
+
+            # Post-turn assessment
+            self._assess_result(result, briefing, intel)
+
+        # Game over
+        result_str = self._commander.game_result or "max turns reached"
+        self._log(f"Game ended: {result_str}")
+
+        return self.get_aar()
+
+    def decide(
+        self, briefing: CommanderBriefing, intel: IntelSummary
+    ) -> list[TacticalOrder]:
+        """Make tactical decisions based on current situation.
+
+        This is the method to replace with LLM inference.
+        The briefing contains all structured data the LLM needs.
+        """
+        orders = []
+
+        # Phase transitions
+        self._update_phase(briefing, intel)
+
+        match self._state.phase:
+            case Phase.ESTABLISH:
+                orders = self._decide_establish(briefing)
+            case Phase.BUILD:
+                orders = self._decide_build(briefing)
+            case Phase.SCOUT:
+                orders = self._decide_scout(briefing)
+            case Phase.MASS:
+                orders = self._decide_mass(briefing)
+            case Phase.ATTACK:
+                orders = self._decide_attack(briefing, intel)
+            case Phase.EXPLOIT:
+                orders = self._decide_exploit(briefing, intel)
+
+        return orders
+
+    def _update_phase(self, briefing: CommanderBriefing, intel: IntelSummary) -> None:
+        """Transition between operational phases."""
+        has_cy = any(b["type"] == "fact" for b in briefing.friendly_buildings)
+        has_barracks = any(b["type"] in ("tent", "barr") for b in briefing.friendly_buildings)
+        unit_count = len(briefing.friendly_units)
+        enemy_found = intel.active_contacts > 0
+
+        match self._state.phase:
+            case Phase.ESTABLISH:
+                if has_cy:
+                    self._state.phase = Phase.BUILD
+                    self._log("Phase → BUILD (C2 established)")
+
+            case Phase.BUILD:
+                if has_barracks and unit_count >= 2:
+                    self._state.phase = Phase.SCOUT
+                    self._log("Phase → SCOUT (barracks + units ready)")
+                elif has_barracks:
+                    self._state.phase = Phase.SCOUT
+
+            case Phase.SCOUT:
+                if enemy_found:
+                    self._state.phase = Phase.MASS
+                    self._log(f"Phase → MASS (enemy found: {intel.active_contacts} contacts)")
+                elif self._state.scouts_sent >= 2 and unit_count >= 4:
+                    self._state.phase = Phase.MASS
+
+            case Phase.MASS:
+                if unit_count >= 6 or (enemy_found and unit_count >= 4):
+                    self._state.phase = Phase.ATTACK
+                    self._log(f"Phase → ATTACK ({unit_count} units ready)")
+
+            case Phase.ATTACK:
+                if self._commander.is_game_over:
+                    self._state.phase = Phase.EXPLOIT
+
+    def _decide_establish(self, briefing: CommanderBriefing) -> list[TacticalOrder]:
+        """Deploy MCV to establish base."""
+        mcv = next((u for u in briefing.friendly_units if u.type == "mcv"), None)
+        if mcv:
+            self._log("Deploying MCV")
+            return [TacticalOrder(order_type=OrderType.DEPLOY, unit_ids=[mcv.actor_id])]
+        return []
+
+    def _decide_build(self, briefing: CommanderBriefing) -> list[TacticalOrder]:
+        """Build base infrastructure."""
+        orders = []
+        available = briefing.available_production
+        eco = briefing.economy
+        building_in_queue = any(
+            p["queue_type"] == "Building" for p in briefing.active_production
+        )
+
+        # Build next structure in order (only if nothing is building)
+        if self._state.build_index < len(BUILD_ORDER) and not building_in_queue:
+            target = BUILD_ORDER[self._state.build_index]
+
+            # Handle faction-specific barracks
+            if target in ("tent", "barr"):
+                target = next((t for t in ("tent", "barr") if t in available), None)
+
+            if target and target in available and eco["cash"] >= 300:
+                orders.append(TacticalOrder(
+                    order_type=OrderType.BUILD,
+                    item_type=target,
+                ))
+                self._state.build_index += 1
+                self._log(f"Building {target}")
+
+        # Train units if barracks available
+        has_barracks = any(b["type"] in ("tent", "barr") for b in briefing.friendly_buildings)
+        training_in_queue = any(
+            p["queue_type"] == "Infantry" for p in briefing.active_production
+        )
+        if has_barracks and not training_in_queue and "e1" in available and eco["cash"] >= 300:
+            orders.append(TacticalOrder(
+                order_type=OrderType.TRAIN,
+                item_type="e1",
+                count=2,
+            ))
+            self._log("Training 2x infantry")
+
+        return orders
+
+    def _decide_scout(self, briefing: CommanderBriefing) -> list[TacticalOrder]:
+        """Send scouts to find the enemy."""
+        orders = []
+        available = briefing.available_production
+        eco = briefing.economy
+
+        # Keep training
+        if "e1" in available and eco["cash"] >= 200:
+            orders.append(TacticalOrder(
+                order_type=OrderType.TRAIN,
+                item_type="e1",
+                count=2,
+            ))
+
+        # Keep building
+        if self._state.build_index < len(BUILD_ORDER):
+            target = BUILD_ORDER[self._state.build_index]
+            if target in ("tent", "barr"):
+                target = next((t for t in ("tent", "barr") if t in available), None)
+            if target and target in available and eco["cash"] >= 500:
+                orders.append(TacticalOrder(
+                    order_type=OrderType.BUILD,
+                    item_type=target,
+                ))
+                self._state.build_index += 1
+
+        # Send idle units to scout
+        idle_units = [u for u in briefing.friendly_units
+                      if u.is_idle and u.type in ("e1", "e3")]
+
+        if idle_units and self._state.scouts_sent < 4:
+            scout = idle_units[0]
+            # Scout toward map quadrants
+            targets = [(100, 40), (10, 40), (56, 10), (56, 50)]
+            target = targets[self._state.scouts_sent % len(targets)]
+
+            orders.append(TacticalOrder(
+                order_type=OrderType.RECONNOITER,
+                unit_ids=[scout.actor_id],
+                target_x=target[0],
+                target_y=target[1],
+            ))
+            self._state.scouts_sent += 1
+            self._log(f"Scout #{self._state.scouts_sent} → ({target[0]},{target[1]})")
+
+        return orders
+
+    def _decide_mass(self, briefing: CommanderBriefing) -> list[TacticalOrder]:
+        """Build up forces for attack."""
+        orders = []
+        available = briefing.available_production
+        eco = briefing.economy
+
+        # Aggressive production
+        if "e1" in available and eco["cash"] >= 200:
+            orders.append(TacticalOrder(
+                order_type=OrderType.TRAIN,
+                item_type="e1",
+                count=3,
+            ))
+
+        if "e3" in available and eco["cash"] >= 500:
+            orders.append(TacticalOrder(
+                order_type=OrderType.TRAIN,
+                item_type="e3",
+                count=1,
+            ))
+
+        # Set all idle units to aggressive stance
+        idle = [u for u in briefing.friendly_units if u.is_idle]
+        if idle:
+            orders.append(TacticalOrder(
+                order_type=OrderType.SET_STANCE,
+                unit_ids=[u.actor_id for u in idle],
+                stance=Stance.FREE_FIRE,
+            ))
+
+        # Keep building infrastructure
+        if self._state.build_index < len(BUILD_ORDER):
+            target = BUILD_ORDER[self._state.build_index]
+            if target in ("tent", "barr"):
+                target = next((t for t in ("tent", "barr") if t in available), None)
+            if target and target in available and eco["cash"] >= 500:
+                orders.append(TacticalOrder(
+                    order_type=OrderType.BUILD,
+                    item_type=target,
+                ))
+                self._state.build_index += 1
+
+        return orders
+
+    def _decide_attack(self, briefing: CommanderBriefing, intel: IntelSummary) -> list[TacticalOrder]:
+        """Launch assault on enemy positions."""
+        orders = []
+        available = briefing.available_production
+        eco = briefing.economy
+
+        # Determine attack target
+        target_x, target_y = self._get_attack_target(briefing, intel)
+
+        # Keep producing reinforcements
+        if "e1" in available and eco["cash"] >= 200:
+            orders.append(TacticalOrder(
+                order_type=OrderType.TRAIN,
+                item_type="e1",
+                count=2,
+            ))
+
+        # Send all combat units to attack
+        combat_units = [u for u in briefing.friendly_units
+                        if u.type in ("e1", "e3", "1tnk", "3tnk", "4tnk", "arty")]
+
+        if combat_units and target_x > 0:
+            if not self._state.attack_launched:
+                self._state.attack_launched = True
+                self._log(f"ASSAULT launched → ({target_x},{target_y}) "
+                         f"with {len(combat_units)} units")
+
+            orders.append(TacticalOrder(
+                order_type=OrderType.ASSAULT,
+                unit_ids=[u.actor_id for u in combat_units],
+                target_x=target_x,
+                target_y=target_y,
+            ))
+
+        return orders
+
+    def _decide_exploit(self, briefing: CommanderBriefing, intel: IntelSummary) -> list[TacticalOrder]:
+        """Exploit success or consolidate."""
+        return []
+
+    def _get_attack_target(self, briefing: CommanderBriefing, intel: IntelSummary) -> tuple[int, int]:
+        """Determine where to attack based on ISR."""
+        # Use known enemy positions
+        contacts = self._isr.active_contacts
+        if contacts:
+            # Attack center of mass of known enemies
+            avg_x = sum(c.cell_x for c in contacts) // len(contacts)
+            avg_y = sum(c.cell_y for c in contacts) // len(contacts)
+            self._state.enemy_base_x = avg_x
+            self._state.enemy_base_y = avg_y
+            return avg_x, avg_y
+
+        # Use known enemy buildings
+        if briefing.known_enemy_buildings:
+            bldg = briefing.known_enemy_buildings[0]
+            return bldg.get("cell_x", 0), bldg.get("cell_y", 0)
+
+        # Default: attack toward map center if no intel
+        if self._state.enemy_base_x > 0:
+            return self._state.enemy_base_x, self._state.enemy_base_y
+
+        return 56, 27  # Map center fallback
+
+    def _assess_result(self, result: TurnResult, briefing: CommanderBriefing,
+                       intel: IntelSummary) -> None:
+        """Post-turn assessment."""
+        bda = result.bda
+        unit_count = len(briefing.friendly_units)
+
+        if bda.units_killed_this_turn > 0:
+            self._log(f"  BDA: +{bda.units_killed_this_turn} kills")
+        if bda.units_lost_this_turn > 0:
+            self._log(f"  BDA: -{bda.units_lost_this_turn} losses")
+        if bda.new_enemy_contacts > 0:
+            self._log(f"  ISR: {bda.new_enemy_contacts} new contacts")
+
+        # Track idle turns for phase transitions
+        if unit_count == self._state.last_unit_count:
+            self._state.consecutive_idle_turns += 1
+        else:
+            self._state.consecutive_idle_turns = 0
+        self._state.last_unit_count = unit_count
+
+    def _log(self, msg: str) -> None:
+        self._state.turn_log.append(f"T{self._turn:3d}: {msg}")
+        if self._verbose:
+            print(f"  AI T{self._turn:3d}: {msg}")
+
+    def get_aar(self) -> str:
+        """Generate AI decision AAR."""
+        lines = [
+            "=== TACTICAL AI — AFTER ACTION REVIEW ===",
+            f"Turns played: {self._turn}",
+            f"Final phase: {self._state.phase.value}",
+            f"Game result: {self._commander.game_result or 'ongoing'}",
+            f"Scouts sent: {self._state.scouts_sent}",
+            f"Attack launched: {self._state.attack_launched}",
+            "",
+            "DECISION LOG:",
+        ]
+        lines.extend(self._state.turn_log)
+
+        # Add commander AAR
+        lines.extend(["", self._commander.get_aar()])
+
+        # Add intel report
+        lines.extend(["", self._isr.format_intel_report()])
+
+        # Add scenario AAR if available
+        if self._scenario:
+            lines.extend(["", self._scenario.get_exercise_aar()])
+
+        return "\n".join(lines)

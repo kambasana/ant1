@@ -120,6 +120,7 @@ class CommanderBriefing:
     economy: dict
     military_stats: dict
     available_production: list[str]
+    active_production: list[dict] = field(default_factory=list)
     previous_bda: Optional[dict] = None
     sitrep: str = ""
 
@@ -383,6 +384,15 @@ class Commander:
                 "kill_ratio": mil.units_killed / max(mil.units_lost, 1),
             },
             available_production=obs.available_production,
+            active_production=[
+                {
+                    "queue_type": p.queue_type,
+                    "item": p.item,
+                    "progress": p.progress,
+                    "paused": p.paused,
+                }
+                for p in obs.production
+            ],
             previous_bda=bda_dict,
             sitrep=self._wego.format_sitrep(situation),
         )
