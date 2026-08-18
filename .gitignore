@@ -10,3 +10,7 @@
 
 # OpenRA-RL (external dependency — clone separately)
 /openra-rl/
+
+# Python cache
+__pycache__/
+*.pyc
