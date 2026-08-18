@@ -34,6 +34,7 @@ from milsim.spatial import SpatialIntel
 from milsim.game_knowledge import GameKnowledge
 from milsim.memory import TacticalMemory
 from milsim.assessment import PerformanceAssessor
+from milsim.cnn import TacticalCNN
 
 try:
     from openra_env.bench_export import build_bench_export
@@ -110,6 +111,7 @@ class TacticalAI:
         self._turn = 0
 
         self._spatial = SpatialIntel()
+        self._cnn = TacticalCNN(use_torch=False)
         self._knowledge = GameKnowledge()
         self._memory = TacticalMemory()
         self._assessor = PerformanceAssessor(vector_enabled=True)
@@ -141,6 +143,7 @@ class TacticalAI:
             try:
                 wego_sit = self._commander._wego.get_situation()
                 self._spatial.update(wego_sit.observation)
+                self._cnn.update(wego_sit.observation)
                 intel = self._isr.process_observation(wego_sit.observation, self._turn)
 
                 # Performance assessment from raw observation
@@ -497,8 +500,17 @@ class TacticalAI:
         return []
 
     def _get_attack_target(self, briefing: CommanderBriefing, intel: IntelSummary) -> tuple[int, int]:
-        """Determine where to attack based on ISR + spatial intel."""
-        # Use spatial threat assessment first (most accurate)
+        """Determine where to attack based on CNN priorities + ISR + spatial intel."""
+        # CNN attack priority scoring (considers value, approach, risk)
+        if self._cnn.has_data:
+            priorities = self._cnn.get_attack_priorities()
+            if priorities:
+                top = priorities[0]
+                self._state.enemy_base_x = top.x
+                self._state.enemy_base_y = top.y
+                return top.x, top.y
+
+        # Fall back to spatial threat assessment
         if self._spatial.has_data:
             threat = self._spatial.get_threat_assessment()
             if threat.total_visible_enemies > 0:

@@ -44,6 +44,7 @@ from milsim.spatial import SpatialIntel
 from milsim.game_knowledge import GameKnowledge
 from milsim.memory import TacticalMemory
 from milsim.assessment import PerformanceAssessor
+from milsim.cnn import TacticalCNN
 
 try:
     from openra_env.bench_export import build_bench_export
@@ -75,6 +76,7 @@ class CommanderBridge:
         self._verbose = verbose
 
         self._spatial = SpatialIntel()
+        self._cnn = TacticalCNN(use_torch=False)
         self._knowledge = GameKnowledge()
         self._memory = TacticalMemory()
         self._assessor = PerformanceAssessor(vector_enabled=True)
@@ -104,6 +106,7 @@ class CommanderBridge:
         try:
             sit = self._commander._wego.get_situation()
             self._spatial.update(sit.observation)
+            self._cnn.update(sit.observation)
             self._isr.process_observation(sit.observation, self._turn)
             self._assessor.evaluate({
                 "economy": briefing.economy,
@@ -783,6 +786,31 @@ MILSIM_TOOLS = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_cnn_analysis",
+            "description": "Get CNN tactical analysis: threat heatmap hotspots, attack priorities with approach/risk scores, defensive positions, rally point, movement corridors, and flank routes.",
+            "parameters": {"type": "object", "properties": {}},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_threat_map",
+            "description": "Get ASCII threat heatmap showing where enemy danger is concentrated.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "width": {
+                        "type": "integer",
+                        "description": "Map width in characters",
+                        "default": 40,
+                    },
+                },
+            },
+        },
+    },
 ]
 
 
@@ -947,6 +975,17 @@ Building codes: powr (power), tent/barr (barracks), proc (refinery), weap (war f
             width = args.get("width", 40)
             return self._bridge._spatial.render_minimap(max_cols=width)
 
+        elif name == "get_cnn_analysis":
+            if not self._bridge._cnn.has_data:
+                return "No spatial data for CNN analysis yet."
+            return self._bridge._cnn.format_analysis()
+
+        elif name == "get_threat_map":
+            if not self._bridge._cnn.has_data:
+                return "No spatial data for threat map yet."
+            width = args.get("width", 40)
+            return self._bridge._cnn.render_threat_ascii(max_cols=width)
+
         return f"Unknown tool: {name}"
 
 
@@ -1048,6 +1087,16 @@ def create_mcp_server(bridge: CommanderBridge):
     async def get_minimap(width: int = 40) -> str:
         """Get ASCII minimap showing terrain, units, and fog of war."""
         return await fc.handle_tool_call("get_minimap", {"width": width})
+
+    @mcp.tool()
+    async def get_cnn_analysis() -> str:
+        """Get CNN tactical analysis: threat hotspots, attack priorities, defensive positions, rally point, movement corridors, flank routes."""
+        return await fc.handle_tool_call("get_cnn_analysis", {})
+
+    @mcp.tool()
+    async def get_threat_map(width: int = 40) -> str:
+        """Get ASCII threat heatmap showing where enemy danger is concentrated."""
+        return await fc.handle_tool_call("get_threat_map", {"width": width})
 
     @mcp.tool()
     async def get_aar() -> str:
