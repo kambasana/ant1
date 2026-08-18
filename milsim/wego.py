@@ -34,6 +34,12 @@ from openra_env.models import (
     UnitInfoModel,
 )
 
+try:
+    from openra_env.mcp_ws_client import OpenRAMCPClient
+    _HAS_MCP_CLIENT = True
+except ImportError:
+    _HAS_MCP_CLIENT = False
+
 
 class TurnPhase(str, Enum):
     PLANNING = "planning"
@@ -102,6 +108,8 @@ class TurnResult:
     orders_issued: list[CommandModel]
     game_over: bool = False
     game_result: str = ""
+    interrupted: bool = False
+    interrupt_reason: str = ""
 
 
 @dataclass
@@ -141,10 +149,12 @@ class WEGOTurnManager:
         env: OpenRAEnv,
         ticks_per_turn: int = 50,
         execution_substeps: int = 5,
+        mcp_client=None,
     ):
         self._env = env
         self._ticks_per_turn = ticks_per_turn
         self._substeps = execution_substeps
+        self._mcp = mcp_client
         self._turn = 0
         self._phase = TurnPhase.PLANNING
         self._current_obs: Optional[OpenRAObservation] = None
@@ -236,29 +246,41 @@ class WEGOTurnManager:
             result = await self._env.step(action)
             self._current_obs = result.observation
 
-        # Phase 2: Execute — advance ticks in substeps
-        ticks_per_sub = self._ticks_per_turn // self._substeps
-        ticks_executed = 0
+        # Phase 2: Execute — advance ticks
+        interrupted = False
+        interrupt_reason = ""
 
-        for _ in range(self._substeps):
-            for _ in range(ticks_per_sub):
-                result = await self._env.step(
-                    OpenRAAction(commands=[CommandModel(action=ActionType.NO_OP)])
-                )
-                ticks_executed += 1
+        if self._mcp:
+            # FastAdvance: single server call with interrupt detection
+            ticks_executed, interrupted, interrupt_reason = await self._fast_advance(
+                self._ticks_per_turn
+            )
+        else:
+            # Fallback: tick-by-tick stepping in substeps
+            ticks_per_sub = self._ticks_per_turn // self._substeps
+            ticks_executed = 0
 
-            self._current_obs = result.observation
+            for _ in range(self._substeps):
+                for _ in range(ticks_per_sub):
+                    result = await self._env.step(
+                        OpenRAAction(commands=[CommandModel(action=ActionType.NO_OP)])
+                    )
+                    ticks_executed += 1
 
-            if self._current_obs.done:
-                self._game_over = True
-                self._game_result = self._current_obs.result
-                break
+                self._current_obs = result.observation
 
-            if interrupt_on_contact:
-                current_enemy_ids = {u.actor_id for u in self._current_obs.visible_enemies}
-                new_contacts = current_enemy_ids - pre_enemy_ids
-                if new_contacts:
+                if self._current_obs.done:
+                    self._game_over = True
+                    self._game_result = self._current_obs.result
                     break
+
+                if interrupt_on_contact:
+                    current_enemy_ids = {u.actor_id for u in self._current_obs.visible_enemies}
+                    new_contacts = current_enemy_ids - pre_enemy_ids
+                    if new_contacts:
+                        interrupted = True
+                        interrupt_reason = "enemy_spotted"
+                        break
 
         # Phase 3: Review — compute BDA
         self._phase = TurnPhase.REVIEW
@@ -308,6 +330,8 @@ class WEGOTurnManager:
             orders_issued=orders,
             game_over=self._game_over,
             game_result=self._game_result,
+            interrupted=interrupted,
+            interrupt_reason=interrupt_reason,
         )
 
         # Advance to next turn
@@ -317,6 +341,126 @@ class WEGOTurnManager:
         self._prev_enemy_ids = post_enemy_ids
 
         return turn_result
+
+    async def _fast_advance(self, ticks: int) -> tuple[int, bool, str]:
+        """Advance using MCP client's server-side FastAdvance with interrupts.
+
+        Returns (ticks_executed, interrupted, interrupt_reason).
+        The server handles all 9 interrupt types internally and
+        checks every 25 ticks.
+        """
+        remaining = ticks
+        total_ticks = 0
+        interrupted = False
+        interrupt_reason = ""
+
+        while remaining > 0:
+            batch = min(remaining, 50)
+            state = await self._mcp.call_tool("advance", ticks=batch)
+
+            actual = state.get("actual_ticks_advanced", batch)
+            total_ticks += actual
+            remaining -= actual
+
+            self._current_obs = self._obs_from_state(state)
+
+            if state.get("done"):
+                self._game_over = True
+                self._game_result = state.get("result", "")
+                break
+
+            if state.get("interrupted"):
+                interrupted = True
+                interrupt_reason = state.get("interrupt_reason", "unknown")
+                break
+
+        return total_ticks, interrupted, interrupt_reason
+
+    def _obs_from_state(self, state: dict) -> OpenRAObservation:
+        """Build an OpenRAObservation from MCP get_game_state / advance result.
+
+        Extracts the fields WEGO needs for BDA computation and
+        situation tracking. Non-essential fields use safe defaults.
+        """
+        from openra_env.models import EconomyInfo
+
+        units = [
+            UnitInfoModel(
+                actor_id=u.get("id", 0),
+                type=u.get("type", ""),
+                cell_x=u.get("cell_x", 0),
+                cell_y=u.get("cell_y", 0),
+                hp_ratio=u.get("hp", u.get("hp_ratio", 1.0)),
+                is_idle=u.get("idle", False),
+                can_attack=u.get("can_attack", True),
+            )
+            for u in state.get("units_summary", [])
+        ]
+
+        buildings = [
+            BuildingInfoModel(
+                actor_id=b.get("id", 0),
+                type=b.get("type", ""),
+                cell_x=b.get("cell_x", 0),
+                cell_y=b.get("cell_y", 0),
+                hp_ratio=b.get("hp", b.get("hp_ratio", 1.0)),
+            )
+            for b in state.get("buildings_summary", [])
+        ]
+
+        enemies = [
+            UnitInfoModel(
+                actor_id=e.get("id", 0),
+                type=e.get("type", ""),
+                cell_x=e.get("cell_x", 0),
+                cell_y=e.get("cell_y", 0),
+                hp_ratio=e.get("hp", e.get("hp_ratio", 1.0)),
+            )
+            for e in state.get("enemy_summary", [])
+        ]
+
+        enemy_buildings = [
+            BuildingInfoModel(
+                actor_id=b.get("id", 0),
+                type=b.get("type", ""),
+                cell_x=b.get("cell_x", 0),
+                cell_y=b.get("cell_y", 0),
+                hp_ratio=b.get("hp", b.get("hp_ratio", 1.0)),
+            )
+            for b in state.get("enemy_buildings_summary", [])
+        ]
+
+        eco = state.get("economy", {})
+        mil = state.get("military", {})
+
+        obs = OpenRAObservation(
+            tick=state.get("tick", 0),
+            done=state.get("done", False),
+            result=state.get("result", ""),
+            units=units,
+            buildings=buildings,
+            visible_enemies=enemies,
+            visible_enemy_buildings=enemy_buildings,
+            economy=EconomyInfo(
+                cash=eco.get("cash", 0),
+                ore=eco.get("ore", 0),
+                power_provided=eco.get("power_provided", state.get("power_provided", 0)),
+                power_drained=eco.get("power_drained", state.get("power_drained", 0)),
+                harvester_count=eco.get("harvester_count", eco.get("harvesters", 0)),
+            ),
+            military=MilitaryInfo(
+                units_killed=mil.get("units_killed", 0),
+                units_lost=mil.get("units_lost", 0),
+                buildings_killed=mil.get("buildings_killed", 0),
+                buildings_lost=mil.get("buildings_lost", 0),
+                army_value=mil.get("army_value", 0),
+                kills_cost=mil.get("kills_cost", 0),
+                deaths_cost=mil.get("losses_cost", mil.get("deaths_cost", 0)),
+            ),
+            available_production=state.get("available_production", []),
+            production=[],
+        )
+        return obs
 
     def format_sitrep(self, situation: Optional[Situation] = None) -> str:
         """Format a military-style situation report."""
