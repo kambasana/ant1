@@ -132,6 +132,17 @@ async def run_full_game():
             check("AAR has intel report", "INTELLIGENCE REPORT" in aar)
             check("AAR has game data", "AFTER ACTION REVIEW" in aar)
 
+            # New integrations
+            print("\n8. Integrated Systems")
+            check("Spatial intel active", ai._spatial.has_data,
+                  f"{ai._spatial.width}x{ai._spatial.height}")
+            check("Game knowledge available", ai._knowledge.available)
+            check("Memory events tracked", ai._memory.event_count > 0,
+                  f"{ai._memory.event_count} events")
+            check("Performance assessed", ai._assessor.get_latest() is not None)
+            check("AAR has spatial", "SPATIAL" in aar or "Map:" in aar)
+            check("AAR has performance", "PERFORMANCE" in aar or "cumulative" in aar.lower())
+
             # Print summary AAR
             print(f"\n{'=' * 60}")
             print("GAME SUMMARY")

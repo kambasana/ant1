@@ -30,6 +30,10 @@ from milsim.commander import (
 from milsim.isr import ISRManager, IntelLevel, IntelSummary
 from milsim.scenario import ScenarioRunner, MSELEvent
 from milsim.wego import TurnResult
+from milsim.spatial import SpatialIntel
+from milsim.game_knowledge import GameKnowledge
+from milsim.memory import TacticalMemory
+from milsim.assessment import PerformanceAssessor
 
 
 class Phase(str, Enum):
@@ -99,6 +103,11 @@ class TacticalAI:
         self._state = AIState()
         self._turn = 0
 
+        self._spatial = SpatialIntel()
+        self._knowledge = GameKnowledge()
+        self._memory = TacticalMemory()
+        self._assessor = PerformanceAssessor(vector_enabled=True)
+
     @property
     def phase(self) -> Phase:
         return self._state.phase
@@ -109,22 +118,34 @@ class TacticalAI:
 
     async def play_game(self) -> str:
         """Play a complete game and return the AAR."""
+        self._memory.reset_events()
+        self._assessor.reset()
+
         briefing = await self._commander.start_game()
         self._log(f"Game started. Map: {briefing.turn_number}")
+        self._memory.record_milestone("game_start", 0, f"Map turn {briefing.turn_number}")
 
         while self._turn < self._max_turns and not self._commander.is_game_over:
             self._turn += 1
 
             # Get current situation
             briefing = self._commander.get_briefing()
-            obs = briefing
 
-            # Process ISR
-            from milsim.wego import WEGOTurnManager
-            wego_sit = None
+            # Process spatial tensor
             try:
                 wego_sit = self._commander._wego.get_situation()
+                self._spatial.update(wego_sit.observation)
                 intel = self._isr.process_observation(wego_sit.observation, self._turn)
+
+                # Performance assessment from raw observation
+                obs_dict = {
+                    "economy": briefing.economy,
+                    "military": briefing.military_stats,
+                    "done": self._commander.is_game_over,
+                    "result": self._commander.game_result or "",
+                    "tick": briefing.game_tick,
+                }
+                self._assessor.evaluate(obs_dict)
             except Exception:
                 intel = self._isr.get_summary()
 
@@ -133,6 +154,8 @@ class TacticalAI:
                 events, _ = self._scenario.advance_turn()
                 for ev in events:
                     self._log(f"MSEL [{ev.category}]: {ev.event}")
+                    self._memory.record_event("msel_event", self._turn,
+                                               f"[{ev.category}] {ev.event}")
 
             # Decide and act
             orders = self.decide(briefing, intel)
@@ -153,6 +176,21 @@ class TacticalAI:
         # Game over
         result_str = self._commander.game_result or "max turns reached"
         self._log(f"Game ended: {result_str}")
+
+        # Save engagement to memory
+        self._memory.save_engagement(
+            result=result_str,
+            turns=self._turn,
+            stats={
+                "final_phase": self._state.phase.value,
+                "kills": briefing.military_stats.get("units_killed", 0),
+                "units_lost": briefing.military_stats.get("units_lost", 0),
+                "buildings_built": len(briefing.friendly_buildings),
+                "final_cash": briefing.economy.get("cash", 0),
+                "max_army_value": briefing.military_stats.get("army_value", 0),
+                "contacts_detected": self._isr.get_summary().total_contacts,
+            },
+        )
 
         return self.get_aar()
 
@@ -197,18 +235,23 @@ class TacticalAI:
                 if has_cy:
                     self._state.phase = Phase.BUILD
                     self._log("Phase → BUILD (C2 established)")
+                    self._memory.record_milestone("c2_established", self._turn)
 
             case Phase.BUILD:
                 if has_barracks and unit_count >= 2:
                     self._state.phase = Phase.SCOUT
                     self._log("Phase → SCOUT (barracks + units ready)")
+                    self._memory.record_milestone("scout_phase", self._turn)
                 elif has_barracks:
                     self._state.phase = Phase.SCOUT
+                    self._memory.record_milestone("scout_phase", self._turn)
 
             case Phase.SCOUT:
                 if enemy_found:
                     self._state.phase = Phase.MASS
                     self._log(f"Phase → MASS (enemy found: {intel.active_contacts} contacts)")
+                    self._memory.record_milestone("enemy_located", self._turn,
+                                                   f"{intel.active_contacts} contacts")
                 elif self._state.scouts_sent >= 2 and unit_count >= 4:
                     self._state.phase = Phase.MASS
 
@@ -216,6 +259,8 @@ class TacticalAI:
                 if unit_count >= 6 or (enemy_found and unit_count >= 4):
                     self._state.phase = Phase.ATTACK
                     self._log(f"Phase → ATTACK ({unit_count} units ready)")
+                    self._memory.record_milestone("attack_phase", self._turn,
+                                                   f"{unit_count} units")
 
             case Phase.ATTACK:
                 if self._commander.is_game_over:
@@ -301,9 +346,22 @@ class TacticalAI:
 
         if idle_units and self._state.scouts_sent < 4:
             scout = idle_units[0]
-            # Scout toward map quadrants
-            targets = [(100, 40), (10, 40), (56, 10), (56, 50)]
-            target = targets[self._state.scouts_sent % len(targets)]
+
+            # Use spatial intel for unexplored regions
+            if self._spatial.has_data:
+                exploration = self._spatial.get_exploration()
+                if exploration.unexplored_regions:
+                    region = exploration.unexplored_regions[
+                        self._state.scouts_sent % len(exploration.unexplored_regions)
+                    ]
+                    target = ((region[0] + region[2]) // 2, (region[1] + region[3]) // 2)
+                else:
+                    w, h = self._spatial.width, self._spatial.height
+                    targets = [(w - 10, h // 2), (10, h // 2), (w // 2, 5), (w // 2, h - 5)]
+                    target = targets[self._state.scouts_sent % len(targets)]
+            else:
+                targets = [(100, 40), (10, 40), (56, 10), (56, 50)]
+                target = targets[self._state.scouts_sent % len(targets)]
 
             orders.append(TacticalOrder(
                 order_type=OrderType.RECONNOITER,
@@ -401,11 +459,18 @@ class TacticalAI:
         return []
 
     def _get_attack_target(self, briefing: CommanderBriefing, intel: IntelSummary) -> tuple[int, int]:
-        """Determine where to attack based on ISR."""
-        # Use known enemy positions
+        """Determine where to attack based on ISR + spatial intel."""
+        # Use spatial threat assessment first (most accurate)
+        if self._spatial.has_data:
+            threat = self._spatial.get_threat_assessment()
+            if threat.total_visible_enemies > 0:
+                self._state.enemy_base_x = threat.enemy_centroid[0]
+                self._state.enemy_base_y = threat.enemy_centroid[1]
+                return threat.enemy_centroid
+
+        # Fall back to ISR contacts
         contacts = self._isr.active_contacts
         if contacts:
-            # Attack center of mass of known enemies
             avg_x = sum(c.cell_x for c in contacts) // len(contacts)
             avg_y = sum(c.cell_y for c in contacts) // len(contacts)
             self._state.enemy_base_x = avg_x
@@ -417,11 +482,14 @@ class TacticalAI:
             bldg = briefing.known_enemy_buildings[0]
             return bldg.get("cell_x", 0), bldg.get("cell_y", 0)
 
-        # Default: attack toward map center if no intel
+        # Last known position
         if self._state.enemy_base_x > 0:
             return self._state.enemy_base_x, self._state.enemy_base_y
 
-        return 56, 27  # Map center fallback
+        # Map center fallback
+        if self._spatial.has_data:
+            return self._spatial.width // 2, self._spatial.height // 2
+        return 56, 27
 
     def _assess_result(self, result: TurnResult, briefing: CommanderBriefing,
                        intel: IntelSummary) -> None:
@@ -431,10 +499,16 @@ class TacticalAI:
 
         if bda.units_killed_this_turn > 0:
             self._log(f"  BDA: +{bda.units_killed_this_turn} kills")
+            self._memory.record_event("engagement", self._turn,
+                                       f"+{bda.units_killed_this_turn} kills")
         if bda.units_lost_this_turn > 0:
             self._log(f"  BDA: -{bda.units_lost_this_turn} losses")
+            self._memory.record_event("casualty", self._turn,
+                                       f"-{bda.units_lost_this_turn} losses")
         if bda.new_enemy_contacts > 0:
             self._log(f"  ISR: {bda.new_enemy_contacts} new contacts")
+            self._memory.record_milestone("first_contact", self._turn,
+                                           f"{bda.new_enemy_contacts} contacts")
 
         # Track idle turns for phase transitions
         if unit_count == self._state.last_unit_count:
@@ -467,6 +541,20 @@ class TacticalAI:
 
         # Add intel report
         lines.extend(["", self._isr.format_intel_report()])
+
+        # Add spatial intelligence
+        if self._spatial.has_data:
+            lines.extend(["", self._spatial.format_spatial_sitrep()])
+
+        # Add performance assessment
+        perf_summary = self._assessor.format_summary()
+        if perf_summary and "No performance" not in perf_summary:
+            lines.extend(["", perf_summary])
+
+        # Add event timeline from memory
+        timeline = self._memory.get_timeline()
+        if timeline and "No events" not in timeline:
+            lines.extend(["", timeline])
 
         # Add scenario AAR if available
         if self._scenario:
