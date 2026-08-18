@@ -35,6 +35,12 @@ from milsim.game_knowledge import GameKnowledge
 from milsim.memory import TacticalMemory
 from milsim.assessment import PerformanceAssessor
 
+try:
+    from openra_env.bench_export import build_bench_export
+    _HAS_BENCH = True
+except ImportError:
+    _HAS_BENCH = False
+
 
 class Phase(str, Enum):
     ESTABLISH = "establish"
@@ -191,6 +197,20 @@ class TacticalAI:
                 "contacts_detected": self._isr.get_summary().total_contacts,
             },
         )
+
+        # Export bench results for leaderboard submission
+        if _HAS_BENCH:
+            try:
+                wego_sit = self._commander._wego.get_situation()
+                export = build_bench_export(
+                    wego_sit.observation,
+                    agent_name="MilSim-TacticalAI",
+                    agent_type="Scripted",
+                    opponent="Normal",
+                )
+                self._log(f"Bench export: {export.get('path', 'n/a')}")
+            except Exception:
+                pass
 
         return self.get_aar()
 
@@ -427,8 +447,19 @@ class TacticalAI:
         # Determine attack target
         target_x, target_y = self._get_attack_target(briefing, intel)
 
-        # Keep producing reinforcements
-        if "e1" in available and eco["cash"] >= 200:
+        # Smart production: counter enemy composition using game knowledge
+        enemy_types = [u.type for u in briefing.known_enemies]
+        if enemy_types and self._knowledge.available:
+            counters = self._knowledge.get_counter_units(enemy_types)
+            for counter_type in counters[:2]:
+                if counter_type in available and eco["cash"] >= 200:
+                    orders.append(TacticalOrder(
+                        order_type=OrderType.TRAIN,
+                        item_type=counter_type,
+                        count=1,
+                    ))
+                    break
+        elif "e1" in available and eco["cash"] >= 200:
             orders.append(TacticalOrder(
                 order_type=OrderType.TRAIN,
                 item_type="e1",
@@ -442,8 +473,15 @@ class TacticalAI:
         if combat_units and target_x > 0:
             if not self._state.attack_launched:
                 self._state.attack_launched = True
+                force_intel = self._knowledge.format_force_intel(
+                    [u.type for u in combat_units]
+                ) if self._knowledge.available else ""
                 self._log(f"ASSAULT launched → ({target_x},{target_y}) "
                          f"with {len(combat_units)} units")
+                if force_intel:
+                    self._log(f"  {force_intel.split(chr(10))[1].strip()}")
+                self._memory.record_event("assault_launched", self._turn,
+                                           f"{len(combat_units)} units → ({target_x},{target_y})")
 
             orders.append(TacticalOrder(
                 order_type=OrderType.ASSAULT,
