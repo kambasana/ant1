@@ -1,0 +1,1514 @@
+<title>MilSim C2</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root {
+  --bg: #111418;
+  --surface: #1C2127;
+  --raised: #252A31;
+  --elevated: #2F343C;
+  --border: #383E47;
+  --border-subtle: #21262D;
+  --accent: #2D72D2;
+  --accent-hover: #4C90F0;
+  --accent-soft: rgba(45,114,210,0.12);
+  --accent-text: #8ABBFF;
+  --green: #32A467;
+  --green-soft: rgba(50,164,103,0.08);
+  --green-dim: #132A1E;
+  --amber: #EC9A3C;
+  --amber-soft: rgba(236,154,60,0.08);
+  --amber-dim: #2A2014;
+  --red: #E76A6E;
+  --red-soft: rgba(231,106,110,0.06);
+  --red-dim: #2A1518;
+  --t1: #F6F7F9;
+  --t2: #ABB3BF;
+  --t3: #5F6B7C;
+  --mono: 'IBM Plex Mono', 'SF Mono', 'Consolas', monospace;
+  --sans: 'Inter', -apple-system, system-ui, sans-serif;
+  --r: 4px;
+  --r-lg: 8px;
+  --status-h: 36px;
+  --cmd-h: 44px;
+  --dock-hdr: 28px;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-decel: cubic-bezier(0, 0, 0.2, 1);
+  --ease-emphasized: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-back: cubic-bezier(0.34, 1.3, 0.7, 1);
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #F6F7F9; --surface: #FFFFFF; --raised: #EDEFF2; --elevated: #E5E8EB;
+    --border: #D3D8DE; --border-subtle: #DCE0E5;
+    --accent: #2D72D2; --accent-hover: #215DB0; --accent-soft: rgba(45,114,210,0.08); --accent-text: #2D72D2;
+    --green: #238551; --green-soft: rgba(35,133,81,0.06); --green-dim: #E8F5EE;
+    --amber: #C87619; --amber-soft: rgba(200,118,25,0.06); --amber-dim: #FDF3E6;
+    --red: #CD4246; --red-soft: rgba(205,66,70,0.04); --red-dim: #FDECEC;
+    --t1: #1C2127; --t2: #5F6B7C; --t3: #8F99A8;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111418; --surface: #1C2127; --raised: #252A31; --elevated: #2F343C;
+  --border: #383E47; --border-subtle: #21262D;
+  --accent: #2D72D2; --accent-hover: #4C90F0; --accent-soft: rgba(45,114,210,0.12); --accent-text: #8ABBFF;
+  --green: #32A467; --green-soft: rgba(50,164,103,0.08); --green-dim: #132A1E;
+  --amber: #EC9A3C; --amber-soft: rgba(236,154,60,0.08); --amber-dim: #2A2014;
+  --red: #E76A6E; --red-soft: rgba(231,106,110,0.06); --red-dim: #2A1518;
+  --t1: #F6F7F9; --t2: #ABB3BF; --t3: #5F6B7C;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--sans); background: var(--bg); color: var(--t1);
+  font-size: 13px; line-height: 1.5; height: 100vh; overflow: hidden;
+  display: flex; flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "tnum", "cv02", "cv03", "cv04";
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* ═══ STATUS BAR ═══ */
+.status-bar {
+  height: var(--status-h); background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 12px; gap: 10px; flex-shrink: 0; z-index: 10;
+}
+.sb-brand { font-weight: 700; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; }
+.sb-sep { width: 1px; height: 14px; background: var(--border); flex-shrink: 0; }
+.sb-stat { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--t2); white-space: nowrap; }
+.sb-stat .v { font-family: var(--mono); font-weight: 600; font-size: 11px; color: var(--t1); font-variant-numeric: tabular-nums; }
+.sb-stat .v.g { color: var(--green); } .sb-stat .v.r { color: var(--red); }
+.sb-spacer { flex: 1; }
+.sb-badge { padding: 2px 8px; border-radius: 100px; font-family: var(--mono); font-weight: 600; font-size: 10px; }
+.sb-turn { background: var(--accent-soft); color: var(--accent-text); }
+.sb-phase { text-transform: uppercase; letter-spacing: 0.05em; font-size: 9px; font-weight: 600; }
+.sb-phase.planning { background: var(--amber-soft); color: var(--amber); }
+.sb-phase.executing { background: var(--green-soft); color: var(--green); }
+
+/* ═══ WORKSPACE — Dock panel grid ═══ */
+.workspace {
+  flex: 1; display: grid; overflow: hidden;
+  grid-template-columns: 220px 1fr 300px;
+  grid-template-rows: 1fr 160px;
+  grid-template-areas: "left map right" "left feed feed";
+}
+
+/* ═══ DOCK PANELS ═══ */
+.dock { display: flex; flex-direction: column; overflow: hidden; background: var(--surface); }
+.dock-hdr {
+  height: var(--dock-hdr); min-height: var(--dock-hdr);
+  display: flex; align-items: center; gap: 6px;
+  padding: 0 10px; background: var(--raised);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer; user-select: none; flex-shrink: 0;
+}
+.dock-hdr svg { width: 13px; height: 13px; color: var(--t3); flex-shrink: 0; }
+.dock-title {
+  font-size: 9px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.07em; color: var(--t3); flex: 1;
+}
+.dock-badge {
+  font-family: var(--mono); font-size: 9px; font-weight: 600;
+  padding: 1px 5px; border-radius: 100px;
+  background: var(--accent-soft); color: var(--accent-text);
+  font-variant-numeric: tabular-nums;
+}
+.dock-badge.empty { background: var(--elevated); color: var(--t3); }
+.dock-chevron { transition: transform 200ms var(--ease-decel); }
+.dock.collapsed .dock-chevron { transform: rotate(-90deg); }
+.dock.collapsed .dock-body { display: none; }
+.dock-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+
+/* Panel positions */
+.dock-left { grid-area: left; border-right: 1px solid var(--border); }
+.dock-right { grid-area: right; border-left: 1px solid var(--border); }
+.dock-bottom { grid-area: feed; border-top: 1px solid var(--border); }
+.map-center { grid-area: map; position: relative; overflow: hidden; background: var(--bg); }
+
+/* ═══ SEARCH INPUT (reused in panels) ═══ */
+.dock-search {
+  padding: 6px 8px; border-bottom: 1px solid var(--border-subtle); flex-shrink: 0;
+}
+.dock-search input {
+  width: 100%; padding: 5px 8px; border-radius: var(--r);
+  border: 1px solid var(--border); background: var(--bg);
+  color: var(--t1); font-family: var(--sans); font-size: 11px; outline: none;
+}
+.dock-search input:focus { border-color: var(--accent); }
+.dock-search input::placeholder { color: var(--t3); }
+
+/* ═══ MAP ═══ */
+#map-canvas { width: 100%; height: 100%; display: block; }
+.map-legend {
+  position: absolute; bottom: 8px; left: 8px; z-index: 2;
+  display: flex; gap: 14px;
+  background: rgba(17,20,24,0.78); padding: 5px 12px;
+  border-radius: var(--r); border: 1px solid rgba(56,62,71,0.3);
+}
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--t2); letter-spacing: 0.02em; }
+.legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+/* ═══ LEFT PANEL: CONTACTS ═══ */
+.filter-bar {
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 8px; border-bottom: 1px solid var(--border-subtle); flex-shrink: 0;
+}
+.filter-chip {
+  padding: 3px 8px; border-radius: 100px;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--t2); font-family: var(--sans); font-size: 10px; cursor: pointer;
+  transition: border-color 100ms var(--ease-decel), color 100ms var(--ease-decel), transform 80ms var(--ease-decel);
+}
+.filter-chip:hover { border-color: var(--t3); color: var(--t1); }
+.filter-chip:active { transform: scale(0.95); }
+.filter-chip.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-text); }
+
+.unit-action-bar {
+  display: flex; align-items: center; gap: 3px;
+  padding: 0 8px; height: 0; overflow: hidden;
+  background: var(--accent-soft); border-bottom: 1px solid transparent; flex-shrink: 0;
+  transition: height 200ms var(--ease-emphasized), padding 200ms var(--ease-emphasized), border-color 200ms var(--ease-decel);
+}
+.unit-action-bar.visible { height: 34px; padding: 0 8px; border-bottom-color: var(--accent); }
+.sel-count {
+  font-family: var(--mono); font-size: 10px; font-weight: 600;
+  color: var(--accent-text); margin-right: 4px; white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.act-btn {
+  display: flex; align-items: center; gap: 3px;
+  padding: 3px 6px; border-radius: var(--r);
+  border: 1px solid transparent; background: transparent;
+  color: var(--t1); font-family: var(--sans); font-size: 10px; font-weight: 500; cursor: pointer;
+  transition: background 100ms var(--ease-decel), transform 80ms var(--ease-decel); white-space: nowrap;
+}
+.act-btn:hover { background: var(--raised); }
+.act-btn:active { transform: scale(0.93); }
+.act-btn.active { background: var(--surface); border-color: var(--accent); color: var(--accent-text); }
+.act-btn svg { width: 12px; height: 12px; stroke-linecap: round; stroke-linejoin: round; }
+.act-sep { width: 1px; height: 14px; background: var(--border); margin: 0 1px; flex-shrink: 0; }
+.act-deselect {
+  margin-left: auto; padding: 3px 6px; border-radius: var(--r);
+  border: none; background: transparent; color: var(--t3);
+  font-family: var(--sans); font-size: 9px; cursor: pointer;
+}
+.act-deselect:hover { color: var(--t1); }
+
+.cmd-inline {
+  display: flex; align-items: center; gap: 4px;
+  max-height: 0; overflow: hidden; width: 100%;
+  transition: max-height 200ms var(--ease-emphasized), padding 200ms var(--ease-emphasized), opacity 200ms var(--ease-decel);
+  opacity: 0; padding: 0 8px; background: var(--raised);
+  border-bottom: 1px solid transparent; flex-shrink: 0;
+}
+.cmd-inline.open { max-height: 34px; opacity: 1; padding: 4px 8px; border-bottom-color: var(--border); }
+.cmd-inline label { font-size: 9px; color: var(--t3); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; flex-shrink: 0; }
+.cmd-inline input, .cmd-inline select {
+  padding: 3px 6px; border-radius: 3px;
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--t1); font-family: var(--mono); font-size: 10px; outline: none; width: 48px;
+}
+.cmd-inline input:focus { border-color: var(--accent); }
+.cmd-inline .cmd-go {
+  margin-left: auto; padding: 3px 10px; border-radius: 3px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: var(--sans); font-size: 10px; font-weight: 600; cursor: pointer; flex-shrink: 0;
+}
+.cmd-inline .cmd-go:hover { background: var(--accent-hover); }
+
+/* Unit rows */
+.scroll-y { overflow-y: auto; flex: 1; min-height: 0; }
+::-webkit-scrollbar { width: 3px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.unit-row {
+  display: grid; grid-template-columns: 16px 1fr 28px 36px;
+  align-items: center; gap: 5px; padding: 4px 8px; height: 30px;
+  cursor: pointer; user-select: none;
+  transition: background 80ms var(--ease-decel);
+  box-shadow: inset 2px 0 0 transparent;
+}
+.unit-row:hover { background: var(--raised); }
+.unit-row.selected { background: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); }
+.unit-check {
+  width: 12px; height: 12px; border-radius: 2px; border: 1.5px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 120ms var(--ease-spring), border-color 80ms var(--ease-decel), background 80ms var(--ease-decel);
+}
+.unit-row:hover .unit-check { border-color: var(--t3); }
+.unit-row.selected .unit-check { background: var(--accent); border-color: var(--accent); transform: scale(1.1); }
+.unit-check svg { width: 8px; height: 8px; opacity: 0; color: #fff; } .unit-row.selected .unit-check svg { opacity: 1; }
+.unit-info { min-width: 0; display: flex; align-items: baseline; gap: 4px; }
+.unit-name { font-size: 11px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.unit-id { font-family: var(--mono); font-size: 9px; color: var(--t3); flex-shrink: 0; }
+.unit-stance { font-size: 9px; color: var(--t3); text-align: right; font-family: var(--mono); }
+.unit-hp-bar { width: 36px; height: 2px; border-radius: 1px; background: var(--elevated); overflow: hidden; }
+.unit-hp-fill { height: 100%; border-radius: 1px; }
+.hp-ok { background: var(--green); } .hp-warn { background: var(--amber); } .hp-crit { background: var(--red); }
+
+/* ═══ KPI GRID — compact metrics ═══ */
+.kpi-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; }
+.kpi-cell { padding: 4px 6px; background: var(--bg); border-radius: 2px; }
+.kpi-k { font-size: 8px; color: var(--t3); text-transform: uppercase; letter-spacing: 0.05em; display: block; line-height: 1.2; }
+.kpi-v { font-family: var(--mono); font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.kpi-v.g { color: var(--green); } .kpi-v.r { color: var(--red); } .kpi-v.a { color: var(--amber); }
+
+/* ═══ ISR CONTACT ROWS ═══ */
+.contact-filters { display: flex; gap: 3px; padding: 3px 6px; border-bottom: 1px solid var(--border-subtle); flex-shrink: 0; }
+.contact-row {
+  display: grid; grid-template-columns: 8px 1fr 44px;
+  gap: 5px; align-items: center; padding: 4px 8px;
+  font-size: 10px; cursor: default;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.contact-row:hover { background: var(--raised); }
+.contact-pip { width: 6px; height: 6px; border-radius: 50%; }
+.contact-pip.lv4 { background: var(--red); }
+.contact-pip.lv3 { background: var(--amber); }
+.contact-pip.lv2 { background: var(--amber); opacity: 0.6; }
+.contact-pip.lv1 { background: var(--t3); }
+.contact-pip.lv0 { background: var(--t3); opacity: 0.4; }
+.contact-pip.stale { opacity: 0.3; }
+.contact-info { min-width: 0; }
+.contact-type { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.contact-meta { font-family: var(--mono); font-size: 8px; color: var(--t3); display: flex; gap: 6px; }
+.contact-conf { font-family: var(--mono); font-size: 8px; }
+.contact-pos { font-family: var(--mono); font-size: 9px; color: var(--t3); text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ═══ CNN TARGET ROWS ═══ */
+.cnn-sub { font-size: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--t3); padding: 5px 0 2px; }
+.cnn-row { display: flex; align-items: center; gap: 5px; padding: 2px 0; font-size: 10px; }
+.cnn-rank { font-family: var(--mono); font-size: 8px; color: var(--t3); width: 14px; flex-shrink: 0; }
+.cnn-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cnn-score { font-family: var(--mono); font-size: 9px; font-weight: 600; width: 28px; text-align: right; flex-shrink: 0; }
+.cnn-bar { width: 40px; height: 2px; border-radius: 1px; background: var(--elevated); flex-shrink: 0; }
+.cnn-fill { height: 100%; border-radius: 1px; }
+
+/* ═══ PRODUCTION — categorized ═══ */
+.prod-queue-item {
+  display: flex; align-items: center; gap: 6px; padding: 4px 0;
+  font-size: 10px; border-bottom: 1px solid var(--border-subtle);
+}
+.prod-queue-item:last-child { border-bottom: none; }
+.prod-q-type { font-family: var(--mono); font-size: 7px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;
+  padding: 1px 4px; border-radius: 2px; background: var(--elevated); color: var(--t3); flex-shrink: 0; width: 32px; text-align: center; }
+.prod-q-name { font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.prod-q-bar { width: 40px; height: 3px; border-radius: 1px; background: var(--elevated); overflow: hidden; flex-shrink: 0; }
+.prod-q-fill { height: 100%; border-radius: 1px; background: var(--green); }
+.prod-q-pct { font-family: var(--mono); font-size: 9px; color: var(--t3); width: 24px; text-align: right; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+
+/* ═══ RIGHT PANEL: CONTEXT — sub-tabs ═══ */
+.panel-tabs {
+  display: flex; height: 26px; border-bottom: 1px solid var(--border);
+  background: var(--surface); flex-shrink: 0;
+}
+.panel-tab {
+  flex: 1; border: none; background: transparent;
+  color: var(--t3); font-family: var(--sans); font-size: 10px; font-weight: 600;
+  letter-spacing: 0.03em; cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 100ms var(--ease-decel), border-color 100ms var(--ease-decel);
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+.panel-tab:hover { color: var(--t2); background: var(--raised); }
+.panel-tab.active { color: var(--accent-text); border-bottom-color: var(--accent); }
+.panel-tab .tab-ct {
+  font-family: var(--mono); font-size: 8px; font-weight: 600;
+  padding: 0 4px; border-radius: 100px;
+  background: var(--elevated); color: var(--t3); font-variant-numeric: tabular-nums;
+}
+.panel-tab.active .tab-ct { background: var(--accent-soft); color: var(--accent-text); }
+.panel-tab-view { flex: 1; display: none; flex-direction: column; overflow-y: auto; min-height: 0; }
+.panel-tab-view.active { display: flex; }
+
+.ctx-section { border-bottom: 1px solid var(--border-subtle); }
+.ctx-section:last-child { border-bottom: none; }
+.ctx-hdr {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 10px; cursor: pointer; user-select: none;
+}
+.ctx-hdr:hover { background: var(--raised); }
+.ctx-hdr .ctx-label {
+  font-size: 9px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--t3); flex: 1;
+}
+.ctx-hdr .ctx-ct {
+  font-family: var(--mono); font-size: 9px; font-weight: 600;
+  padding: 1px 5px; border-radius: 100px;
+  background: var(--accent-soft); color: var(--accent-text); font-variant-numeric: tabular-nums;
+}
+.ctx-hdr .ctx-ct.empty { background: var(--elevated); color: var(--t3); }
+.ctx-hdr svg { width: 12px; height: 12px; color: var(--t3); transition: transform 200ms var(--ease-decel); }
+.ctx-section.collapsed .ctx-hdr svg { transform: rotate(-90deg); }
+.ctx-body { padding: 0 10px 8px; }
+.ctx-section.collapsed .ctx-body { display: none; }
+
+/* KPI rows */
+.kpi-row { display: flex; align-items: baseline; gap: 4px; padding: 2px 0; }
+.kpi-label { font-size: 10px; color: var(--t3); flex: 1; }
+.kpi-val { font-family: var(--mono); font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* Contacts (hostile) */
+.ct-row { display: flex; align-items: center; gap: 5px; padding: 3px 0; font-size: 10px; }
+.ct-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+.ct-dot.hostile { background: var(--red); } .ct-dot.unknown { background: var(--amber); }
+.ct-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ct-pos { font-family: var(--mono); font-size: 9px; color: var(--t3); font-variant-numeric: tabular-nums; }
+
+/* CNN Threat */
+.thr-row { padding: 3px 0; }
+.thr-label { font-size: 10px; color: var(--t2); display: flex; align-items: center; justify-content: space-between; }
+.thr-label span { font-family: var(--mono); font-size: 9px; font-weight: 600; }
+.thr-bar { width: 100%; height: 2px; border-radius: 1px; background: var(--elevated); margin-top: 2px; }
+.thr-fill { height: 100%; border-radius: 1px; }
+
+/* Sitrep */
+.sitrep-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; }
+.sitrep-row { display: flex; align-items: center; gap: 6px; font-size: 10px; }
+.sitrep-label { color: var(--t3); font-size: 9px; min-width: 65px; flex-shrink: 0; }
+.sitrep-val { font-family: var(--mono); font-size: 10px; font-weight: 600; color: var(--t1); font-variant-numeric: tabular-nums; }
+.sitrep-val.g { color: var(--green); } .sitrep-val.r { color: var(--red); }
+.sitrep-bar-wrap { flex: 1; height: 2px; border-radius: 1px; background: var(--elevated); overflow: hidden; }
+.sitrep-bar { height: 100%; border-radius: 1px; background: var(--green); transition: width 300ms var(--ease-decel); }
+
+/* Order cards */
+.order-card {
+  display: flex; align-items: stretch;
+  background: var(--raised); border-radius: var(--r);
+  border: 1px solid var(--border); margin-bottom: 4px;
+  overflow: hidden; min-height: 38px;
+  animation: card-in 200ms var(--ease-out-expo) both;
+}
+@keyframes card-in { from { opacity: 0; transform: translateY(-6px) scale(0.97); } }
+.order-card:hover { border-color: var(--elevated); }
+.order-stripe { width: 2px; flex-shrink: 0; }
+.order-stripe.move { background: var(--accent); } .order-stripe.attack { background: var(--red); }
+.order-stripe.defend { background: var(--green); } .order-stripe.scout { background: var(--amber); }
+.order-stripe.hold { background: var(--t3); } .order-stripe.build { background: var(--green); }
+.order-stripe.train { background: var(--accent); } .order-stripe.stance { background: var(--t3); }
+.order-body { flex: 1; display: flex; align-items: center; padding: 5px 8px; gap: 6px; min-width: 0; }
+.order-badge {
+  font-family: var(--mono); font-size: 8px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  padding: 2px 6px; border-radius: 2px; flex-shrink: 0;
+}
+.order-badge.move { background: var(--accent-soft); color: var(--accent-text); }
+.order-badge.attack { background: var(--red-soft); color: var(--red); }
+.order-badge.defend { background: var(--green-soft); color: var(--green); }
+.order-badge.scout { background: var(--amber-soft); color: var(--amber); }
+.order-badge.hold { background: var(--elevated); color: var(--t2); }
+.order-badge.build { background: var(--green-soft); color: var(--green); }
+.order-badge.train { background: var(--accent-soft); color: var(--accent-text); }
+.order-badge.stance { background: var(--elevated); color: var(--t2); }
+.order-detail { flex: 1; min-width: 0; }
+.order-desc { font-size: 11px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.order-units { font-family: var(--mono); font-size: 9px; color: var(--t3); }
+.order-meta { display: flex; gap: 6px; align-items: center; margin-top: 1px; }
+.order-unit-names { font-family: var(--mono); font-size: 9px; color: var(--t3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.order-eta { font-family: var(--mono); font-size: 8px; color: var(--t3); padding: 1px 4px; border-radius: 2px; background: var(--elevated); }
+.order-rm {
+  width: 20px; height: 20px; border-radius: 3px;
+  border: none; background: transparent; color: var(--t3);
+  cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  opacity: 0;
+}
+.order-card:hover .order-rm { opacity: 1; }
+.order-rm:hover { background: var(--red-soft); color: var(--red); }
+.orders-empty {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  color: var(--t3); gap: 4px; font-size: 11px; padding: 20px;
+}
+.orders-empty svg { width: 28px; height: 28px; opacity: 0.15; }
+.orders-actions {
+  display: flex; align-items: center; gap: 6px; padding: 4px 10px;
+  border-bottom: 1px solid var(--border-subtle); flex-shrink: 0;
+}
+.orders-actions button {
+  padding: 3px 8px; border-radius: var(--r);
+  border: 1px solid var(--border); background: transparent;
+  color: var(--t2); font-family: var(--sans); font-size: 10px; cursor: pointer;
+}
+.orders-actions button:hover { background: var(--raised); color: var(--t1); }
+
+/* Production compact */
+.prod-group { margin-bottom: 6px; }
+.prod-group-label {
+  font-size: 9px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--t3); margin-bottom: 3px;
+  display: flex; align-items: center; gap: 6px;
+}
+.prod-group-label .ct-input {
+  width: 30px; padding: 1px 3px; border-radius: 2px;
+  border: 1px solid var(--border); background: var(--raised);
+  color: var(--t1); font-family: var(--mono); font-size: 9px;
+}
+.prod-section { display: flex; gap: 3px; flex-wrap: wrap; }
+.prod-btn {
+  padding: 3px 7px; border-radius: 3px;
+  border: 1px solid var(--border); background: var(--raised);
+  color: var(--t2); font-family: var(--mono); font-size: 9px; cursor: pointer;
+  transition: border-color 80ms var(--ease-decel), color 80ms var(--ease-decel), transform 80ms var(--ease-decel);
+}
+.prod-btn:hover { border-color: var(--t3); color: var(--t1); }
+.prod-btn:active { transform: scale(0.93); }
+
+/* ═══ BOTTOM PANEL: FEED ═══ */
+.feed-bar {
+  display: flex; align-items: center; gap: 4px;
+  padding: 0 10px; flex-shrink: 0;
+}
+.feed-bar input {
+  width: 140px; padding: 4px 8px; border-radius: var(--r);
+  border: 1px solid var(--border); background: var(--bg);
+  color: var(--t1); font-family: var(--sans); font-size: 10px; outline: none;
+}
+.feed-bar input:focus { border-color: var(--accent); }
+.feed-bar input::placeholder { color: var(--t3); }
+.feed-filter {
+  padding: 2px 7px; border-radius: 100px;
+  border: 1px solid transparent; background: transparent;
+  color: var(--t3); font-family: var(--sans); font-size: 9px; cursor: pointer;
+  transition: color 80ms var(--ease-decel), border-color 80ms var(--ease-decel);
+}
+.feed-filter:hover { color: var(--t2); }
+.feed-filter.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-text); }
+.feed-scroll { flex: 1; overflow-y: auto; }
+.f-row {
+  display: flex; align-items: center; height: 26px;
+  padding: 0 10px; border-bottom: 1px solid var(--border-subtle);
+  gap: 6px; border-left: 2px solid transparent;
+  transition: background 60ms var(--ease-decel);
+}
+.f-row:hover { background: var(--raised); }
+.f-row.critical { border-left-color: var(--red); background: var(--red-soft); }
+.f-row.critical:hover { background: rgba(231,106,110,0.10); }
+.f-row.warning { border-left-color: var(--amber); }
+.f-row.info { border-left-color: var(--accent); }
+.f-row.routine { border-left-color: transparent; }
+.f-turn { font-family: var(--mono); font-size: 9px; color: var(--t3); width: 20px; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.f-tag {
+  font-size: 7px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.04em; padding: 1px 4px; border-radius: 2px; flex-shrink: 0; width: 38px; text-align: center;
+}
+.f-tag.combat { background: var(--red-dim); color: var(--red); }
+.f-tag.recon { background: var(--amber-dim); color: var(--amber); }
+.f-tag.prod { background: var(--green-dim); color: var(--green); }
+.f-tag.move { background: var(--accent-soft); color: var(--accent-text); }
+.f-tag.system { background: var(--elevated); color: var(--t3); }
+.f-msg { flex: 1; font-size: 11px; color: var(--t2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.f-row.critical .f-msg { color: var(--red); font-weight: 600; }
+.f-row.warning .f-msg { color: var(--amber); font-weight: 500; }
+.f-row.info .f-msg { color: var(--t1); }
+
+/* ═══ CMD BAR ═══ */
+.cmd-bar {
+  height: var(--cmd-h); background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 14px; gap: 10px; flex-shrink: 0; z-index: 10;
+}
+.cmd-queue-count { font-family: var(--mono); font-size: 11px; color: var(--t2); display: flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+.cmd-queue-count .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); display: none; }
+.cmd-queue-count .dot.has-orders { display: block; animation: pulse 1.5s ease infinite; }
+.cmd-spacer { flex: 1; }
+.btn-execute {
+  padding: 8px 24px; border-radius: var(--r-lg);
+  border: none; background: var(--accent); color: #fff;
+  font-family: var(--sans); font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: transform 120ms var(--ease-out-back), opacity 200ms var(--ease-decel), box-shadow 200ms var(--ease-decel);
+}
+.btn-execute:hover { transform: translateY(-1px) scale(1.02); box-shadow: 0 4px 16px rgba(45,114,210,0.3); }
+.btn-execute:active { transform: translateY(0) scale(0.97); }
+.btn-execute:disabled { opacity: 0.3; cursor: not-allowed; transform: none; box-shadow: none; }
+.btn-execute.executing { background: var(--green); animation: exec-pulse 1s var(--ease-standard) infinite; }
+@keyframes exec-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.8; } }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: calc(var(--cmd-h) + 10px); left: 50%;
+  transform: translateX(-50%) translateY(16px) scale(0.95);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 6px 14px;
+  font-family: var(--mono); font-size: 10px; font-weight: 500;
+  color: var(--accent-text); box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+  opacity: 0; pointer-events: none; z-index: 100;
+  transition: opacity 150ms var(--ease-decel), transform 200ms var(--ease-spring);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+.orders-count-badge.bounce { animation: badge-pop 400ms var(--ease-spring); }
+@keyframes badge-pop { 0% { transform: scale(1); } 40% { transform: scale(1.25); } 100% { transform: scale(1); } }
+
+/* ═══ RESPONSIVE ═══ */
+@media (max-width: 1024px) {
+  .workspace {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+    grid-template-areas: "map";
+  }
+  .dock-left, .dock-right, .dock-bottom { display: none; }
+}
+@media (pointer: coarse) and (hover: none) {
+  .unit-row { height: 36px; } .f-row { height: 30px; } .order-rm { opacity: 1; }
+}
+</style>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <div class="sb-brand">C2</div>
+  <div class="sb-sep"></div>
+  <div class="sb-stat"><span>Credits</span><span class="v g" id="s-credits">2,400</span></div>
+  <div class="sb-stat"><span>Power</span><span class="v" id="s-power">100/200</span></div>
+  <div class="sb-sep"></div>
+  <div class="sb-stat"><span>Units</span><span class="v" id="s-units">12</span></div>
+  <div class="sb-stat"><span>Kills</span><span class="v r" id="s-kills">3</span></div>
+  <div class="sb-spacer"></div>
+  <span class="sb-badge sb-phase planning" id="phase">Planning</span>
+  <span class="sb-badge sb-turn" id="turn">Turn 4</span>
+</div>
+
+<!-- WORKSPACE — Dock panel layout -->
+<div class="workspace" id="workspace">
+
+  <!-- LEFT: CONTACTS -->
+  <div class="dock dock-left" id="panel-contacts">
+    <div class="dock-hdr" onclick="toggleDock('panel-contacts')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4-4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      <span class="dock-title">Contacts</span>
+      <span class="dock-badge" id="contacts-badge">12</span>
+      <svg class="dock-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <div class="dock-body">
+      <div class="dock-search"><input type="text" placeholder="Search units..." id="contacts-search" oninput="searchUnits(this.value)"></div>
+      <div class="filter-bar" id="units-toolbar">
+        <button class="filter-chip active" data-f="all">All</button>
+        <button class="filter-chip" data-f="infantry">Inf</button>
+        <button class="filter-chip" data-f="vehicle">Veh</button>
+        <button class="filter-chip" data-f="building">Bld</button>
+      </div>
+      <div class="unit-action-bar" id="unit-action-bar">
+        <span class="sel-count" id="sel-count">0</span>
+        <button class="act-btn" data-act="move" onclick="pickAction('move')" title="Move"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+        <button class="act-btn" data-act="attack" onclick="pickAction('attack')" title="Attack-Move"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></button>
+        <button class="act-btn" data-act="defend" onclick="pickAction('defend')" title="Defend"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5.25-3.5 9.74-8 11-4.5-1.26-8-5.75-8-11V7l8-4z"/></svg></button>
+        <button class="act-btn" data-act="scout" onclick="pickAction('scout')" title="Scout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></button>
+        <button class="act-btn" data-act="guard" onclick="pickAction('guard')" title="Guard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4M12 16h.01"/></svg></button>
+        <div class="act-sep"></div>
+        <button class="act-btn" data-act="stop" onclick="queueStop()" title="Stop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12"/></svg></button>
+        <button class="act-btn" data-act="stance" onclick="pickAction('stance')" title="Set Stance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg></button>
+        <button class="act-deselect" onclick="selectNone()" title="Deselect">&#x2715;</button>
+      </div>
+      <div class="cmd-inline" id="cmd-inline">
+        <div id="cmd-fields"></div>
+        <button class="cmd-go" onclick="queueFromCmd()">Queue</button>
+      </div>
+      <div class="scroll-y" id="unit-list"></div>
+    </div>
+  </div>
+
+  <!-- CENTER: MAP -->
+  <div class="map-center" id="map-frame">
+    <canvas id="map-canvas"></canvas>
+    <div class="map-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div> Friendly</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> Hostile</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div> Resources</div>
+    </div>
+  </div>
+
+  <!-- RIGHT: CONTEXT -->
+  <div class="dock dock-right" id="panel-context">
+    <div class="dock-hdr" onclick="toggleDock('panel-context')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+      <span class="dock-title">Intel & Orders</span>
+      <svg class="dock-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <div class="dock-body">
+      <!-- Sub-tabs: Situation vs Orders -->
+      <div class="panel-tabs">
+        <button class="panel-tab active" data-ptab="situation" onclick="switchPanelTab('situation')">Situation</button>
+        <button class="panel-tab" data-ptab="orders" onclick="switchPanelTab('orders')">Orders <span class="tab-ct" id="orders-badge">0</span></button>
+      </div>
+
+      <!-- TAB: Situation — overview + contacts + CNN -->
+      <div class="panel-tab-view active" id="ptab-situation">
+
+        <!-- Overview: EconomyInfo + MilitaryInfo + PerformanceScore -->
+        <div class="ctx-section" id="ctx-sitrep">
+          <div class="ctx-hdr" onclick="toggleCtx('ctx-sitrep')">
+            <span class="ctx-label">Overview</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="ctx-body" id="overview-body"></div>
+        </div>
+
+        <!-- ISR Contacts — searchable, filterable, scrollable -->
+        <div class="ctx-section" id="ctx-contacts" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+          <div class="ctx-hdr" onclick="toggleCtx('ctx-contacts')">
+            <span class="ctx-label">ISR Contacts</span>
+            <span class="ctx-ct" id="contacts-ct">0</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="ctx-body" style="display:flex;flex-direction:column;overflow:hidden;padding-bottom:0">
+            <div class="contact-filters" id="isr-filters">
+              <button class="filter-chip active" data-cf="all" onclick="filterContacts('all')">All</button>
+              <button class="filter-chip" data-cf="vehicle" onclick="filterContacts('vehicle')">Veh</button>
+              <button class="filter-chip" data-cf="infantry" onclick="filterContacts('infantry')">Inf</button>
+              <button class="filter-chip" data-cf="building" onclick="filterContacts('building')">Bld</button>
+            </div>
+            <div class="scroll-y" id="isr-contact-list" style="flex:1;min-height:0"></div>
+          </div>
+        </div>
+
+        <!-- CNN Tactical Analysis — attack priorities, defensive positions, hotspots -->
+        <div class="ctx-section" id="ctx-cnn">
+          <div class="ctx-hdr" onclick="toggleCtx('ctx-cnn')">
+            <span class="ctx-label">CNN Analysis</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="ctx-body" id="cnn-body"></div>
+        </div>
+
+      </div>
+
+      <!-- TAB: Orders — queue + production (each gets full height) -->
+      <div class="panel-tab-view" id="ptab-orders">
+
+        <!-- Orders Queue -->
+        <div class="ctx-section" id="ctx-orders" style="flex:1;overflow-y:auto">
+          <div class="ctx-hdr" onclick="toggleCtx('ctx-orders')">
+            <span class="ctx-label">Order Queue</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="ctx-body">
+            <div class="orders-actions"><button onclick="clearOrders()">Clear All</button></div>
+            <div id="order-cards"></div>
+            <div class="orders-empty" id="orders-empty">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
+              <span>No orders queued</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Production Queues (from ProductionInfoModel) -->
+        <div class="ctx-section" id="ctx-active-prod">
+          <div class="ctx-hdr" onclick="toggleCtx('ctx-active-prod')">
+            <span class="ctx-label">Active Production</span>
+            <span class="ctx-ct" id="active-prod-ct">0</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="ctx-body" id="active-prod-body"></div>
+        </div>
+
+        <!-- Production Commands — categorized by queue_type with costs -->
+        <div class="ctx-section" id="ctx-prod">
+          <div class="ctx-hdr" onclick="toggleCtx('ctx-prod')">
+            <span class="ctx-label">Build / Train</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="ctx-body" id="prod-body"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM: FEED -->
+  <div class="dock dock-bottom" id="panel-feed">
+    <div class="dock-hdr" onclick="toggleDock('panel-feed')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      <span class="dock-title">Battle Feed</span>
+      <span class="dock-badge" id="feed-badge">12</span>
+      <svg class="dock-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <div class="dock-body">
+      <div class="feed-bar">
+        <input type="text" placeholder="Search events..." id="feed-search" oninput="searchFeed(this.value)">
+        <button class="feed-filter active" data-ff="all" onclick="filterFeed('all')">All</button>
+        <button class="feed-filter" data-ff="combat" onclick="filterFeed('combat')">Combat</button>
+        <button class="feed-filter" data-ff="recon" onclick="filterFeed('recon')">Recon</button>
+        <button class="feed-filter" data-ff="prod" onclick="filterFeed('prod')">Prod</button>
+        <button class="feed-filter" data-ff="system" onclick="filterFeed('system')">Sys</button>
+      </div>
+      <div class="feed-scroll" id="feed-scroll"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- CMD BAR -->
+<div class="cmd-bar">
+  <div class="cmd-queue-count">
+    <div class="dot" id="q-dot"></div>
+    <span id="q-count">0 orders queued</span>
+  </div>
+  <div class="cmd-spacer"></div>
+  <button class="btn-execute" id="btn-exec" disabled onclick="executeTurn()">Execute Turn</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// REAL GAME DATA — modeled on UnitInfoModel, EconomyInfo,
+// MilitaryInfo, ISR Contact, TacticalAnalysis, ProductionInfoModel,
+// PerformanceScore from the OpenRA-RL + MilSim codebase
+// ═══════════════════════════════════════════════════════════════
+
+// Unit type lookup — from game_data.py RA_UNITS / RA_BUILDINGS
+var UNIT_DB = {
+  'e1':  {name:'Rifle Infantry',  category:'infantry', cost:100},
+  'e2':  {name:'Grenadier',       category:'infantry', cost:150},
+  'e3':  {name:'Rocket Soldier',  category:'infantry', cost:300},
+  'e4':  {name:'Flamethrower',    category:'infantry', cost:300},
+  'e6':  {name:'Engineer',        category:'infantry', cost:400},
+  'e7':  {name:'Tanya',           category:'infantry', cost:1800},
+  'spy': {name:'Spy',             category:'infantry', cost:500},
+  'dog': {name:'Attack Dog',      category:'infantry', cost:200},
+  'medi':{name:'Medic',           category:'infantry', cost:200},
+  'shok':{name:'Shock Trooper',   category:'infantry', cost:350},
+  '1tnk':{name:'Light Tank',      category:'vehicle',  cost:700},
+  '2tnk':{name:'Medium Tank',     category:'vehicle',  cost:850},
+  '3tnk':{name:'Heavy Tank',      category:'vehicle',  cost:1150},
+  '4tnk':{name:'Mammoth Tank',    category:'vehicle',  cost:2000},
+  'arty':{name:'Artillery',       category:'vehicle',  cost:850},
+  'v2rl':{name:'V2 Launcher',     category:'vehicle',  cost:900},
+  'jeep':{name:'Ranger',          category:'vehicle',  cost:500},
+  'apc': {name:'APC',             category:'vehicle',  cost:850},
+  'harv':{name:'Ore Truck',       category:'vehicle',  cost:1100},
+  'mcv': {name:'MCV',             category:'vehicle',  cost:2000},
+  'mnly':{name:'Minelayer',       category:'vehicle',  cost:800},
+  'ttnk':{name:'Tesla Tank',      category:'vehicle',  cost:1350},
+  'heli':{name:'Longbow',         category:'aircraft', cost:2000},
+  'hind':{name:'Hind',            category:'aircraft', cost:1200},
+  'mig': {name:'MiG-29',          category:'aircraft', cost:2000},
+  'yak': {name:'Yak',             category:'aircraft', cost:800},
+};
+var BUILDING_DB = {
+  'fact':{name:'Construction Yard', cost:2000, power:0},
+  'powr':{name:'Power Plant',       cost:300,  power:100},
+  'apwr':{name:'Adv. Power Plant',  cost:500,  power:200},
+  'barr':{name:'Soviet Barracks',   cost:500,  power:-20},
+  'tent':{name:'Allied Barracks',   cost:500,  power:-20},
+  'proc':{name:'Ore Refinery',      cost:1400, power:-30},
+  'weap':{name:'War Factory',       cost:2000, power:-30},
+  'dome':{name:'Radar Dome',        cost:1500, power:-40},
+  'fix': {name:'Service Depot',     cost:1200, power:-30},
+  'hpad':{name:'Helipad',           cost:1500, power:-10},
+  'afld':{name:'Airfield',          cost:1500, power:-30},
+  'atek':{name:'Allied Tech',       cost:1500, power:-200},
+  'stek':{name:'Soviet Tech',       cost:1500, power:-200},
+  'sam': {name:'SAM Site',          cost:750,  power:-20},
+  'tsla':{name:'Tesla Coil',        cost:1500, power:-150},
+  'gun': {name:'Turret',            cost:600,  power:0},
+  'ftur':{name:'Flame Tower',       cost:600,  power:0},
+};
+
+// Stance mapping — matches UnitInfoModel.stance (0-3)
+var STANCES = ['HLD','RET','DEF','ATK'];
+
+// ─── Own Units (UnitInfoModel fields) ───
+var UNITS = [
+  {actor_id:42, type:'2tnk', cell_x:14, cell_y:18, hp_percent:0.95, is_idle:false, current_activity:'Move', stance:2, speed:72, attack_range:5120, can_attack:true, experience_level:1, facing:512},
+  {actor_id:43, type:'2tnk', cell_x:12, cell_y:16, hp_percent:0.80, is_idle:true,  current_activity:'', stance:2, speed:72, attack_range:5120, can_attack:true, experience_level:0, facing:256},
+  {actor_id:44, type:'jeep', cell_x:20, cell_y:10, hp_percent:1.00, is_idle:false, current_activity:'AttackMove', stance:3, speed:164, attack_range:4096, can_attack:true, experience_level:0, facing:768},
+  {actor_id:45, type:'jeep', cell_x:18, cell_y:12, hp_percent:0.70, is_idle:true,  current_activity:'', stance:3, speed:164, attack_range:4096, can_attack:true, experience_level:0, facing:640},
+  {actor_id:46, type:'e1',   cell_x:13, cell_y:22, hp_percent:1.00, is_idle:true,  current_activity:'', stance:2, speed:56,  attack_range:3072, can_attack:true, experience_level:0, facing:0},
+  {actor_id:47, type:'e1',   cell_x:13, cell_y:23, hp_percent:1.00, is_idle:true,  current_activity:'', stance:2, speed:56,  attack_range:3072, can_attack:true, experience_level:0, facing:0},
+  {actor_id:48, type:'e1',   cell_x:15, cell_y:21, hp_percent:0.55, is_idle:false, current_activity:'AttackMove', stance:2, speed:56, attack_range:3072, can_attack:true, experience_level:1, facing:384},
+  {actor_id:49, type:'e3',   cell_x:10, cell_y:20, hp_percent:1.00, is_idle:true,  current_activity:'', stance:1, speed:56,  attack_range:6144, can_attack:true, experience_level:0, facing:128},
+  {actor_id:50, type:'e3',   cell_x:11, cell_y:19, hp_percent:0.85, is_idle:true,  current_activity:'', stance:1, speed:56,  attack_range:6144, can_attack:true, experience_level:0, facing:128},
+  {actor_id:51, type:'apc',  cell_x:9,  cell_y:17, hp_percent:1.00, is_idle:true,  current_activity:'', stance:2, speed:128, attack_range:0,    can_attack:false,experience_level:0, facing:512},
+  {actor_id:52, type:'3tnk', cell_x:11, cell_y:15, hp_percent:1.00, is_idle:false, current_activity:'Move', stance:2, speed:64, attack_range:5632, can_attack:true, experience_level:2, facing:512},
+  {actor_id:53, type:'arty', cell_x:8,  cell_y:20, hp_percent:1.00, is_idle:true,  current_activity:'', stance:1, speed:54,  attack_range:8192, can_attack:true, experience_level:0, facing:512},
+];
+
+// ─── Own Buildings (BuildingInfoModel fields) ───
+var BUILDINGS = [
+  {actor_id:100, type:'fact', cell_x:8, cell_y:17, hp_percent:1.0, is_producing:true, production_progress:0.4, producing_item:'weap', is_powered:true, power_amount:0, can_produce:['powr','apwr','barr','tent','proc','weap','dome','fix']},
+  {actor_id:101, type:'powr', cell_x:6, cell_y:18, hp_percent:1.0, is_producing:false, production_progress:0.0, producing_item:'', is_powered:true, power_amount:100, can_produce:[]},
+  {actor_id:102, type:'powr', cell_x:6, cell_y:16, hp_percent:1.0, is_producing:false, production_progress:0.0, producing_item:'', is_powered:true, power_amount:100, can_produce:[]},
+  {actor_id:103, type:'barr', cell_x:9, cell_y:19, hp_percent:0.85, is_producing:true, production_progress:0.72, producing_item:'e3', is_powered:true, power_amount:-20, can_produce:['e1','e2','e3','e4','e6','dog']},
+  {actor_id:104, type:'proc', cell_x:7, cell_y:18, hp_percent:1.0, is_producing:false, production_progress:0.0, producing_item:'', is_powered:true, power_amount:-30, can_produce:[]},
+  {actor_id:105, type:'weap', cell_x:10, cell_y:16, hp_percent:1.0, is_producing:false, production_progress:0.0, producing_item:'', is_powered:true, power_amount:-30, can_produce:['1tnk','2tnk','3tnk','4tnk','arty','v2rl','apc','harv','jeep','mnly']},
+];
+
+// ─── Economy (EconomyInfo fields) ───
+var ECONOMY = {
+  cash: 2400,
+  ore: 1200,
+  power_provided: 200,
+  power_drained: 80,
+  resource_capacity: 2000,
+  harvester_count: 1,
+};
+
+// ─── Military (MilitaryInfo fields) ───
+var MILITARY = {
+  units_killed: 3,
+  units_lost: 1,
+  buildings_killed: 0,
+  buildings_lost: 0,
+  army_value: 8650,
+  active_unit_count: 12,
+  kills_cost: 1150,
+  deaths_cost: 100,
+  assets_value: 14750,
+  experience: 340,
+  order_count: 28,
+};
+
+// ─── ISR Contacts (isr.py Contact dataclass) ───
+var ISR_CONTACTS = [
+  {contact_id:'C-001', actor_id:201, intel_level:4, cell_x:62, cell_y:28, category:'vehicle', unit_type:'1tnk', hp_percent:0.90, stance:3, is_visible:true, turns_since_seen:0, first_seen_turn:3, last_seen_turn:4, turns_observed:2, is_destroyed:false, can_attack:true, speed:113, attack_range:5120, current_activity:'Move'},
+  {contact_id:'C-002', actor_id:202, intel_level:4, cell_x:55, cell_y:30, category:'infantry', unit_type:'e1', hp_percent:1.0, stance:2, is_visible:true, turns_since_seen:0, first_seen_turn:2, last_seen_turn:4, turns_observed:3, is_destroyed:false, can_attack:true, speed:56, attack_range:3072, current_activity:''},
+  {contact_id:'C-003', actor_id:203, intel_level:4, cell_x:56, cell_y:31, category:'infantry', unit_type:'e1', hp_percent:0.85, stance:2, is_visible:true, turns_since_seen:0, first_seen_turn:2, last_seen_turn:4, turns_observed:3, is_destroyed:false, can_attack:true, speed:56, attack_range:3072, current_activity:''},
+  {contact_id:'C-004', actor_id:204, intel_level:4, cell_x:57, cell_y:29, category:'infantry', unit_type:'e3', hp_percent:1.0, stance:1, is_visible:true, turns_since_seen:0, first_seen_turn:3, last_seen_turn:4, turns_observed:2, is_destroyed:false, can_attack:true, speed:56, attack_range:6144, current_activity:'Guard'},
+  {contact_id:'C-005', actor_id:0,   intel_level:3, cell_x:70, cell_y:15, category:'building', unit_type:'', hp_percent:0.0, stance:-1, is_visible:false, turns_since_seen:2, first_seen_turn:1, last_seen_turn:2, turns_observed:1, is_destroyed:false, can_attack:false, speed:0, attack_range:0, current_activity:''},
+  {contact_id:'C-006', actor_id:0,   intel_level:2, cell_x:88, cell_y:18, category:'vehicle', unit_type:'', hp_percent:0.0, stance:-1, is_visible:false, turns_since_seen:3, first_seen_turn:1, last_seen_turn:1, turns_observed:1, is_destroyed:false, can_attack:false, speed:0, attack_range:0, current_activity:''},
+  {contact_id:'C-007', actor_id:205, intel_level:4, cell_x:90, cell_y:12, category:'vehicle', unit_type:'3tnk', hp_percent:1.0, stance:2, is_visible:false, turns_since_seen:1, first_seen_turn:1, last_seen_turn:3, turns_observed:2, is_destroyed:false, can_attack:true, speed:64, attack_range:5632, current_activity:''},
+  {contact_id:'C-008', actor_id:0,   intel_level:1, cell_x:92, cell_y:15, category:'unknown', unit_type:'', hp_percent:0.0, stance:-1, is_visible:false, turns_since_seen:4, first_seen_turn:1, last_seen_turn:1, turns_observed:1, is_destroyed:false, can_attack:false, speed:0, attack_range:0, current_activity:''},
+  {contact_id:'C-009', actor_id:0,   intel_level:0, cell_x:85, cell_y:22, category:'unknown', unit_type:'', hp_percent:0.0, stance:-1, is_visible:false, turns_since_seen:3, first_seen_turn:1, last_seen_turn:1, turns_observed:1, is_destroyed:false, can_attack:false, speed:0, attack_range:0, current_activity:''},
+];
+
+// ─── CNN Tactical Analysis (cnn.py TacticalAnalysis) ───
+var CNN_DATA = {
+  attack_priorities: [
+    {x:62, y:28, score:0.87, target_type:'vehicle', approach_quality:0.72, risk:0.35},
+    {x:55, y:30, score:0.74, target_type:'infantry', approach_quality:0.85, risk:0.22},
+    {x:70, y:15, score:0.61, target_type:'building', approach_quality:0.55, risk:0.48},
+    {x:90, y:12, score:0.53, target_type:'vehicle', approach_quality:0.40, risk:0.72},
+    {x:57, y:29, score:0.48, target_type:'infantry', approach_quality:0.80, risk:0.28},
+  ],
+  defensive_positions: [
+    {x:15, y:20, score:0.91, terrain_advantage:0.85, coverage:0.78, vulnerability:0.12},
+    {x:12, y:18, score:0.84, terrain_advantage:0.72, coverage:0.82, vulnerability:0.18},
+    {x:20, y:15, score:0.76, terrain_advantage:0.68, coverage:0.65, vulnerability:0.25},
+    {x:10, y:22, score:0.70, terrain_advantage:0.60, coverage:0.72, vulnerability:0.30},
+  ],
+  hot_spots: [
+    {x:62, y:28, score:0.92, contributing_factors:['enemy_units','terrain_choke']},
+    {x:55, y:30, score:0.78, contributing_factors:['enemy_units','fog_edge']},
+    {x:70, y:15, score:0.65, contributing_factors:['enemy_buildings','unexplored']},
+  ],
+  recommended_rally_point: [13, 20],
+};
+
+// ─── Active Production (ProductionInfoModel) ───
+var ACTIVE_PRODUCTION = [
+  {queue_type:'Building', item:'weap', progress:0.40, remaining_ticks:180, remaining_cost:1200, paused:false},
+  {queue_type:'Infantry', item:'e3',   progress:0.72, remaining_ticks:45,  remaining_cost:84,   paused:false},
+];
+
+// ─── Performance Score (assessment.py PerformanceScore) ───
+var PERF_SCORE = {
+  scalar: 0.62,
+  dimensions: [
+    {name:'combat',        value:0.71, trend:0.05},
+    {name:'economy',       value:0.68, trend:-0.02},
+    {name:'infrastructure',value:0.55, trend:0.08},
+    {name:'intelligence',  value:0.42, trend:0.10},
+    {name:'composition',   value:0.65, trend:0.0},
+    {name:'tempo',         value:0.58, trend:0.03},
+    {name:'disruption',    value:0.78, trend:0.12},
+    {name:'outcome',       value:0.50, trend:0.0},
+  ],
+};
+
+// ─── Battle Feed (from BattleDamageAssessment + game events) ───
+var FEED_DATA = [
+  {turn:4, sev:'critical', cat:'combat', msg:'Medium Tank #42 destroyed enemy Rifle Squad at (58,26) — kills_cost +100'},
+  {turn:4, sev:'critical', cat:'combat', msg:'Rifle Inf #48 under fire at (54,28) — hp_percent 0.55'},
+  {turn:4, sev:'warning',  cat:'recon',  msg:'ISR: C-001 identified — Light Tank at (62,28), intel_level IDENTIFIED'},
+  {turn:4, sev:'info',     cat:'recon',  msg:'Ranger #44 completed recon sweep sector NE, 2 new contacts'},
+  {turn:3, sev:'routine',  cat:'prod',   msg:'Infantry queue complete: e3 Rocket Soldier delivered'},
+  {turn:3, sev:'info',     cat:'move',   msg:'Ranger #45 arrived at waypoint (18,12)'},
+  {turn:3, sev:'warning',  cat:'recon',  msg:'ISR: C-005 classified — building at (70,15), intel_level CLASSIFIED'},
+  {turn:2, sev:'critical', cat:'combat', msg:'BDA: Rifle Inf #48 took 45% damage at (54,28), units_lost delta +0'},
+  {turn:2, sev:'info',     cat:'move',   msg:'Heavy Tank #52 repositioned to defense line (11,15)'},
+  {turn:2, sev:'routine',  cat:'prod',   msg:'Building queue complete: powr Power Plant online, +100 power'},
+  {turn:1, sev:'routine',  cat:'move',   msg:'All units deployed to staging area'},
+  {turn:1, sev:'routine',  cat:'system', msg:'Game started — Tournament Arena 108x50'},
+];
+
+// ─── State ───
+var selected = new Set(), orders = [], unitFilter = 'all', activeAct = null;
+var feedFilter = 'all', feedSearch = '', unitSearch = '', contactFilter = 'all';
+var lastClickIdx = -1, toastTimer = null;
+
+function unitName(u) {
+  var db = UNIT_DB[u.type];
+  return db ? db.name : u.type.toUpperCase();
+}
+function unitCategory(u) {
+  var db = UNIT_DB[u.type];
+  return db ? db.category : 'vehicle';
+}
+function contactName(c) {
+  if (c.unit_type && UNIT_DB[c.unit_type]) return UNIT_DB[c.unit_type].name;
+  if (c.category === 'building') return 'Structure';
+  if (c.category !== 'unknown') return c.category.charAt(0).toUpperCase() + c.category.slice(1);
+  return 'Unknown';
+}
+function contactConfidence(c) {
+  var base = c.intel_level / 4.0;
+  var decay = Math.min(c.turns_since_seen * 0.1, 0.6);
+  return Math.max(0.0, base - decay);
+}
+
+// ═══ TOAST ═══
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { t.classList.remove('show'); }, 1800);
+}
+function bounceBadge() {
+  var b = document.getElementById('orders-badge');
+  b.classList.remove('bounce'); void b.offsetWidth; b.classList.add('bounce');
+  switchPanelTab('orders');
+}
+
+// ═══ DOCK PANELS ═══
+function toggleDock(id) {
+  document.getElementById(id).classList.toggle('collapsed');
+  updateGrid(); setTimeout(renderMap, 60);
+}
+function updateGrid() {
+  var ws = document.getElementById('workspace');
+  var lc = document.getElementById('panel-contacts').classList.contains('collapsed');
+  var rc = document.getElementById('panel-context').classList.contains('collapsed');
+  var bc = document.getElementById('panel-feed').classList.contains('collapsed');
+  ws.style.gridTemplateColumns = (lc ? '28px' : '220px') + ' 1fr ' + (rc ? '28px' : '300px');
+  ws.style.gridTemplateRows = '1fr ' + (bc ? '28px' : '160px');
+}
+function toggleCtx(id) { document.getElementById(id).classList.toggle('collapsed'); }
+function switchPanelTab(tab) {
+  document.querySelectorAll('.panel-tab').forEach(function(b) { b.classList.toggle('active', b.dataset.ptab === tab); });
+  document.querySelectorAll('.panel-tab-view').forEach(function(v) { v.classList.remove('active'); });
+  document.getElementById('ptab-' + tab).classList.add('active');
+}
+
+// ═══ LEFT PANEL: OWN UNITS ═══
+function searchUnits(q) { unitSearch = q.toLowerCase(); renderUnits(); }
+
+function getVisibleUnits() {
+  return UNITS.filter(function(u) {
+    var cat = unitCategory(u);
+    if (unitFilter !== 'all' && cat !== unitFilter) return false;
+    if (unitSearch) {
+      var n = unitName(u).toLowerCase();
+      if (n.indexOf(unitSearch) === -1 && ('#' + u.actor_id).indexOf(unitSearch) === -1 && u.type.indexOf(unitSearch) === -1) return false;
+    }
+    return true;
+  });
+}
+
+function renderUnits() {
+  var list = document.getElementById('unit-list');
+  list.innerHTML = '';
+  var visible = getVisibleUnits();
+  visible.forEach(function(u, idx) {
+    var el = document.createElement('div');
+    el.className = 'unit-row' + (selected.has(u.actor_id) ? ' selected' : '');
+    var hp = Math.round(u.hp_percent * 100);
+    var hpCls = hp > 70 ? 'hp-ok' : hp > 35 ? 'hp-warn' : 'hp-crit';
+    var st = u.stance >= 0 && u.stance < STANCES.length ? STANCES[u.stance] : '?';
+    el.innerHTML =
+      '<div class="unit-check"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 6l3 3 5-5"/></svg></div>' +
+      '<div class="unit-info"><span class="unit-name">' + unitName(u) + '</span><span class="unit-id">#' + u.actor_id + '</span></div>' +
+      '<div class="unit-stance">' + st + '</div>' +
+      '<div class="unit-hp-bar"><div class="unit-hp-fill ' + hpCls + '" style="width:' + hp + '%"></div></div>';
+    el.addEventListener('click', function(e) {
+      if (e.shiftKey && lastClickIdx >= 0) {
+        var start = Math.min(lastClickIdx, idx), end = Math.max(lastClickIdx, idx);
+        for (var i = start; i <= end; i++) selected.add(visible[i].actor_id);
+      } else if (e.ctrlKey || e.metaKey) {
+        if (selected.has(u.actor_id)) selected.delete(u.actor_id); else selected.add(u.actor_id);
+      } else {
+        if (selected.has(u.actor_id) && selected.size === 1) selected.delete(u.actor_id);
+        else { selected.clear(); selected.add(u.actor_id); }
+      }
+      lastClickIdx = idx;
+      renderUnits(); updateToolbar();
+    });
+    list.appendChild(el);
+  });
+  document.getElementById('contacts-badge').textContent = visible.length;
+}
+
+document.querySelectorAll('#units-toolbar .filter-chip').forEach(function(b) {
+  b.onclick = function() {
+    document.querySelectorAll('#units-toolbar .filter-chip').forEach(function(c) { c.classList.remove('active'); });
+    b.classList.add('active');
+    unitFilter = b.dataset.f;
+    renderUnits();
+  };
+});
+
+function selectNone() { selected.clear(); lastClickIdx = -1; closeCmd(); renderUnits(); updateToolbar(); }
+
+function updateToolbar() {
+  var actionBar = document.getElementById('unit-action-bar');
+  var count = document.getElementById('sel-count');
+  var hasSelection = selected.size > 0;
+  actionBar.classList.toggle('visible', hasSelection);
+  count.textContent = selected.size + ' sel';
+  if (!hasSelection) closeCmd();
+}
+
+function pickAction(act) {
+  activeAct = act;
+  document.querySelectorAll('.act-btn').forEach(function(b) { b.classList.toggle('active', b.dataset.act === act); });
+  var cmd = document.getElementById('cmd-inline');
+  var fields = document.getElementById('cmd-fields');
+  if (act === 'stop') { queueStop(); return; }
+  if (act === 'stance') {
+    fields.innerHTML = '<label>Stance</label><select id="cmd-stance"><option value="0">HoldFire</option><option value="1">ReturnFire</option><option value="2" selected>Defend</option><option value="3">AttackAnything</option></select>';
+    cmd.classList.add('open'); return;
+  }
+  fields.innerHTML = '<label>X</label><input type="number" id="cmd-x" placeholder="X" min="0" max="107"><label>Y</label><input type="number" id="cmd-y" placeholder="Y" min="0" max="49">';
+  cmd.classList.add('open');
+  var fx = document.getElementById('cmd-x'); if (fx) fx.focus();
+}
+function closeCmd() {
+  document.getElementById('cmd-inline').classList.remove('open');
+  document.querySelectorAll('.act-btn').forEach(function(b) { b.classList.remove('active'); });
+  activeAct = null;
+}
+function queueStop() {
+  orders.push({type:'stop', units:Array.from(selected)});
+  closeCmd(); syncQueue(); showToast('Stop queued'); bounceBadge();
+}
+function queueFromCmd() {
+  if (!activeAct) return;
+  if (activeAct === 'stance') {
+    var stVal = +document.getElementById('cmd-stance').value;
+    orders.push({type:'set_stance', units:Array.from(selected), stance:stVal});
+  } else {
+    var x = +document.getElementById('cmd-x').value, y = +document.getElementById('cmd-y').value;
+    if (x < 0 || y < 0) return;
+    var actionMap = {move:'move', attack:'attack_move', defend:'defend', scout:'scout', guard:'guard'};
+    orders.push({type:actionMap[activeAct] || activeAct, units:Array.from(selected), target_x:x, target_y:y});
+  }
+  closeCmd(); syncQueue();
+  showToast(activeAct.charAt(0).toUpperCase() + activeAct.slice(1) + ' queued'); bounceBadge();
+}
+
+// ═══ RIGHT PANEL — OVERVIEW (EconomyInfo + MilitaryInfo + PerformanceScore) ═══
+function renderOverview() {
+  var el = document.getElementById('overview-body');
+  var pw = ECONOMY.power_provided, pd = ECONOMY.power_drained;
+  var pwCls = pw >= pd ? 'g' : 'r';
+  var kdr = MILITARY.units_lost > 0 ? (MILITARY.units_killed / MILITARY.units_lost).toFixed(1) : MILITARY.units_killed + '.0';
+  var avgHp = UNITS.length > 0 ? Math.round(UNITS.reduce(function(s,u){return s + u.hp_percent;},0) / UNITS.length * 100) : 0;
+  var idleCount = UNITS.filter(function(u){return u.is_idle;}).length;
+
+  var html = '<div class="kpi-grid">' +
+    '<div class="kpi-cell"><span class="kpi-k">Cash</span><span class="kpi-v g">$' + ECONOMY.cash.toLocaleString() + '</span></div>' +
+    '<div class="kpi-cell"><span class="kpi-k">Ore</span><span class="kpi-v">' + ECONOMY.ore.toLocaleString() + '</span></div>' +
+    '<div class="kpi-cell"><span class="kpi-k">Power</span><span class="kpi-v ' + pwCls + '">' + pw + '/' + pd + '</span></div>' +
+    '<div class="kpi-cell"><span class="kpi-k">Army Val</span><span class="kpi-v">$' + MILITARY.army_value.toLocaleString() + '</span></div>' +
+    '<div class="kpi-cell"><span class="kpi-k">K/D</span><span class="kpi-v">' + kdr + '</span></div>' +
+    '<div class="kpi-cell"><span class="kpi-k">Kills $</span><span class="kpi-v g">$' + MILITARY.kills_cost.toLocaleString() + '</span></div>' +
+    '<div class="kpi-cell"><span class="kpi-k">Readiness</span><span class="kpi-v ' + (avgHp > 70 ? 'g' : avgHp > 40 ? 'a' : 'r') + '">' + avgHp + '%</span></div>' +
+    '<div class="kpi-cell"><span class="kpi-k">Idle</span><span class="kpi-v ' + (idleCount > 3 ? 'a' : '') + '">' + idleCount + '/' + UNITS.length + '</span></div>' +
+    '<div class="kpi-cell"><span class="kpi-k">Harvesters</span><span class="kpi-v">' + ECONOMY.harvester_count + '</span></div>' +
+  '</div>';
+
+  // Performance dimensions as compact bars
+  html += '<div style="margin-top:6px">';
+  PERF_SCORE.dimensions.forEach(function(d) {
+    var pct = Math.round(d.value * 100);
+    var col = pct > 65 ? 'var(--green)' : pct > 40 ? 'var(--amber)' : 'var(--red)';
+    var trend = d.trend > 0 ? ' +' : d.trend < 0 ? ' ' : '';
+    var trendV = d.trend !== 0 ? (d.trend * 100).toFixed(0) : '';
+    html += '<div class="sitrep-row" style="margin-bottom:1px">' +
+      '<span class="sitrep-label">' + d.name.charAt(0).toUpperCase() + d.name.slice(1,4) + '</span>' +
+      '<div class="sitrep-bar-wrap"><div class="sitrep-bar" style="width:' + pct + '%;background:' + col + '"></div></div>' +
+      '<span class="sitrep-val" style="width:30px;font-size:9px">' + pct + (trendV ? '<span style="color:' + (d.trend > 0 ? 'var(--green)' : 'var(--red)') + ';font-size:7px">' + trend + trendV + '</span>' : '') + '</span>' +
+    '</div>';
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+// ═══ RIGHT PANEL — ISR CONTACTS ═══
+function filterContacts(f) {
+  contactFilter = f;
+  document.querySelectorAll('#isr-filters .filter-chip').forEach(function(b) { b.classList.toggle('active', b.dataset.cf === f); });
+  renderContacts();
+}
+function renderContacts() {
+  var list = document.getElementById('isr-contact-list');
+  var INTEL_LABELS = ['PENDING','DETECTED','TRACKED','CLASSIFIED','IDENTIFIED'];
+  var active = ISR_CONTACTS.filter(function(c) { return !c.is_destroyed; });
+  if (contactFilter !== 'all') active = active.filter(function(c) { return c.category === contactFilter; });
+
+  list.innerHTML = active.map(function(c) {
+    var stale = c.turns_since_seen > 5;
+    var pipCls = 'contact-pip lv' + c.intel_level + (stale ? ' stale' : '');
+    var conf = contactConfidence(c);
+    var confPct = Math.round(conf * 100);
+    var confCol = confPct > 60 ? 'var(--green)' : confPct > 30 ? 'var(--amber)' : 'var(--t3)';
+    var label = contactName(c);
+    var meta = INTEL_LABELS[c.intel_level] || '?';
+    if (c.turns_since_seen > 0) meta += ' T-' + c.turns_since_seen;
+    return '<div class="contact-row">' +
+      '<div class="' + pipCls + '"></div>' +
+      '<div class="contact-info"><div class="contact-type">' + label + '</div>' +
+      '<div class="contact-meta"><span>' + c.contact_id + '</span><span>' + meta + '</span>' +
+      (c.hp_percent > 0 ? '<span>HP ' + Math.round(c.hp_percent * 100) + '%</span>' : '') +
+      '</div></div>' +
+      '<div class="contact-pos">' + c.cell_x + ',' + c.cell_y + '</div>' +
+    '</div>';
+  }).join('');
+
+  document.getElementById('contacts-ct').textContent = active.length;
+}
+
+// ═══ RIGHT PANEL — CNN ANALYSIS ═══
+function renderCNN() {
+  var el = document.getElementById('cnn-body');
+  var html = '';
+
+  // Hot spots
+  if (CNN_DATA.hot_spots.length) {
+    html += '<div class="cnn-sub">Threat Hotspots</div>';
+    CNN_DATA.hot_spots.forEach(function(h, i) {
+      var pct = Math.round(h.score * 100);
+      html += '<div class="cnn-row">' +
+        '<span class="cnn-rank">#' + (i+1) + '</span>' +
+        '<span class="cnn-label">(' + h.x + ',' + h.y + ') ' + h.contributing_factors.join(', ') + '</span>' +
+        '<span class="cnn-score" style="color:var(--red)">' + pct + '</span>' +
+        '<div class="cnn-bar"><div class="cnn-fill" style="width:' + pct + '%;background:var(--red)"></div></div>' +
+      '</div>';
+    });
+  }
+
+  // Attack priorities (up to 15 from TacticalAnalysis)
+  if (CNN_DATA.attack_priorities.length) {
+    html += '<div class="cnn-sub">Attack Priorities</div>';
+    CNN_DATA.attack_priorities.forEach(function(a, i) {
+      var pct = Math.round(a.score * 100);
+      var riskPct = Math.round(a.risk * 100);
+      html += '<div class="cnn-row">' +
+        '<span class="cnn-rank">#' + (i+1) + '</span>' +
+        '<span class="cnn-label">(' + a.x + ',' + a.y + ') ' + a.target_type + '</span>' +
+        '<span class="cnn-score" style="color:var(--amber)">' + pct + '</span>' +
+        '<div class="cnn-bar"><div class="cnn-fill" style="width:' + pct + '%;background:var(--amber)"></div></div>' +
+      '</div>';
+    });
+  }
+
+  // Defensive positions (up to 20 from TacticalAnalysis)
+  if (CNN_DATA.defensive_positions.length) {
+    html += '<div class="cnn-sub">Defensive Positions</div>';
+    CNN_DATA.defensive_positions.forEach(function(d, i) {
+      var pct = Math.round(d.score * 100);
+      html += '<div class="cnn-row">' +
+        '<span class="cnn-rank">#' + (i+1) + '</span>' +
+        '<span class="cnn-label">(' + d.x + ',' + d.y + ') cov:' + Math.round(d.coverage*100) + ' vul:' + Math.round(d.vulnerability*100) + '</span>' +
+        '<span class="cnn-score" style="color:var(--green)">' + pct + '</span>' +
+        '<div class="cnn-bar"><div class="cnn-fill" style="width:' + pct + '%;background:var(--green)"></div></div>' +
+      '</div>';
+    });
+  }
+
+  // Rally point
+  if (CNN_DATA.recommended_rally_point) {
+    var rp = CNN_DATA.recommended_rally_point;
+    html += '<div style="margin-top:4px;font-size:9px;color:var(--t3)">Rally Point: <span style="font-family:var(--mono);color:var(--accent-text)">(' + rp[0] + ',' + rp[1] + ')</span></div>';
+  }
+
+  el.innerHTML = html;
+}
+
+// ═══ ORDERS TAB — ACTIVE PRODUCTION (ProductionInfoModel) ═══
+function renderActiveProduction() {
+  var el = document.getElementById('active-prod-body');
+  var ct = document.getElementById('active-prod-ct');
+  ct.textContent = ACTIVE_PRODUCTION.length;
+  if (!ACTIVE_PRODUCTION.length) {
+    el.innerHTML = '<div style="font-size:10px;color:var(--t3);padding:4px 0">No active production</div>';
+    return;
+  }
+  el.innerHTML = ACTIVE_PRODUCTION.map(function(p) {
+    var pct = Math.round(p.progress * 100);
+    var db = UNIT_DB[p.item] || BUILDING_DB[p.item];
+    var label = db ? db.name : p.item.toUpperCase();
+    return '<div class="prod-queue-item">' +
+      '<span class="prod-q-type">' + p.queue_type.slice(0,3) + '</span>' +
+      '<span class="prod-q-name">' + label + '</span>' +
+      '<div class="prod-q-bar"><div class="prod-q-fill" style="width:' + pct + '%"></div></div>' +
+      '<span class="prod-q-pct">' + pct + '%</span>' +
+    '</div>';
+  }).join('');
+}
+
+// ═══ ORDERS TAB — PRODUCTION COMMANDS (categorized with costs) ═══
+function renderProductionCommands() {
+  var el = document.getElementById('prod-body');
+  var cats = [
+    {label:'Structures', items:['powr','apwr','barr','tent','proc','weap','dome','fix','hpad','afld','sam','tsla','gun','ftur'], db:BUILDING_DB, action:'build'},
+    {label:'Infantry', items:['e1','e2','e3','e4','e6','spy','dog','shok','medi'], db:UNIT_DB, action:'train'},
+    {label:'Vehicles', items:['1tnk','2tnk','3tnk','4tnk','arty','v2rl','apc','jeep','harv','mnly','mcv'], db:UNIT_DB, action:'train'},
+    {label:'Aircraft', items:['heli','hind','mig','yak'], db:UNIT_DB, action:'train'},
+  ];
+  el.innerHTML = cats.map(function(cat) {
+    return '<div class="prod-group">' +
+      '<div class="prod-group-label">' + cat.label + '</div>' +
+      '<div class="prod-section">' + cat.items.map(function(key) {
+        var info = cat.db[key];
+        if (!info) return '';
+        return '<button class="prod-btn" onclick="queueProd(\'' + cat.action + '\',\'' + key + '\')" title="' + info.name + ' — $' + info.cost + '">' +
+          key.toUpperCase() + '<span style="font-size:7px;color:var(--t3);margin-left:2px">$' + info.cost + '</span></button>';
+      }).join('') + '</div></div>';
+  }).join('');
+}
+function queueProd(action, item) {
+  var db = action === 'build' ? BUILDING_DB : UNIT_DB;
+  var info = db[item];
+  var label = info ? info.name : item.toUpperCase();
+  orders.push({type:action, item_type:item, name:label});
+  syncQueue(); showToast(label + ' queued'); bounceBadge();
+}
+
+// ═══ ORDER QUEUE ═══
+function syncQueue() {
+  var cards = document.getElementById('order-cards');
+  var empty = document.getElementById('orders-empty');
+  var dot = document.getElementById('q-dot');
+  var ct = document.getElementById('q-count');
+  var btn = document.getElementById('btn-exec');
+  var badge = document.getElementById('orders-badge');
+
+  ct.textContent = orders.length + ' order' + (orders.length !== 1 ? 's' : '') + ' queued';
+  btn.disabled = orders.length === 0;
+  dot.classList.toggle('has-orders', orders.length > 0);
+  badge.textContent = orders.length;
+  badge.classList.toggle('empty', orders.length === 0);
+
+  if (!orders.length) { cards.innerHTML = ''; empty.style.display = 'flex'; renderOverview(); return; }
+  empty.style.display = 'none';
+  cards.innerHTML = orders.map(function(o, i) {
+    var desc = '', unitLabel = '', unitNames = '', eta = '';
+    var otype = o.type;
+    if (otype === 'move') { desc = 'Move to (' + o.target_x + ',' + o.target_y + ')'; eta = '~2 turns'; }
+    else if (otype === 'attack_move') { desc = 'Attack-move (' + o.target_x + ',' + o.target_y + ')'; eta = '~1-3 turns'; otype = 'attack'; }
+    else if (otype === 'defend') { desc = 'Defend (' + o.target_x + ',' + o.target_y + ')'; eta = 'Ongoing'; }
+    else if (otype === 'scout') { desc = 'Recon (' + o.target_x + ',' + o.target_y + ')'; eta = '~2 turns'; }
+    else if (otype === 'guard') { desc = 'Guard area (' + o.target_x + ',' + o.target_y + ')'; eta = 'Ongoing'; }
+    else if (otype === 'stop') { desc = 'Stop / hold position'; eta = 'Immediate'; otype = 'hold'; }
+    else if (otype === 'set_stance') { desc = 'Stance: ' + STANCES[o.stance]; eta = 'Immediate'; otype = 'stance'; }
+    else if (o.item_type) { desc = (o.name || o.item_type) + (o.count > 1 ? ' x' + o.count : ''); eta = '~3 turns'; otype = o.type === 'build' ? 'build' : 'train'; }
+    if (o.units && o.units.length) {
+      unitLabel = o.units.length + ' unit' + (o.units.length > 1 ? 's' : '');
+      var names = o.units.slice(0, 2).map(function(uid) {
+        var u = UNITS.find(function(u) { return u.actor_id === uid; });
+        return u ? unitName(u) + ' #' + u.actor_id : '#' + uid;
+      });
+      if (o.units.length > 2) names.push('+' + (o.units.length - 2));
+      unitNames = names.join(', ');
+    }
+    return '<div class="order-card">' +
+      '<div class="order-stripe ' + otype + '"></div>' +
+      '<div class="order-body">' +
+        '<span class="order-badge ' + otype + '">' + otype + '</span>' +
+        '<div class="order-detail"><div class="order-desc">' + desc + '</div>' +
+        '<div class="order-meta">' +
+        (unitLabel ? '<span class="order-units">' + unitLabel + '</span>' : '') +
+        (eta ? '<span class="order-eta">' + eta + '</span>' : '') +
+        '</div>' +
+        (unitNames ? '<div class="order-unit-names">' + unitNames + '</div>' : '') +
+        '</div>' +
+        '<button class="order-rm" onclick="rmOrder(' + i + ')"><svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 2l8 8M10 2l-8 8"/></svg></button>' +
+      '</div></div>';
+  }).join('');
+  renderOverview();
+}
+function rmOrder(i) { orders.splice(i, 1); syncQueue(); }
+function clearOrders() { orders = []; syncQueue(); }
+
+// ═══ STATUS BAR UPDATE ═══
+function updateStatusBar() {
+  document.getElementById('s-credits').textContent = '$' + ECONOMY.cash.toLocaleString();
+  var pwOk = ECONOMY.power_provided >= ECONOMY.power_drained;
+  var pwEl = document.getElementById('s-power');
+  pwEl.textContent = ECONOMY.power_provided + '/' + ECONOMY.power_drained;
+  pwEl.className = 'v' + (pwOk ? '' : ' r');
+  document.getElementById('s-units').textContent = MILITARY.active_unit_count;
+  document.getElementById('s-kills').textContent = MILITARY.units_killed;
+}
+
+// ═══ EXECUTE TURN ═══
+function executeTurn() {
+  if (!orders.length) return;
+  var btn = document.getElementById('btn-exec');
+  var ph = document.getElementById('phase');
+  var tn = document.getElementById('turn');
+  ph.textContent = 'Executing'; ph.className = 'sb-badge sb-phase executing';
+  btn.classList.add('executing'); btn.textContent = 'Executing...'; btn.disabled = true;
+  setTimeout(function() {
+    var t = parseInt(tn.textContent.replace('Turn ', '')) + 1;
+    tn.textContent = 'Turn ' + t;
+    ph.textContent = 'Planning'; ph.className = 'sb-badge sb-phase planning';
+    btn.classList.remove('executing'); btn.textContent = 'Execute Turn';
+    orders = []; syncQueue();
+  }, 1500);
+}
+
+// ═══ FEED — searchable, filterable ═══
+function searchFeed(q) { feedSearch = q.toLowerCase(); renderFeed(); }
+function renderFeed() {
+  var scroll = document.getElementById('feed-scroll');
+  var data = FEED_DATA.filter(function(e) {
+    if (feedFilter !== 'all' && e.cat !== feedFilter) return false;
+    if (feedSearch && e.msg.toLowerCase().indexOf(feedSearch) === -1) return false;
+    return true;
+  });
+  scroll.innerHTML = data.map(function(e) {
+    var tagLabel = e.cat.charAt(0).toUpperCase() + e.cat.slice(1);
+    return '<div class="f-row ' + e.sev + '">' +
+      '<span class="f-turn">T' + e.turn + '</span>' +
+      '<span class="f-tag ' + e.cat + '">' + tagLabel + '</span>' +
+      '<span class="f-msg">' + e.msg + '</span>' +
+    '</div>';
+  }).join('');
+  document.getElementById('feed-badge').textContent = data.length;
+}
+function filterFeed(f) {
+  feedFilter = f;
+  document.querySelectorAll('.feed-filter').forEach(function(b) { b.classList.toggle('active', b.dataset.ff === f); });
+  renderFeed();
+}
+
+// ═══ MAP — procedural terrain, full-bleed canvas ═══
+var MAP_W = 108, MAP_H = 50;
+function _mh(x, y, s) {
+  var n = Math.sin(x * 127.1 + y * 311.7 + s * 73.3) * 43758.5453;
+  return n - Math.floor(n);
+}
+function _mn(x, y, sc, s) {
+  var sx = x / sc, sy = y / sc;
+  var ix = Math.floor(sx), iy = Math.floor(sy);
+  var fx = sx - ix, fy = sy - iy;
+  fx *= fx * (3 - 2 * fx); fy *= fy * (3 - 2 * fy);
+  return (1-fy)*((1-fx)*_mh(ix,iy,s)+fx*_mh(ix+1,iy,s))+fy*((1-fx)*_mh(ix,iy+1,s)+fx*_mh(ix+1,iy+1,s));
+}
+function _mfbm(x, y, s) {
+  return _mn(x,y,18,s)*0.5 + _mn(x,y,8,s+5)*0.3 + _mn(x,y,4,s+10)*0.2;
+}
+
+function buildMapMarkers() {
+  var markers = [];
+  UNITS.forEach(function(u) {
+    markers.push({x:u.cell_x, y:u.cell_y, t:'f', k:'u'});
+  });
+  BUILDINGS.forEach(function(b) {
+    markers.push({x:b.cell_x, y:b.cell_y, t:'f', k:'b'});
+  });
+  ISR_CONTACTS.forEach(function(c) {
+    if (c.is_destroyed) return;
+    if (c.category === 'building') markers.push({x:c.cell_x, y:c.cell_y, t:'e', k:'b'});
+    else markers.push({x:c.cell_x, y:c.cell_y, t:'e', k:'u'});
+  });
+  return markers;
+}
+
+function renderMap() {
+  var canvas = document.getElementById('map-canvas');
+  var frame = document.getElementById('map-frame');
+  if (!canvas || !frame) return;
+  var ctx = canvas.getContext('2d');
+  var dpr = window.devicePixelRatio || 1;
+  var w = frame.clientWidth, h = frame.clientHeight;
+  if (w < 1 || h < 1) return;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+  ctx.scale(dpr, dpr);
+
+  var cell = Math.max(w / MAP_W, h / MAP_H);
+  var ox = (w - MAP_W * cell) / 2, oy = (h - MAP_H * cell) / 2;
+  var startCol = Math.floor(-ox / cell) - 1, endCol = Math.ceil((w - ox) / cell) + 1;
+  var startRow = Math.floor(-oy / cell) - 1, endRow = Math.ceil((h - oy) / cell) + 1;
+
+  var cs = getComputedStyle(document.documentElement);
+  var cAccent = cs.getPropertyValue('--accent').trim() || '#2D72D2';
+  var cAccentT = cs.getPropertyValue('--accent-text').trim() || '#8ABBFF';
+  var cRed = cs.getPropertyValue('--red').trim() || '#E76A6E';
+  var cAmber = cs.getPropertyValue('--amber').trim() || '#EC9A3C';
+
+  for (var row = startRow; row < endRow; row++) {
+    for (var col = startCol; col < endCol; col++) {
+      var px = ox + col * cell, py = oy + row * cell;
+      var inB = col >= 0 && col < MAP_W && row >= 0 && row < MAP_H;
+      var ed = inB ? Math.min(col, MAP_W - 1 - col, row, MAP_H - 1 - row) : -1;
+      var elev = _mfbm(col, row, 47), moist = _mfbm(col, row, 89);
+      var rc = MAP_H * 0.42 + Math.sin(col * 0.055) * 7 + Math.sin(col * 0.14) * 2.5;
+      var rd = Math.abs(row - rc), rw = 1.8 + Math.sin(col * 0.03) * 0.6;
+      var r, g, b;
+      if (!inB) { var v = 11 + elev * 5; r = Math.round(v + 1); g = Math.round(v); b = Math.round(v - 1); }
+      else if (ed < 3) { var v = 16 + ed * 4 + elev * 6; r = Math.round(v + 2); g = Math.round(v); b = Math.round(v - 1); }
+      else if (rd < rw && elev < 0.62) { var d = 1 - rd / rw; r = Math.round(10 + d * 5); g = Math.round(20 + d * 10); b = Math.round(35 + d * 18); }
+      else if (elev > 0.68 || ed < 6) { var v = 22 + elev * 14 + (ed < 6 ? (ed - 3) * 2 : 0); r = Math.round(v + 3); g = Math.round(v + 1); b = Math.round(v - 2); }
+      else if (moist > 0.52 && elev > 0.3) { var sh = 0.7 + elev * 0.35; r = Math.round(14 * sh); g = Math.round(26 * sh); b = Math.round(12 * sh); }
+      else { var sh = 0.8 + elev * 0.25; r = Math.round(20 * sh); g = Math.round(30 * sh); b = Math.round(16 * sh); }
+      ctx.fillStyle = 'rgb(' + r + ',' + g + ',' + b + ')';
+      ctx.fillRect(px, py, cell + 1, cell + 1);
+    }
+  }
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)'; ctx.lineWidth = 0.5;
+  for (var gx = 0; gx <= MAP_W; gx += 10) { var lx = ox + gx * cell; ctx.beginPath(); ctx.moveTo(lx, Math.max(0, oy)); ctx.lineTo(lx, Math.min(h, oy + MAP_H * cell)); ctx.stroke(); }
+  for (var gy = 0; gy <= MAP_H; gy += 10) { var ly = oy + gy * cell; ctx.beginPath(); ctx.moveTo(Math.max(0, ox), ly); ctx.lineTo(Math.min(w, ox + MAP_W * cell), ly); ctx.stroke(); }
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1;
+  ctx.strokeRect(ox, oy, MAP_W * cell, MAP_H * cell);
+
+  var fs = Math.max(7, Math.min(10, cell * 0.7));
+  ctx.fillStyle = 'rgba(255,255,255,0.12)';
+  ctx.font = '500 ' + fs + 'px "IBM Plex Mono", monospace';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (var gx = 0; gx < MAP_W; gx += 10) ctx.fillText(gx.toString(), ox + gx * cell + cell / 2, oy + 2);
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  for (var gy = 10; gy < MAP_H; gy += 10) ctx.fillText(gy.toString(), ox + 3, oy + gy * cell + cell / 2);
+
+  var sz = Math.max(3.5, cell * 0.32);
+  var mapMarkers = buildMapMarkers();
+  mapMarkers.forEach(function(u) {
+    var cx = ox + u.x * cell + cell / 2, cy = oy + u.y * cell + cell / 2;
+    ctx.shadowBlur = 0;
+    if (u.t === 'f' && u.k === 'u') {
+      ctx.shadowColor = cAccentT; ctx.shadowBlur = 6;
+      ctx.beginPath(); ctx.arc(cx, cy, sz, 0, Math.PI * 2);
+      ctx.fillStyle = cAccent; ctx.fill(); ctx.shadowBlur = 0;
+      ctx.strokeStyle = cAccentT; ctx.lineWidth = 1; ctx.stroke();
+    } else if (u.t === 'f' && u.k === 'b') {
+      ctx.shadowColor = cAccentT; ctx.shadowBlur = 4;
+      ctx.fillStyle = cAccent; ctx.fillRect(cx - sz, cy - sz, sz * 2, sz * 2);
+      ctx.shadowBlur = 0; ctx.strokeStyle = cAccentT; ctx.lineWidth = 1;
+      ctx.strokeRect(cx - sz, cy - sz, sz * 2, sz * 2);
+    } else if (u.t === 'e' && u.k === 'u') {
+      ctx.shadowColor = cRed; ctx.shadowBlur = 6;
+      ctx.beginPath(); ctx.moveTo(cx, cy - sz); ctx.lineTo(cx + sz, cy);
+      ctx.lineTo(cx, cy + sz); ctx.lineTo(cx - sz, cy); ctx.closePath();
+      ctx.fillStyle = cRed; ctx.fill(); ctx.shadowBlur = 0;
+      ctx.strokeStyle = '#FF9194'; ctx.lineWidth = 1; ctx.stroke();
+    } else if (u.t === 'e' && u.k === 'b') {
+      ctx.shadowColor = cRed; ctx.shadowBlur = 4;
+      ctx.fillStyle = '#CD4246'; ctx.fillRect(cx - sz, cy - sz, sz * 2, sz * 2);
+      ctx.shadowBlur = 0; ctx.strokeStyle = cRed; ctx.lineWidth = 1;
+      ctx.strokeRect(cx - sz, cy - sz, sz * 2, sz * 2);
+    }
+  });
+  ctx.shadowBlur = 0;
+}
+window.addEventListener('resize', function() { renderMap(); });
+
+// ═══ INIT ═══
+renderMap(); renderUnits(); renderOverview(); renderContacts(); renderCNN();
+renderActiveProduction(); renderProductionCommands(); renderFeed(); syncQueue();
+updateStatusBar();
+</script>
