@@ -7,6 +7,10 @@ Approach 3: Function-Calling — OpenAI-compatible tool calling loop
 All three share the same CommanderBridge that wraps the existing Commander
 and integrates spatial, ISR, game knowledge, memory, and assessment.
 
+Every LLM-driven approach here is provider-agnostic and defaults to a
+local Ollama daemon (``$OLLAMA_HOST``, default http://localhost:11434) —
+no API key required. See :mod:`milsim.llm_provider`.
+
 Usage (structured text — simplest):
     bridge = CommanderBridge(commander, isr, scenario)
     await bridge.start()
@@ -16,8 +20,12 @@ Usage (structured text — simplest):
         orders = bridge.parse_orders(llm_response)
         result_text = await bridge.execute(orders)
 
+Usage (structured text, driven by Ollama — no key needed):
+    tc = StructuredTextCommander(bridge, llm=build_llm())
+    aar = await tc.play_game()
+
 Usage (function-calling):
-    fc = FunctionCallingCommander(bridge, llm_config)
+    fc = FunctionCallingCommander(bridge, llm=build_llm(model="llama3.1:8b"))
     aar = await fc.play_game()
 
 Usage (MCP server):
@@ -45,6 +53,7 @@ from milsim.game_knowledge import GameKnowledge
 from milsim.memory import TacticalMemory
 from milsim.assessment import PerformanceAssessor
 from milsim.cnn import TacticalCNN
+from milsim.llm_provider import LLMClient, LLMUnavailableError, build_llm
 
 try:
     from openra_env.bench_export import build_bench_export
@@ -238,15 +247,82 @@ Example:
 """
 
 
+TEXT_SYSTEM_PROMPT = """You are a military commander playing Command & Conquer: Red Alert.
+
+Read the briefing and reply with orders — one order per line, nothing else.
+Use exactly the order syntax listed at the bottom of the briefing.
+No prose, no markdown, no explanation. If no order is warranted, reply HOLD.
+
+Doctrine: deploy the MCV first, build power → barracks → refinery → war factory,
+scout with cheap infantry, mass a force before attacking, then attack-move it
+onto the enemy base."""
+
+
 class StructuredTextCommander:
     """Approach 2: Text-in, text-out LLM interface.
 
     Formats the full game state as structured text and parses
     natural-language-ish orders back into TacticalOrders.
+
+    Pass an :class:`~milsim.llm_provider.LLMClient` (or nothing, to get the
+    default local Ollama client) to have it drive the game itself via
+    :meth:`play_game`.
     """
 
-    def __init__(self, bridge: CommanderBridge):
+    def __init__(
+        self,
+        bridge: CommanderBridge,
+        llm: Optional[LLMClient] = None,
+        system_prompt: str = "",
+    ):
         self._bridge = bridge
+        self._llm = llm
+        self._system_prompt = system_prompt or TEXT_SYSTEM_PROMPT
+
+    @property
+    def llm(self) -> LLMClient:
+        """The LLM client, defaulting to local Ollama on first use."""
+        if self._llm is None:
+            self._llm = build_llm()
+        return self._llm
+
+    async def decide(self, briefing_text: Optional[str] = None) -> list[TacticalOrder]:
+        """Ask the LLM for this turn's orders."""
+        text = briefing_text if briefing_text is not None else self.format_briefing()
+        response = await self.llm.complete_text(
+            [
+                {"role": "system", "content": self._system_prompt},
+                {"role": "user", "content": text},
+            ]
+        )
+        return self.parse_orders(response)
+
+    async def play_game(self, max_turns: int = 60, verbose: bool = True) -> str:
+        """Play a full game with the configured LLM. Returns the AAR."""
+        llm = self.llm
+        if verbose:
+            print(f"MilSim — structured text commander via {llm.config.describe()}")
+        # Fail fast with an actionable message rather than mid-game.
+        await llm.ensure_available()
+
+        if self._bridge.turn == 0:
+            await self._bridge.start()
+
+        turn = 0
+        while not self._bridge.game_over and turn < max_turns:
+            turn += 1
+            orders = await self.decide()
+            if verbose:
+                print(f"T{turn}: {len(orders)} order(s) from {llm.config.model}")
+            result = (
+                await self._bridge.execute(orders)
+                if orders
+                else await self._bridge.advance()
+            )
+            if verbose:
+                print(result)
+
+        return self._bridge.get_aar()
 
     def format_briefing(self, briefing: Optional[CommanderBriefing] = None) -> str:
         b = briefing or self._bridge.get_briefing()
@@ -820,11 +896,26 @@ class FunctionCallingCommander:
     Manages a tool-calling conversation where the LLM issues commands
     through structured function calls. Each turn the LLM receives a
     briefing, calls tools to issue orders, then calls advance_turn.
+
+    Provider-agnostic: with no arguments it drives a local Ollama model
+    (``$OLLAMA_HOST``, default http://localhost:11434), no API key needed.
     """
 
-    def __init__(self, bridge: CommanderBridge):
+    def __init__(
+        self,
+        bridge: CommanderBridge,
+        llm: Optional[LLMClient] = None,
+    ):
         self._bridge = bridge
+        self._llm = llm
         self._pending_orders: list[TacticalOrder] = []
+
+    @property
+    def llm(self) -> LLMClient:
+        """The LLM client, defaulting to local Ollama on first use."""
+        if self._llm is None:
+            self._llm = build_llm()
+        return self._llm
 
     def get_tools(self) -> list[dict]:
         return MILSIM_TOOLS
@@ -987,6 +1078,110 @@ Building codes: powr (power), tent/barr (barracks), proc (refinery), weap (war f
             return self._bridge._cnn.render_threat_ascii(max_cols=width)
 
         return f"Unknown tool: {name}"
+
+    async def play_game(
+        self,
+        max_turns: int = 60,
+        max_steps: int = 0,
+        verbose: bool = True,
+        keep_last_messages: int = 40,
+    ) -> str:
+        """Run the tool-calling loop end to end. Returns the AAR.
+
+        Works against any OpenAI-compatible endpoint; by default that is a
+        local Ollama daemon and no API key is involved.
+        """
+        llm = self.llm
+        if verbose:
+            print(f"MilSim — function-calling commander via {llm.config.describe()}")
+        # Fail fast: a down daemon or missing model is reported before the
+        # first turn, with the command that fixes it.
+        await llm.ensure_available()
+
+        if self._bridge.turn == 0:
+            await self._bridge.start()
+
+        tools = self.get_tools()
+        messages: list[dict] = [
+            {"role": "system", "content": self.get_system_prompt()},
+            {
+                "role": "user",
+                "content": "Game started. Call get_briefing to see the initial situation.",
+            },
+        ]
+
+        steps = 0
+        limit = max_steps or max_turns * 5
+        while not self._bridge.game_over and steps < limit and self._bridge.turn < max_turns:
+            steps += 1
+            try:
+                message = await llm.complete(messages, tools=tools)
+            except LLMUnavailableError as exc:
+                raise LLMUnavailableError(
+                    f"{exc}\n  (failed on step {steps}; the game is left at turn "
+                    f"{self._bridge.turn})"
+                ) from None
+
+            messages.append(dict(message))
+            tool_calls = message.get("tool_calls") or []
+
+            if not tool_calls:
+                content = (message.get("content") or "").strip()
+                if verbose and content:
+                    print(f"LLM: {content[:200]}")
+                messages.append({
+                    "role": "user",
+                    "content": (
+                        "You must act through the tools. Call get_briefing to see "
+                        "the situation, or advance_turn to execute queued orders."
+                    ),
+                })
+                continue
+
+            for call in tool_calls:
+                fn = call.get("function") or {}
+                fn_name = fn.get("name", "")
+                raw_args = fn.get("arguments") or "{}"
+                if isinstance(raw_args, str):
+                    try:
+                        fn_args = json.loads(raw_args or "{}")
+                    except json.JSONDecodeError:
+                        fn_args = {}
+                        result_text = (
+                            f"Could not parse arguments for {fn_name}: {raw_args[:200]}. "
+                            "Send valid JSON arguments."
+                        )
+                        messages.append({
+                            "role": "tool",
+                            "tool_call_id": call.get("id", ""),
+                            "content": result_text,
+                        })
+                        continue
+                else:
+                    fn_args = dict(raw_args)
+
+                if verbose:
+                    print(f"  Tool: {fn_name}({fn_args})")
+                try:
+                    result_text = await self.handle_tool_call(fn_name, fn_args)
+                except (KeyError, TypeError, ValueError) as exc:
+                    result_text = f"Tool {fn_name} failed: {exc.__class__.__name__}: {exc}"
+
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": call.get("id", ""),
+                    "content": result_text[:4000],
+                })
+
+            if len(messages) > keep_last_messages + 20:
+                tail = messages[-keep_last_messages:]
+                # Never start the tail with an orphaned tool result — some
+                # endpoints reject a tool message with no preceding call.
+                while tail and tail[0].get("role") == "tool":
+                    tail.pop(0)
+                messages = [messages[0]] + tail
+
+        return self._bridge.get_aar()
 
 
 # ── Approach 1: MCP Server ────────────────────────────────────────

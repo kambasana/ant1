@@ -187,6 +187,7 @@ body {
 .dock-left .dock-rail { border-right: 1px solid var(--border); }
 .dock-right .dock-rail { border-left: 1px solid var(--border); }
 .dock-bottom .dock-rail { display: none; }
+.dock-bottom.collapsed .dock-rail { display: flex; align-items: center; padding: 0 4px; }
 .rail-btn, .rail-expand {
   position: relative; width: 28px; height: 28px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
@@ -1324,7 +1325,11 @@ function loadConfig() {
     });
   } catch (e) { /* ignore malformed storage */ }
 }
-function resetConfig() { CONFIG = cloneCfg(DEFAULTS); applyConfig(); saveConfig(); renderSettings(); showToast('Settings reset'); }
+function resetConfig() {
+  CONFIG = cloneCfg(DEFAULTS);
+  applyConfig(); saveConfig(); renderSettings(); refreshKeyHints();
+  showToast('Settings reset');
+}
 
 // Layout settings become CSS custom properties, so the stylesheet holds
 // no fixed dimensions either.
@@ -1534,13 +1539,15 @@ function mountMenus() {
 // pair up on data-tab. Adding a menu anywhere is markup only — the
 // delegated listener below picks it up with no new JS.
 var TAB_HOOKS = {
-  left:  function(k) { if (k === 'build') renderBuildView(); },
-  right: function(k) {
+  left:  function(k) {
+    if (k === 'build') renderBuildView();
     if (k === 'production') renderProduction();
+    if (k === 'cap') renderCapacity();
+  },
+  right: function(k) {
     if (k === 'alerts') renderAlerts();
     if (k === 'force') renderForce();
     if (k === 'settings') renderSettings();
-    if (k === 'cap') renderCapacity();
   },
   prod:  function() { renderProduction(); },
   intel: function() {},
@@ -1732,8 +1739,9 @@ function selectUnits(list, why) {
 }
 function selectIdle()    { selectUnits(idleUnits(), 'idle units'); }
 function selectDamaged() { selectUnits(damagedUnits(), 'damaged units'); }
-function goProduction(sub) { switchTab('right', 'production'); switchTab('prod', sub); }
-function goTracks() { switchTab('right', 'intel'); switchTab('intel', 'tracks'); }
+function goProduction(sub) { showPanel('left', 'production'); switchTab('prod', sub); }
+function goCapacity() { showPanel('left', 'cap'); }
+function goTracks() { showPanel('right', 'intel'); switchTab('intel', 'tracks'); }
 
 // Each item: {tone, label, detail, count, act}. Order is severity.
 function attentionItems() {
@@ -1758,11 +1766,11 @@ function attentionItems() {
   });
   if (ECONOMY.harvester_count < cfg('thresholds','minHarvesters')) out.push({
     tone:'warn', icon:'harvest', label:'Thin on harvesters', detail:'Income is one loss away from stalling',
-    count:String(ECONOMY.harvester_count), act:"goProduction('cap')",
+    count:String(ECONOMY.harvester_count), act:'goCapacity()',
   });
   if (head < cfg('thresholds','powerMargin')) out.push({
     tone: head < 0 ? 'bad' : 'warn', icon:'power', label:'Power margin low', detail:'New structures may brown out',
-    count:(head >= 0 ? '+' : '') + head, act:"goProduction('cap')",
+    count:(head >= 0 ? '+' : '') + head, act:'goCapacity()',
   });
   if (newContacts.length) out.push({
     tone:'', icon:'contact', label:'New contacts', detail:'Seen this turn', count:String(newContacts.length), act:'goTracks()',

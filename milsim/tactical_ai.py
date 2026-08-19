@@ -6,14 +6,20 @@ Implements a doctrine-driven decision loop that:
   3. Issues tactical orders
   4. Reviews results and adapts
 
-This is the slot where an LLM commander plugs in — replace
-the rule-based `decide()` method with LLM inference over the
-structured briefing text.
+This is the slot where an LLM commander plugs in: `LLMTacticalAI`
+subclasses `TacticalAI` and replaces the rule-based `decide()` with LLM
+inference over the same structured briefing text. Any OpenAI-compatible
+provider works, and the default is a local Ollama daemon
+($OLLAMA_HOST, default http://localhost:11434) with no API key.
 
-Usage:
+Usage (doctrine / rule-based):
     ai = TacticalAI(commander, isr, scenario_runner)
     await ai.play_game()
     print(ai.get_aar())
+
+Usage (LLM commander, local Ollama by default):
+    ai = LLMTacticalAI(commander, isr, scenario_runner)
+    await ai.play_game()          # clear error up front if Ollama is down
 """
 
 from dataclasses import dataclass, field
@@ -35,6 +41,7 @@ from milsim.game_knowledge import GameKnowledge
 from milsim.memory import TacticalMemory
 from milsim.assessment import PerformanceAssessor
 from milsim.cnn import TacticalCNN
+from milsim.llm_provider import LLMClient, LLMError, build_llm
 
 try:
     from openra_env.bench_export import build_bench_export
@@ -167,7 +174,7 @@ class TacticalAI:
                                                f"[{ev.category}] {ev.event}")
 
             # Decide and act
-            orders = self.decide(briefing, intel)
+            orders = await self.decide_async(briefing, intel)
 
             if orders:
                 self._log(f"T{self._turn} [{self._state.phase.value}] "
@@ -217,13 +224,24 @@ class TacticalAI:
 
         return self.get_aar()
 
+    async def decide_async(
+        self, briefing: CommanderBriefing, intel: IntelSummary
+    ) -> list[TacticalOrder]:
+        """Async decision hook used by `play_game`.
+
+        The rule-based AI just defers to `decide()`; `LLMTacticalAI`
+        overrides this to run inference. Subclasses that need I/O should
+        override this rather than `decide()`.
+        """
+        return self.decide(briefing, intel)
+
     def decide(
         self, briefing: CommanderBriefing, intel: IntelSummary
     ) -> list[TacticalOrder]:
         """Make tactical decisions based on current situation.
 
-        This is the method to replace with LLM inference.
-        The briefing contains all structured data the LLM needs.
+        The doctrine (rule-based) decision. `LLMTacticalAI` replaces it
+        with LLM inference over the same structured briefing text.
         """
         orders = []
 
@@ -611,3 +629,167 @@ class TacticalAI:
             lines.extend(["", self._scenario.get_exercise_aar()])
 
         return "\n".join(lines)
+
+
+# ── LLM-driven commander ──────────────────────────────────────────
+
+LLM_SYSTEM_PROMPT = """You are a battalion commander playing Command & Conquer: Red Alert.
+
+You receive a structured briefing each turn and reply with orders — one order
+per line, using EXACTLY the order syntax in the briefing. No prose, no
+markdown, no code fences, no explanations. Reply WAIT if nothing should be done.
+
+Doctrine:
+1. ESTABLISH — deploy the MCV immediately to create the construction yard
+2. BUILD — power plant, barracks, refinery, war factory, then more power
+3. SCOUT — send one or two cheap infantry to find the enemy base
+4. MASS — build a mixed force before committing to an attack
+5. ATTACK — attack-move the whole force onto the enemy position
+6. ADAPT — counter enemy composition, replace losses, exploit success
+
+Never queue a duplicate of something already in production. Keep power positive."""
+
+
+class LLMTacticalAI(TacticalAI):
+    """`TacticalAI` with `decide()` replaced by LLM inference.
+
+    The LLM sees the same structured briefing the rule-based AI sees, and
+    answers in the same order syntax the structured-text commander parses.
+
+    Provider comes from `milsim.llm_provider` — by default a local Ollama
+    daemon at $OLLAMA_HOST (http://localhost:11434) with no API key. If the
+    daemon is unreachable or the model is not pulled, `play_game()` raises
+    `LLMUnavailableError` with the command that fixes it, before turn 1.
+
+    Args:
+        llm: an LLMClient; omit to build one from config/environment.
+        fallback_to_doctrine: if the LLM fails *mid-game* (or returns
+            nothing parseable), fall back to the rule-based decision for
+            that turn instead of aborting the run. The pre-flight
+            reachability check always raises regardless of this flag.
+    """
+
+    def __init__(
+        self,
+        commander: Commander,
+        isr: ISRManager,
+        scenario: Optional[ScenarioRunner] = None,
+        max_turns: int = 60,
+        verbose: bool = True,
+        llm: Optional[LLMClient] = None,
+        system_prompt: str = "",
+        fallback_to_doctrine: bool = True,
+    ):
+        super().__init__(
+            commander=commander,
+            isr=isr,
+            scenario=scenario,
+            max_turns=max_turns,
+            verbose=verbose,
+        )
+        self._llm = llm
+        self._system_prompt = system_prompt or LLM_SYSTEM_PROMPT
+        self._fallback_to_doctrine = fallback_to_doctrine
+        self._llm_turns = 0
+        self._llm_failures = 0
+        self._phase_updated_turn = -1
+
+    @property
+    def llm(self) -> LLMClient:
+        """The LLM client, defaulting to local Ollama on first use."""
+        if self._llm is None:
+            self._llm = build_llm(verbose=False)
+        return self._llm
+
+    async def play_game(self) -> str:
+        """Check the provider is reachable, then play as usual."""
+        llm = self.llm
+        self._log(f"LLM commander: {llm.config.describe()}")
+        if self._verbose:
+            print(f"MilSim — LLM tactical AI via {llm.config.describe()}")
+        # Raises LLMUnavailableError with an actionable fix if the daemon
+        # is down or the model is not installed.
+        await llm.ensure_available()
+        return await super().play_game()
+
+    def build_prompt(self, briefing: CommanderBriefing, intel: IntelSummary) -> str:
+        """The user-turn text: briefing + intel + phase + order syntax."""
+        from milsim.llm_commander import ORDER_SCHEMA
+
+        parts = [self._commander.format_briefing_text(briefing)]
+
+        intel_report = self._isr.format_intel_report()
+        if intel_report:
+            parts.append(intel_report)
+
+        parts.append(
+            f"OPERATIONAL PHASE: {self._state.phase.value.upper()} "
+            f"(turn {self._turn} of {self._max_turns}, "
+            f"{intel.active_contacts} active enemy contacts)"
+        )
+        if self._spatial.has_data:
+            parts.append(self._spatial.format_spatial_sitrep())
+
+        parts.append(ORDER_SCHEMA)
+        return "\n\n".join(p for p in parts if p)
+
+    async def decide_async(
+        self, briefing: CommanderBriefing, intel: IntelSummary
+    ) -> list[TacticalOrder]:
+        """Ask the LLM for this turn's orders, in the shared order syntax."""
+        from milsim.llm_commander import StructuredTextCommander
+
+        # Keep phase tracking alive so prompts and the AAR stay meaningful.
+        # (Guarded below so a doctrine fallback cannot double-advance it.)
+        self._update_phase(briefing, intel)
+
+        messages = [
+            {"role": "system", "content": self._system_prompt},
+            {"role": "user", "content": self.build_prompt(briefing, intel)},
+        ]
+
+        try:
+            response = await self.llm.complete_text(messages)
+        except LLMError as exc:
+            self._llm_failures += 1
+            self._log(f"LLM call failed: {exc}")
+            if not self._fallback_to_doctrine:
+                raise
+            self._log("Falling back to doctrine for this turn.")
+            return self.decide(briefing, intel)
+
+        orders = StructuredTextCommander.parse_orders(response)
+        self._llm_turns += 1
+
+        if not orders:
+            preview = " ".join(response.split())[:120]
+            self._log(f"LLM issued no parseable orders ({preview!r})")
+            if self._fallback_to_doctrine:
+                return self.decide(briefing, intel)
+        else:
+            self._log(f"LLM orders: {len(orders)} ({self.llm.config.model})")
+
+        return orders
+
+    def _update_phase(self, briefing: CommanderBriefing, intel: IntelSummary) -> None:
+        """Advance the phase state machine at most once per turn.
+
+        `decide_async` needs the current phase for the prompt, and the
+        doctrine fallback calls `decide()` which updates it again — without
+        this guard a turn could skip a phase.
+        """
+        if self._phase_updated_turn == self._turn:
+            return
+        self._phase_updated_turn = self._turn
+        super()._update_phase(briefing, intel)
+
+    def get_aar(self) -> str:
+        provider = self._llm.config.describe() if self._llm else "(not initialized)"
+        header = [
+            "=== LLM COMMANDER ===",
+            f"Provider: {provider}",
+            f"LLM turns: {self._llm_turns} | failed calls: {self._llm_failures}",
+            f"Doctrine fallback: {'on' if self._fallback_to_doctrine else 'off'}",
+            "",
+        ]
+        return "\n".join(header) + super().get_aar()
