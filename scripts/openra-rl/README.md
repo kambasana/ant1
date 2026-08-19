@@ -100,3 +100,36 @@ Six tests in `openra-rl/tests` (`test_config.py::TestBotTypeMapping` and
 `--recurse-submodules` leaves `openra-rl/OpenRA/` empty and those six fail
 with `FileNotFoundError`; the other 641 pass. Add `--recurse-submodules` if
 you want that suite fully green — it is a large fetch and nothing else needs it.
+
+## Open: `--difficulty normal` is not a valid engine tier
+
+`docker_manager.py` passes the CLI difficulty through verbatim as
+`BOT_TYPE={difficulty}` (line ~193), and `cli/main.py` offers
+`easy | normal | hard` with **normal as the default**. But `config.yaml`
+documents the tiers as `beginner / easy / medium / hard / brutal` — `normal`
+is not among them, so a default invocation sets `BOT_TYPE=normal`, a value the
+engine does not list.
+
+`easy` and `hard` happen to be valid; the default is not. Deliberately not
+"fixed" here: whether the engine silently accepts `normal`, falls back, or
+errors is unverified, and inventing a mapping (`normal` → `medium`) would
+change opponent behaviour on a guess. This needs an upstream answer.
+
+## Open: no enemy is ever visible
+
+`milsim/tests/test_isr.py` and `test_spatial.py` fail against a live server
+with `0 total contacts` and `0 corridors found`. Both need an opponent to
+observe.
+
+Established:
+
+- `AI_SLOT=Multi0` and `BOT_TYPE` are both set on the container.
+- Setting a *valid* tier (`--difficulty hard`) does **not** change the result,
+  so the tier defect above is not the cause. This was tested, not assumed.
+- The default map is `singles.oramap`, 128×128.
+- The server log carries no bot or player-setup lines to confirm a spawn
+  either way.
+
+Unresolved: whether the bot never spawns, or spawns and is simply never
+scouted on a map that size within the test's turn budget. Those have
+different fixes and the evidence so far does not separate them.
