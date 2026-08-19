@@ -279,19 +279,6 @@ body {
 .cnn-bar { width: 40px; height: 2px; border-radius: 1px; background: var(--elevated); flex-shrink: 0; }
 .cnn-fill { height: 100%; border-radius: 1px; }
 
-/* ═══ PRODUCTION — categorized ═══ */
-.prod-queue-item {
-  display: flex; align-items: center; gap: 6px; padding: 4px 0;
-  font-size: 10px; border-bottom: 1px solid var(--border-subtle);
-}
-.prod-queue-item:last-child { border-bottom: none; }
-.prod-q-type { font-family: var(--mono); font-size: 7px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;
-  padding: 1px 4px; border-radius: 2px; background: var(--elevated); color: var(--t3); flex-shrink: 0; width: 32px; text-align: center; }
-.prod-q-name { font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.prod-q-bar { width: 40px; height: 3px; border-radius: 1px; background: var(--elevated); overflow: hidden; flex-shrink: 0; }
-.prod-q-fill { height: 100%; border-radius: 1px; background: var(--green); }
-.prod-q-pct { font-family: var(--mono); font-size: 9px; color: var(--t3); width: 24px; text-align: right; font-variant-numeric: tabular-nums; flex-shrink: 0; }
-
 /* ═══ RIGHT PANEL: CONTEXT — collapsible sections ═══ */
 .ctx-section { border-bottom: 1px solid var(--border-subtle); }
 .ctx-section:last-child { border-bottom: none; }
@@ -314,6 +301,7 @@ body {
 .ctx-section.collapsed .ctx-hdr svg { transform: rotate(-90deg); }
 .ctx-body { padding: 0 10px 8px; }
 .ctx-section.collapsed .ctx-body { display: none; }
+.dock-right .ctx-section { flex-shrink: 0; }
 
 /* KPI rows */
 .kpi-row { display: flex; align-items: baseline; gap: 4px; padding: 2px 0; }
@@ -402,28 +390,6 @@ body {
   color: var(--t2); font-family: var(--sans); font-size: 10px; cursor: pointer;
 }
 .orders-actions button:hover { background: var(--raised); color: var(--t1); }
-
-/* Production compact */
-.prod-group { margin-bottom: 6px; }
-.prod-group-label {
-  font-size: 9px; font-weight: 600; text-transform: uppercase;
-  letter-spacing: 0.06em; color: var(--t3); margin-bottom: 3px;
-  display: flex; align-items: center; gap: 6px;
-}
-.prod-group-label .ct-input {
-  width: 30px; padding: 1px 3px; border-radius: 2px;
-  border: 1px solid var(--border); background: var(--raised);
-  color: var(--t1); font-family: var(--mono); font-size: 9px;
-}
-.prod-section { display: flex; gap: 3px; flex-wrap: wrap; }
-.prod-btn {
-  padding: 3px 7px; border-radius: 3px;
-  border: 1px solid var(--border); background: var(--raised);
-  color: var(--t2); font-family: var(--mono); font-size: 9px; cursor: pointer;
-  transition: border-color 80ms var(--ease-decel), color 80ms var(--ease-decel), transform 80ms var(--ease-decel);
-}
-.prod-btn:hover { border-color: var(--t3); color: var(--t1); }
-.prod-btn:active { transform: scale(0.93); }
 
 /* ═══ BOTTOM PANEL: FEED ═══ */
 .feed-bar {
@@ -534,6 +500,14 @@ body {
 .seg-btn:hover { color: var(--t2); background: rgba(255,255,255,0.03); }
 .seg-btn.active { background: var(--accent-soft); color: var(--accent-text); }
 .seg-btn + .seg-btn { border-left: 1px solid var(--border); }
+/* Size variant for nested/second-level menus */
+.seg-ctrl.sm { --seg-h: 18px; --seg-font: 8px; }
+.seg-ctrl.sm .seg-ct { --ct-dot: 3px; }
+/* Row wrapper when a control sits in a panel body rather than a header */
+.seg-sub {
+  display: flex; padding: 5px 8px; flex-shrink: 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
 
 /* ═══ DESIGN SYSTEM: Inline Count Indicator ═══
  * Composable badge for any tab/segment/header.
@@ -568,40 +542,87 @@ body {
 .tab-view { flex: 1; display: none; flex-direction: column; overflow: hidden; min-height: 0; }
 .tab-view.active { display: flex; }
 
-/* ═══ BUILD VIEW — production grid ═══ */
-.build-scroll { flex: 1; overflow-y: auto; padding: 6px 8px; min-height: 0; }
-.build-cat-label {
+/* ═══ DESIGN SYSTEM: Group Label ═══
+ * Section heading used inside any scrolling panel body.
+ */
+.grp-label {
   font-size: 8px; font-weight: 600; text-transform: uppercase;
-  letter-spacing: 0.06em; color: var(--t3); margin: 6px 0 3px; padding-bottom: 2px;
+  letter-spacing: 0.06em; color: var(--t3); margin: 8px 0 4px; padding-bottom: 2px;
   border-bottom: 1px solid var(--border-subtle);
+  display: flex; align-items: center; gap: 5px;
 }
-.build-cat-label:first-child { margin-top: 0; }
-.build-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+.grp-label:first-child { margin-top: 0; }
+.ct-pill {
+  font-family: var(--mono); font-size: 8px; font-weight: 600;
+  padding: 0 4px; border-radius: 100px;
+  background: var(--accent-soft); color: var(--accent-text);
+  font-variant-numeric: tabular-nums;
+}
+.ct-pill.dim { background: var(--elevated); color: var(--t3); }
+.grp-note { margin-left: auto; font-family: var(--mono); font-size: 8px; color: var(--t3); text-transform: none; letter-spacing: 0; }
+
+/* ═══ BUILD VIEW — catalog grid ═══
+ * Columns auto-fill, so the grid reflows with panel width and any
+ * number of categories/items from the data can be added without
+ * touching layout code.
+ */
+.build-scroll { flex: 1; overflow-y: auto; padding: 6px 8px; min-height: 0; }
+.build-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 3px; }
 .build-item {
   display: flex; align-items: center; gap: 4px;
   padding: 4px 6px; border-radius: 3px;
   border: 1px solid var(--border); background: var(--raised);
   color: var(--t2); font-family: var(--mono); font-size: 9px;
-  cursor: pointer; min-width: 0; overflow: hidden;
+  cursor: pointer; min-width: 0; overflow: hidden; text-align: left;
   transition: border-color 80ms var(--ease-decel), color 80ms var(--ease-decel), transform 80ms var(--ease-decel);
 }
 .build-item:hover { border-color: var(--t3); color: var(--t1); }
 .build-item:active { transform: scale(0.95); }
 .build-item-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; font-weight: 500; }
 .build-item-cost { font-size: 7px; color: var(--t3); flex-shrink: 0; }
+/* No powered facility can produce it — BuildingInfoModel.can_produce */
+.build-item.locked { opacity: 0.32; cursor: not-allowed; border-style: dashed; }
+.build-item.locked:hover { border-color: var(--border); color: var(--t2); }
+.build-item.locked:active { transform: none; }
+/* Producible but cost exceeds EconomyInfo.cash */
+.build-item.poor { border-color: var(--border-subtle); }
+.build-item.poor .build-item-cost { color: var(--red); }
 
-/* Active production in build view */
-.build-active { padding: 4px 8px; border-bottom: 1px solid var(--border-subtle); flex-shrink: 0; }
-.build-active-label {
-  font-size: 8px; font-weight: 600; text-transform: uppercase;
-  letter-spacing: 0.06em; color: var(--t3); margin-bottom: 3px;
-  display: flex; align-items: center; gap: 4px;
+/* ═══ PRODUCTION MONITOR — ProductionInfoModel + producing buildings ═══ */
+.prod-mon { flex: 1; overflow-y: auto; padding: 8px; min-height: 0; }
+.prod-job {
+  background: var(--raised); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 6px 8px; margin-bottom: 4px;
 }
-.build-active-label .ct-pill {
-  font-family: var(--mono); font-size: 8px; font-weight: 600;
-  padding: 0 4px; border-radius: 100px;
-  background: var(--accent-soft); color: var(--accent-text);
+.prod-job.paused { border-color: var(--amber); background: var(--amber-soft); }
+.prod-job-top { display: flex; align-items: center; gap: 6px; }
+.prod-q-type {
+  font-family: var(--mono); font-size: 7px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.03em;
+  padding: 1px 4px; border-radius: 2px; background: var(--elevated);
+  color: var(--t3); flex-shrink: 0; min-width: 32px; text-align: center;
 }
+.prod-job-name { font-size: 11px; font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.prod-job-pct { font-family: var(--mono); font-size: 10px; font-weight: 600; color: var(--green); font-variant-numeric: tabular-nums; }
+.prod-job-bar { height: 3px; border-radius: 1px; background: var(--elevated); overflow: hidden; margin-top: 5px; }
+.prod-job-fill { height: 100%; border-radius: 1px; background: var(--green); transition: width 300ms var(--ease-decel); }
+.prod-job.paused .prod-job-fill { background: var(--amber); }
+.prod-job-meta { display: flex; gap: 10px; margin-top: 4px; font-family: var(--mono); font-size: 8px; color: var(--t3); }
+.prod-empty { font-size: 10px; color: var(--t3); padding: 6px 0; }
+
+/* Facility rows — BuildingInfoModel producers */
+.fac-row {
+  display: flex; align-items: center; gap: 6px; padding: 4px 0;
+  font-size: 10px; border-bottom: 1px solid var(--border-subtle);
+}
+.fac-row:last-child { border-bottom: none; }
+.fac-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+.fac-dot.busy { background: var(--green); }
+.fac-dot.idle { background: var(--t3); }
+.fac-dot.down { background: var(--red); }
+.fac-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fac-state { font-family: var(--mono); font-size: 8px; color: var(--t3); }
+.fac-state.idle { color: var(--amber); }
 
 /* ═══ RESPONSIVE ═══ */
 @media (max-width: 1024px) {
@@ -637,17 +658,17 @@ body {
   <!-- LEFT PANEL: segmented [Units | Build | Orders] -->
   <div class="dock dock-left" id="panel-contacts">
     <div class="dock-hdr" onclick="event.target.closest('.seg-ctrl') || toggleDock('panel-contacts')">
-      <div class="seg-ctrl">
-        <button class="seg-btn active" data-lt="units" onclick="event.stopPropagation();switchLeftTab('units')">Units <span class="seg-ct" id="seg-units-ct"></span></button>
-        <button class="seg-btn" data-lt="build" onclick="event.stopPropagation();switchLeftTab('build')">Build <span class="seg-ct" id="seg-build-ct"></span></button>
-        <button class="seg-btn" data-lt="orders" onclick="event.stopPropagation();switchLeftTab('orders')">Orders <span class="seg-ct" id="seg-orders-ct"></span></button>
+      <div class="seg-ctrl" data-group="left">
+        <button class="seg-btn active" data-tab="units">Units <span class="seg-ct" id="seg-units-ct"></span></button>
+        <button class="seg-btn" data-tab="build">Build <span class="seg-ct" id="seg-build-ct"></span></button>
+        <button class="seg-btn" data-tab="orders">Orders <span class="seg-ct" id="seg-orders-ct"></span></button>
       </div>
       <svg class="dock-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
     </div>
     <div class="dock-body">
 
       <!-- TAB: Units list -->
-      <div class="tab-view active" id="ltab-units">
+      <div class="tab-view active" data-group="left" data-tab="units">
         <div class="dock-search"><input type="text" placeholder="Search units..." id="contacts-search" oninput="searchUnits(this.value)"></div>
         <div class="filter-bar" id="units-toolbar">
           <button class="filter-chip active" data-f="all">All</button>
@@ -658,14 +679,15 @@ body {
         <div class="scroll-y" id="unit-list"></div>
       </div>
 
-      <!-- TAB: Build / Train -->
-      <div class="tab-view" id="ltab-build">
-        <div class="build-active" id="build-active-area"></div>
+      <!-- TAB: Build catalog — category chips + reflowing grid -->
+      <div class="tab-view" data-group="left" data-tab="build">
+        <div class="dock-search"><input type="text" placeholder="Search catalog..." id="build-search" oninput="searchBuild(this.value)"></div>
+        <div class="filter-bar" id="build-cats"></div>
         <div class="build-scroll" id="build-scroll"></div>
       </div>
 
       <!-- TAB: Orders queue -->
-      <div class="tab-view" id="ltab-orders">
+      <div class="tab-view" data-group="left" data-tab="orders">
         <div class="orders-actions"><button onclick="clearOrders()">Clear All</button></div>
         <div class="scroll-y">
           <div id="order-cards"></div>
@@ -689,32 +711,38 @@ body {
     </div>
   </div>
 
-  <!-- RIGHT PANEL: Intel (overview + ISR contacts + CNN) -->
+  <!-- RIGHT PANEL: segmented [Intel | Production] -->
   <div class="dock dock-right" id="panel-context">
-    <div class="dock-hdr" onclick="toggleDock('panel-context')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
-      <span class="dock-title">Intel</span>
+    <div class="dock-hdr" onclick="event.target.closest('.seg-ctrl') || toggleDock('panel-context')">
+      <div class="seg-ctrl" data-group="right">
+        <button class="seg-btn active" data-tab="intel">Intel <span class="seg-ct" id="seg-intel-ct"></span></button>
+        <button class="seg-btn" data-tab="prod">Production <span class="seg-ct" id="seg-prod-ct"></span></button>
+      </div>
       <svg class="dock-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
     </div>
-    <div class="dock-body" style="overflow-y:auto">
+    <div class="dock-body">
 
-      <!-- Overview: EconomyInfo + MilitaryInfo + PerformanceScore -->
-      <div class="ctx-section" id="ctx-sitrep">
-        <div class="ctx-hdr" onclick="toggleCtx('ctx-sitrep')">
-          <span class="ctx-label">Overview</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-        </div>
-        <div class="ctx-body" id="overview-body"></div>
-      </div>
+      <!-- TAB: Intel — pinned overview, then [Tracks | Analysis] -->
+      <div class="tab-view active" data-group="right" data-tab="intel">
 
-      <!-- ISR Contacts — searchable, filterable, scrollable -->
-      <div class="ctx-section" id="ctx-contacts">
-        <div class="ctx-hdr" onclick="toggleCtx('ctx-contacts')">
-          <span class="ctx-label">ISR Contacts</span>
-          <span class="ctx-ct" id="contacts-ct">0</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        <!-- Overview: EconomyInfo + MilitaryInfo + PerformanceScore -->
+        <div class="ctx-section" id="ctx-sitrep">
+          <div class="ctx-hdr" onclick="toggleCtx('ctx-sitrep')">
+            <span class="ctx-label">Overview</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="ctx-body" id="overview-body"></div>
         </div>
-        <div class="ctx-body" style="display:flex;flex-direction:column;overflow:hidden;padding-bottom:0">
+
+        <div class="seg-sub">
+          <div class="seg-ctrl sm" data-group="intel">
+            <button class="seg-btn active" data-tab="tracks">Tracks <span class="seg-ct" id="seg-tracks-ct"></span></button>
+            <button class="seg-btn" data-tab="cnn">Analysis <span class="seg-ct" id="seg-cnn-ct"></span></button>
+          </div>
+        </div>
+
+        <!-- SUB-TAB: Tracks — ISR contacts, their behaviour and decay -->
+        <div class="tab-view active" data-group="intel" data-tab="tracks">
           <div class="contact-filters" id="isr-filters">
             <button class="filter-chip active" data-cf="all" onclick="filterContacts('all')">All</button>
             <button class="filter-chip" data-cf="vehicle" onclick="filterContacts('vehicle')">Veh</button>
@@ -723,25 +751,17 @@ body {
           </div>
           <div class="scroll-y" id="isr-contact-list"></div>
         </div>
+
+        <!-- SUB-TAB: Analysis — CNN TacticalAnalysis -->
+        <div class="tab-view" data-group="intel" data-tab="cnn">
+          <div class="scroll-y" id="cnn-body" style="padding:6px 10px 8px"></div>
+        </div>
+
       </div>
 
-      <!-- CNN Tactical Analysis -->
-      <div class="ctx-section" id="ctx-cnn">
-        <div class="ctx-hdr" onclick="toggleCtx('ctx-cnn')">
-          <span class="ctx-label">CNN Analysis</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-        </div>
-        <div class="ctx-body" id="cnn-body"></div>
-      </div>
-
-      <!-- Active Production status -->
-      <div class="ctx-section" id="ctx-active-prod">
-        <div class="ctx-hdr" onclick="toggleCtx('ctx-active-prod')">
-          <span class="ctx-label">Production</span>
-          <span class="ctx-ct" id="active-prod-ct">0</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-        </div>
-        <div class="ctx-body" id="active-prod-body"></div>
+      <!-- TAB: Production — active queues + producing facilities -->
+      <div class="tab-view" data-group="right" data-tab="prod">
+        <div class="prod-mon" id="prod-monitor"></div>
       </div>
 
     </div>
@@ -985,6 +1005,7 @@ var FEED_DATA = [
 // ─── State ───
 var selected = new Set(), orders = [], unitFilter = 'all', activeAct = null;
 var feedFilter = 'all', feedSearch = '', unitSearch = '', contactFilter = 'all';
+var buildFilter = 'all', buildSearch = '';
 var lastClickIdx = -1, toastTimer = null;
 
 function unitName(u) {
@@ -1051,15 +1072,45 @@ function setIndicator(id, value, attn) {
 
 // Recomputes every segment indicator from state. Single source of truth.
 function updateIndicators() {
+  var contacts = ISR_CONTACTS.filter(function(c) { return !c.is_destroyed; });
+  var threats = contacts.filter(function(c) { return c.is_visible && c.can_attack; });
+  var hot = CNN_DATA.hot_spots.filter(function(h) { return h.score >= 0.8; });
+  var producible = producibleSet(), buildable = 0;
+  BUILD_CATS.forEach(function(c) {
+    catalogFor(c).forEach(function(k) { if (producible[k]) buildable++; });
+  });
+
   setIndicator('seg-units-ct', selected.size || getVisibleUnits().length, selected.size > 0);
-  setIndicator('seg-build-ct', ACTIVE_PRODUCTION.length, ACTIVE_PRODUCTION.length > 0);
+  setIndicator('seg-build-ct', buildable, false);
   setIndicator('seg-orders-ct', orders.length, orders.length > 0);
+  setIndicator('seg-intel-ct', contacts.length, threats.length > 0);
+  setIndicator('seg-prod-ct', ACTIVE_PRODUCTION.length, ACTIVE_PRODUCTION.length > 0);
+  setIndicator('seg-tracks-ct', contacts.length, threats.length > 0);
+  setIndicator('seg-cnn-ct', hot.length, hot.length > 0);
 }
 
-function switchLeftTab(tab) {
-  document.querySelectorAll('.seg-ctrl .seg-btn').forEach(function(b) { b.classList.toggle('active', b.dataset.lt === tab); });
-  document.querySelectorAll('.dock-left .tab-view').forEach(function(v) { v.classList.toggle('active', v.id === 'ltab-' + tab); });
+// ═══ DESIGN SYSTEM: tab group controller ═══
+// One controller drives every segmented menu. A group is a .seg-ctrl
+// plus the .tab-view elements sharing its data-group; buttons and views
+// pair up on data-tab. Adding a menu anywhere is markup only — the
+// delegated listener below picks it up with no new JS.
+var TAB_HOOKS = {
+  left:  function(k) { if (k === 'build') renderBuildView(); },
+  right: function(k) { if (k === 'prod') renderProductionMonitor(); },
+};
+function switchTab(group, key) {
+  document.querySelectorAll('.seg-ctrl[data-group="' + group + '"] .seg-btn')
+    .forEach(function(b) { b.classList.toggle('active', b.dataset.tab === key); });
+  document.querySelectorAll('.tab-view[data-group="' + group + '"]')
+    .forEach(function(v) { v.classList.toggle('active', v.dataset.tab === key); });
+  if (TAB_HOOKS[group]) TAB_HOOKS[group](key);
 }
+document.addEventListener('click', function(e) {
+  var btn = e.target.closest('.seg-btn');
+  if (!btn) return;
+  var ctrl = btn.closest('.seg-ctrl');
+  if (ctrl && ctrl.dataset.group) switchTab(ctrl.dataset.group, btn.dataset.tab);
+});
 
 // ═══ LEFT PANEL: OWN UNITS ═══
 function searchUnits(q) { unitSearch = q.toLowerCase(); renderUnits(); }
@@ -1237,7 +1288,7 @@ function renderContacts() {
     '</div>';
   }).join('');
 
-  document.getElementById('contacts-ct').textContent = active.length;
+  updateIndicators();
 }
 
 // ═══ RIGHT PANEL — CNN ANALYSIS ═══
@@ -1297,73 +1348,149 @@ function renderCNN() {
   el.innerHTML = html;
 }
 
-// ═══ ORDERS TAB — ACTIVE PRODUCTION (ProductionInfoModel) ═══
-function renderActiveProduction() {
-  var el = document.getElementById('active-prod-body');
-  var ct = document.getElementById('active-prod-ct');
-  ct.textContent = ACTIVE_PRODUCTION.length;
-  if (!ACTIVE_PRODUCTION.length) {
-    el.innerHTML = '<div style="font-size:10px;color:var(--t3);padding:4px 0">No active production</div>';
-    return;
-  }
-  el.innerHTML = ACTIVE_PRODUCTION.map(function(p) {
-    var pct = Math.round(p.progress * 100);
-    var db = UNIT_DB[p.item] || BUILDING_DB[p.item];
-    var label = db ? db.name : p.item.toUpperCase();
-    return '<div class="prod-queue-item">' +
-      '<span class="prod-q-type">' + p.queue_type.slice(0,3) + '</span>' +
-      '<span class="prod-q-name">' + label + '</span>' +
-      '<div class="prod-q-bar"><div class="prod-q-fill" style="width:' + pct + '%"></div></div>' +
-      '<span class="prod-q-pct">' + pct + '%</span>' +
-    '</div>';
-  }).join('');
+// ═══ BUILD CATALOG ═══
+// Categories are the four ProductionInfoModel.queue_type values. Each
+// draws its items from a DB by category, so adding a unit to UNIT_DB —
+// or a whole new queue type here — shows up in the UI with no layout
+// or render changes.
+var BUILD_CATS = [
+  {key:'Building', label:'Structures', short:'Str', db:BUILDING_DB, action:'build'},
+  {key:'Infantry', label:'Infantry',   short:'Inf', db:UNIT_DB, cat:'infantry', action:'train'},
+  {key:'Vehicle',  label:'Vehicles',   short:'Veh', db:UNIT_DB, cat:'vehicle',  action:'train'},
+  {key:'Aircraft', label:'Aircraft',   short:'Air', db:UNIT_DB, cat:'aircraft', action:'train'},
+];
+function catalogFor(c) {
+  return Object.keys(c.db).filter(function(k) { return !c.cat || c.db[k].category === c.cat; });
 }
 
-// ═══ LEFT PANEL — BUILD VIEW (production grid + active queues) ═══
+// What the base can actually produce right now, from the can_produce
+// lists of powered BuildingInfoModel structures. Maps item -> facility.
+function producibleSet() {
+  var s = {};
+  BUILDINGS.forEach(function(b) {
+    if (!b.is_powered) return;
+    (b.can_produce || []).forEach(function(k) { s[k] = b.type; });
+  });
+  return s;
+}
+
+function searchBuild(q) { buildSearch = q.toLowerCase(); renderBuildView(); }
+
 function renderBuildView() {
-  // Active production at top
-  var activeEl = document.getElementById('build-active-area');
-  if (ACTIVE_PRODUCTION.length) {
-    activeEl.innerHTML = '<div class="build-active-label">In Progress <span class="ct-pill">' + ACTIVE_PRODUCTION.length + '</span></div>' +
-      ACTIVE_PRODUCTION.map(function(p) {
-        var pct = Math.round(p.progress * 100);
-        var db = UNIT_DB[p.item] || BUILDING_DB[p.item];
-        var label = db ? db.name : p.item.toUpperCase();
-        return '<div class="prod-queue-item">' +
-          '<span class="prod-q-type">' + p.queue_type.slice(0,3) + '</span>' +
-          '<span class="prod-q-name">' + label + '</span>' +
-          '<div class="prod-q-bar"><div class="prod-q-fill" style="width:' + pct + '%"></div></div>' +
-          '<span class="prod-q-pct">' + pct + '%</span></div>';
-      }).join('');
-  } else {
-    activeEl.innerHTML = '';
-  }
+  var producible = producibleSet();
 
-  // Build grid — categorized with 2-column layout
+  var chips = document.getElementById('build-cats');
+  chips.innerHTML = ['<button class="filter-chip' + (buildFilter === 'all' ? ' active' : '') + '" data-bc="all">All</button>']
+    .concat(BUILD_CATS.map(function(c) {
+      return '<button class="filter-chip' + (buildFilter === c.key ? ' active' : '') + '" data-bc="' + c.key + '">' + c.short + '</button>';
+    })).join('');
+  chips.querySelectorAll('.filter-chip').forEach(function(b) {
+    b.onclick = function() { buildFilter = b.dataset.bc; renderBuildView(); };
+  });
+
   var el = document.getElementById('build-scroll');
-  var cats = [
-    {label:'Structures', items:['powr','apwr','barr','tent','proc','weap','dome','fix','hpad','afld','sam','tsla','gun','ftur'], db:BUILDING_DB, action:'build'},
-    {label:'Infantry',   items:['e1','e2','e3','e4','e6','spy','dog','shok','medi'], db:UNIT_DB, action:'train'},
-    {label:'Vehicles',   items:['1tnk','2tnk','3tnk','4tnk','arty','v2rl','apc','jeep','harv','mnly','mcv'], db:UNIT_DB, action:'train'},
-    {label:'Aircraft',   items:['heli','hind','mig','yak'], db:UNIT_DB, action:'train'},
-  ];
-  el.innerHTML = cats.map(function(cat) {
-    return '<div class="build-cat-label">' + cat.label + '</div>' +
-      '<div class="build-grid">' + cat.items.map(function(key) {
-        var info = cat.db[key];
-        if (!info) return '';
-        return '<button class="build-item" onclick="queueProd(\'' + cat.action + '\',\'' + key + '\')" title="' + info.name + '">' +
-          '<span class="build-item-name">' + info.name + '</span>' +
-          '<span class="build-item-cost">$' + info.cost + '</span></button>';
-      }).join('') + '</div>';
-  }).join('');
+  var shown = BUILD_CATS.filter(function(c) { return buildFilter === 'all' || buildFilter === c.key; });
+  var html = '';
+
+  shown.forEach(function(cat) {
+    var items = catalogFor(cat).filter(function(k) {
+      if (!buildSearch) return true;
+      return cat.db[k].name.toLowerCase().indexOf(buildSearch) !== -1 || k.indexOf(buildSearch) !== -1;
+    });
+    if (!items.length) return;
+    var open = items.filter(function(k) { return producible[k]; }).length;
+    html += '<div class="grp-label">' + cat.label +
+      '<span class="ct-pill' + (open ? '' : ' dim') + '">' + open + '/' + items.length + '</span></div>';
+    html += '<div class="build-grid">' + items.map(function(key) {
+      var info = cat.db[key];
+      var facility = producible[key];
+      var poor = !!facility && info.cost > ECONOMY.cash;
+      var cls = 'build-item' + (facility ? (poor ? ' poor' : '') : ' locked');
+      var tip = facility
+        ? info.name + ' — $' + info.cost + ' from ' + (BUILDING_DB[facility] ? BUILDING_DB[facility].name : facility) + (poor ? ' (insufficient cash)' : '')
+        : info.name + ' — no powered facility can produce this';
+      return '<button class="' + cls + '"' + (facility ? '' : ' disabled') +
+        ' onclick="queueProd(\'' + cat.action + '\',\'' + key + '\')" title="' + tip + '">' +
+        '<span class="build-item-name">' + info.name + '</span>' +
+        '<span class="build-item-cost">$' + info.cost + '</span></button>';
+    }).join('') + '</div>';
+  });
+
+  el.innerHTML = html || '<div class="prod-empty">No matching items.</div>';
 }
+
 function queueProd(action, item) {
   var db = action === 'build' ? BUILDING_DB : UNIT_DB;
   var info = db[item];
   var label = info ? info.name : item.toUpperCase();
   orders.push({type:action, item_type:item, name:label});
   syncQueue(); showToast(label + ' queued'); bounceBadge();
+}
+
+// ═══ RIGHT PANEL — PRODUCTION MONITOR ═══
+// Active ProductionInfoModel queues plus the BuildingInfoModel
+// structures running them. OpenRA ticks at 25/sec.
+function renderProductionMonitor() {
+  var el = document.getElementById('prod-monitor');
+  if (!el) return;
+  var html = '';
+
+  html += '<div class="grp-label">Active Queues <span class="ct-pill' +
+    (ACTIVE_PRODUCTION.length ? '' : ' dim') + '">' + ACTIVE_PRODUCTION.length + '</span></div>';
+  if (!ACTIVE_PRODUCTION.length) {
+    html += '<div class="prod-empty">Nothing in production.</div>';
+  } else {
+    html += ACTIVE_PRODUCTION.map(function(p) {
+      var pct = Math.round(p.progress * 100);
+      var db = UNIT_DB[p.item] || BUILDING_DB[p.item];
+      var label = db ? db.name : p.item.toUpperCase();
+      var eta = Math.max(1, Math.round(p.remaining_ticks / 25));
+      return '<div class="prod-job' + (p.paused ? ' paused' : '') + '">' +
+        '<div class="prod-job-top">' +
+          '<span class="prod-q-type">' + p.queue_type.slice(0,3) + '</span>' +
+          '<span class="prod-job-name">' + label + '</span>' +
+          '<span class="prod-job-pct">' + pct + '%</span>' +
+        '</div>' +
+        '<div class="prod-job-bar"><div class="prod-job-fill" style="width:' + pct + '%"></div></div>' +
+        '<div class="prod-job-meta">' +
+          '<span>ETA ' + eta + 's</span>' +
+          '<span>' + p.remaining_ticks + ' ticks</span>' +
+          '<span>$' + p.remaining_cost.toLocaleString() + ' left</span>' +
+          (p.paused ? '<span style="color:var(--amber)">PAUSED</span>' : '') +
+        '</div></div>';
+    }).join('');
+  }
+
+  var facilities = BUILDINGS.filter(function(b) { return (b.can_produce || []).length > 0; });
+  var idle = facilities.filter(function(b) { return b.is_powered && !b.is_producing; }).length;
+  html += '<div class="grp-label">Facilities <span class="ct-pill' + (idle ? '' : ' dim') + '">' +
+    (facilities.length - idle) + '/' + facilities.length + ' busy</span></div>';
+  html += facilities.map(function(b) {
+    var info = BUILDING_DB[b.type];
+    var name = info ? info.name : b.type.toUpperCase();
+    var state, dot;
+    if (!b.is_powered) { state = 'Unpowered'; dot = 'down'; }
+    else if (b.is_producing) {
+      var pi = UNIT_DB[b.producing_item] || BUILDING_DB[b.producing_item];
+      state = (pi ? pi.name : b.producing_item) + ' ' + Math.round(b.production_progress * 100) + '%';
+      dot = 'busy';
+    } else { state = 'Idle'; dot = 'idle'; }
+    return '<div class="fac-row">' +
+      '<div class="fac-dot ' + dot + '"></div>' +
+      '<span class="fac-name">' + name + ' <span style="color:var(--t3);font-family:var(--mono);font-size:8px">#' + b.actor_id + '</span></span>' +
+      '<span class="fac-state' + (dot === 'idle' ? ' idle' : '') + '">' + state + '</span>' +
+    '</div>';
+  }).join('');
+
+  var pwHead = ECONOMY.power_provided - ECONOMY.power_drained;
+  html += '<div class="grp-label">Capacity</div>';
+  html += '<div class="kpi-grid">' +
+    '<div class="kpi-cell"><span class="kpi-k">Cash</span><span class="kpi-v g">$' + ECONOMY.cash.toLocaleString() + '</span></div>' +
+    '<div class="kpi-cell"><span class="kpi-k">Pwr Head</span><span class="kpi-v ' + (pwHead >= 0 ? 'g' : 'r') + '">' + (pwHead >= 0 ? '+' : '') + pwHead + '</span></div>' +
+    '<div class="kpi-cell"><span class="kpi-k">Harvesters</span><span class="kpi-v ' + (ECONOMY.harvester_count > 1 ? '' : 'a') + '">' + ECONOMY.harvester_count + '</span></div>' +
+  '</div>';
+
+  el.innerHTML = html;
 }
 
 // ═══ ORDER QUEUE ═══
@@ -1598,6 +1725,6 @@ window.addEventListener('resize', function() { renderMap(); });
 
 // ═══ INIT ═══
 renderMap(); renderUnits(); renderOverview(); renderContacts(); renderCNN();
-renderActiveProduction(); renderBuildView(); renderFeed(); syncQueue();
-updateStatusBar();
+renderBuildView(); renderProductionMonitor(); renderFeed(); syncQueue();
+updateStatusBar(); updateIndicators();
 </script>
