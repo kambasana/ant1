@@ -35,7 +35,7 @@
     powershell -ExecutionPolicy Bypass -File scripts\windows\run.ps1
 
 .EXAMPLE
-    .\scripts\windows\run.ps1 -Mode text -Ollama -Model qwen3:32b
+    .\scripts\windows\run.ps1 -Mode text -Ollama -Model qwen2.5:7b-instruct
 
 .EXAMPLE
     .\scripts\windows\run.ps1 -Scenario strait_of_hormuz -MaxTurns 20 -Fast
@@ -173,11 +173,11 @@ if ($Ollama -or $OllamaHost -ne '') {
         Write-Host ''
         Write-Host 'Install it from https://ollama.com/download/windows, then:' -ForegroundColor Yellow
         Write-Host '  ollama serve          # usually already running as a service' -ForegroundColor Yellow
-        Write-Host '  ollama pull qwen3:8b' -ForegroundColor Yellow
+        Write-Host '  ollama pull qwen2.5:7b-instruct' -ForegroundColor Yellow
         Write-Host '  ollama list           # names you can pass to -Model' -ForegroundColor Yellow
         Write-Host ''
         Write-Host 'If Ollama runs on another machine, pass its address:' -ForegroundColor Yellow
-        Write-Host '  .\scripts\windows\run.ps1 -Mode text -OllamaHost http://192.168.1.20:11434 -Model qwen3:8b' -ForegroundColor Yellow
+        Write-Host '  .\scripts\windows\run.ps1 -Mode text -OllamaHost http://192.168.1.20:11434 -Model qwen2.5:7b-instruct' -ForegroundColor Yellow
         exit 1
     }
 }
@@ -186,7 +186,7 @@ if (($Mode -eq 'text' -or $Mode -eq 'fc') -and $Model -eq '') {
     Write-Err "-Model is required for -Mode $Mode."
     Write-Host ''
     Write-Host 'Examples:' -ForegroundColor Yellow
-    Write-Host '  .\scripts\windows\run.ps1 -Mode text -Ollama -Model qwen3:8b' -ForegroundColor Yellow
+    Write-Host '  .\scripts\windows\run.ps1 -Mode text -Ollama -Model qwen2.5:7b-instruct' -ForegroundColor Yellow
     Write-Host '  .\scripts\windows\run.ps1 -Mode fc -Model gpt-4o -ApiKey $env:OPENAI_API_KEY' -ForegroundColor Yellow
     exit 1
 }

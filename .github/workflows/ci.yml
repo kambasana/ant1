@@ -124,6 +124,93 @@ jobs:
           assert not missing, f'navigation to group/tab pairs with no view: {missing}'
           print(f'{len(declared)} views, {len(called)} navigation pairs, all resolve')
 
+  powershell:
+    # PowerShell Core is cross-platform, so the Windows scripts are parsed and
+    # executed here rather than only reviewed. The ubuntu leg proves they are
+    # not Linux-hostile; windows-latest is where they actually have to work.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Parse every script
+        shell: pwsh
+        run: |
+          $bad = 0
+          foreach ($f in Get-ChildItem scripts/windows/*.ps1) {
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              $f.FullName, [ref]$null, [ref]$errors) | Out-Null
+            if ($errors.Count) {
+              $bad++
+              Write-Host "PARSE FAIL $($f.Name)"
+              $errors | ForEach-Object {
+                Write-Host "   line $($_.Extent.StartLineNumber): $($_.Message)" }
+            } else { Write-Host "parse OK   $($f.Name)" }
+          }
+          if ($bad) { exit 1 }
+
+      - name: No PowerShell 7-only syntax
+        shell: pwsh
+        run: |
+          # Windows ships 5.1 by default. These parse under 7 and fail there.
+          $bad = 0
+          foreach ($f in Get-ChildItem scripts/windows/*.ps1) {
+            $tokens = $null
+            $ast = [System.Management.Automation.Language.Parser]::ParseFile(
+              $f.FullName, [ref]$tokens, [ref]$null)
+            $hits = @()
+            $hits += $ast.FindAll({ $args[0] -is
+              [System.Management.Automation.Language.TernaryExpressionAst] }, $true)
+            $hits += $ast.FindAll({ $args[0] -is
+              [System.Management.Automation.Language.PipelineChainAst] }, $true)
+            $hits += $tokens | Where-Object { $_.Kind -in
+              @('QuestionQuestion','QuestionQuestionEquals','QuestionDot','QuestionLBracket') }
+            if ($hits) {
+              $bad++
+              Write-Host "$($f.Name): 7-only syntax at lines $(($hits |
+                ForEach-Object { $_.Extent.StartLineNumber }) -join ', ')"
+            } else { Write-Host "$($f.Name): 5.1-compatible" }
+          }
+          if ($bad) { exit 1 }
+
+      - name: setup.ps1 runs end to end
+        shell: pwsh
+        run: ./scripts/windows/setup.ps1 -VenvPath ${{ runner.temp }}/psvenv
+
+      - name: run.ps1 fails clearly with no game server
+        shell: pwsh
+        run: |
+          ./scripts/windows/run.ps1 -VenvPath ${{ runner.temp }}/psvenv -MaxTurns 1
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host 'run.ps1 should exit non-zero when no server is listening'
+            exit 1
+          }
+          Write-Host "exited $LASTEXITCODE as expected"
+
+      - name: Advertised model matches the resolved default
+        shell: pwsh
+        run: |
+          # These drifted once: the scripts told users to pull qwen3:8b while
+          # the code resolved qwen2.5:7b-instruct.
+          $default = python -c "import sys;sys.path.insert(0,'.');from milsim.llm_provider import DEFAULT_OLLAMA_MODEL;print(DEFAULT_OLLAMA_MODEL)"
+          $default = $default.Trim()
+          $stale = Select-String -Path scripts/windows/*.ps1, docs/WINDOWS.md `
+            -Pattern 'ollama pull ([^\s''"`]+)' -AllMatches |
+            ForEach-Object { $_.Matches.Groups[1].Value } |
+            Where-Object { $_ -ne $default }
+          if ($stale) {
+            Write-Host "docs tell users to pull '$stale' but the default is '$default'"
+            exit 1
+          }
+          Write-Host "advertised model matches default: $default"
+
   lint:
     runs-on: ubuntu-latest
     steps:

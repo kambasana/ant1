@@ -217,14 +217,14 @@ Three things that are easy to get wrong by hand:
    works with any chat model.
 
    ```powershell
-   ollama pull qwen3:8b
+   ollama pull qwen2.5:7b-instruct
    ollama list
    ```
 
 3. Run with `-Ollama`:
 
    ```powershell
-   .\scripts\windows\run.ps1 -Mode text -Ollama -Model qwen3:8b
+   .\scripts\windows\run.ps1 -Mode text -Ollama -Model qwen2.5:7b-instruct
    ```
 
 `-Ollama` checks that `GET http://localhost:11434/api/tags` answers before
@@ -240,7 +240,7 @@ starting anything, then sets:
 For Ollama on another machine, or on a non-default port:
 
 ```powershell
-.\scripts\windows\run.ps1 -Mode text -OllamaHost http://192.168.1.20:11434 -Model qwen3:8b
+.\scripts\windows\run.ps1 -Mode text -OllamaHost http://192.168.1.20:11434 -Model qwen2.5:7b-instruct
 ```
 
 **Context window.** Local models default to a small context. MilSim briefings are
@@ -248,8 +248,8 @@ long, and a truncated context shows up as the commander ignoring orders or
 repeating itself. Create a larger-context variant:
 
 ```powershell
-ollama create qwen3-32k --from qwen3:8b --parameter num_ctx 32768
-.\scripts\windows\run.ps1 -Mode text -Ollama -Model qwen3-32k
+ollama create milsim-32k --from qwen2.5:7b-instruct --parameter num_ctx 32768
+.\scripts\windows\run.ps1 -Mode text -Ollama -Model milsim-32k
 ```
 
 **Timeouts.** milsim uses a 60 second per-request timeout in `text` and `fc`
