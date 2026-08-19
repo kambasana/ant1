@@ -178,6 +178,11 @@ jobs:
       - name: Fetch openra-rl
         run: git clone --depth 1 https://github.com/yxc20089/OpenRA-RL.git openra-rl
 
+      # setup.ps1 builds its own venv, but the model-drift guard below reads
+      # the default through the system interpreter, which needs httpx.
+      - name: Install what the guards import
+        run: python -m pip install --upgrade pip httpx pydantic pyyaml
+
       - name: Parse every script
         shell: pwsh
         run: |
@@ -245,7 +250,11 @@ jobs:
           # These drifted once: the scripts told users to pull qwen3:8b while
           # the code resolved qwen2.5:7b-instruct.
           $default = python -c "import sys;sys.path.insert(0,'.');from milsim.llm_provider import DEFAULT_OLLAMA_MODEL;print(DEFAULT_OLLAMA_MODEL)"
-          $default = $default.Trim()
+          if ($LASTEXITCODE -ne 0 -or -not $default) {
+            Write-Host 'could not read DEFAULT_OLLAMA_MODEL — the guard cannot run'
+            exit 1
+          }
+          $default = "$default".Trim()
           $stale = Select-String -Path scripts/windows/*.ps1, docs/WINDOWS.md `
             -Pattern 'ollama pull ([^\s''"`]+)' -AllMatches |
             ForEach-Object { $_.Matches.Groups[1].Value } |
