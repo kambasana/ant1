@@ -49,7 +49,7 @@
     --border: #D3D8DE; --border-subtle: #DCE0E5;
     --accent: #2D72D2; --accent-hover: #215DB0; --accent-soft: rgba(45,114,210,0.08); --accent-text: #2D72D2;
     --green: #238551; --green-soft: rgba(35,133,81,0.06); --green-dim: #E8F5EE;
-    --amber: #C87619; --amber-soft: rgba(200,118,25,0.06); --amber-dim: #FDF3E6;
+    --amber: #9E5C0D; --amber-soft: rgba(158,92,13,0.07); --amber-dim: #FDF3E6;
     --red: #CD4246; --red-soft: rgba(205,66,70,0.04); --red-dim: #FDECEC;
     --t1: #1C2127; --t2: #5F6B7C; --t3: #5F6B7C;
     --seg-on: var(--surface); --seg-on-shadow: 0 1px 2px rgba(16,22,26,0.18);
@@ -124,7 +124,50 @@ body {
 .dock-badge.empty { background: var(--elevated); color: var(--t3); }
 .dock-chevron { transition: transform 200ms var(--ease-decel); }
 .dock.collapsed .dock-chevron { transform: rotate(-90deg); }
-.dock.collapsed .dock-body { display: none; }
+.dock.collapsed .dock-body,
+.dock.collapsed .dock-hdr { display: none; }
+
+/* ═══ DESIGN SYSTEM: Icon Rail ═══
+ * What a segmented menu becomes when its panel is collapsed. Same tab
+ * contract (data-group / data-tab), same selected treatment turned
+ * ninety degrees — raised surface plus an accent bar on the leading
+ * edge. Clicking a rail icon reopens the panel on that tab, so a
+ * collapsed dock stays navigable instead of becoming a dead strip.
+ */
+.dock-rail { display: none; }
+.dock.collapsed .dock-rail {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 2px; padding: 4px 0; background: var(--raised); height: 100%;
+}
+.dock-bottom.collapsed .dock-rail { flex-direction: row; height: auto; padding: 0 4px; align-items: center; }
+.rail-btn, .rail-expand {
+  position: relative; width: 28px; height: 28px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border: none; border-radius: var(--r); background: transparent;
+  color: var(--t3); cursor: pointer;
+  transition: background 100ms var(--ease-decel), color 100ms var(--ease-decel);
+}
+.rail-btn svg, .rail-expand svg { width: 15px; height: 15px; }
+.rail-btn:hover, .rail-expand:hover { color: var(--t1); background: var(--elevated); }
+.rail-btn:focus-visible, .rail-expand:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.rail-btn.active {
+  background: var(--seg-on); color: var(--t1);
+  box-shadow: inset 2px 0 0 var(--accent), var(--seg-on-shadow);
+}
+.dock-right .rail-btn.active { box-shadow: inset -2px 0 0 var(--accent), var(--seg-on-shadow); }
+.dock-bottom .rail-btn.active { box-shadow: inset 0 -2px 0 var(--accent), var(--seg-on-shadow); }
+.rail-expand { color: var(--t2); margin-bottom: 2px; }
+/* Count rides the icon as a corner badge — the same information the
+   segment carries inline, in the space a 28px button has. */
+.rail-ct {
+  position: absolute; top: 1px; right: 1px;
+  min-width: 13px; height: 11px; padding: 0 2px;
+  border-radius: 100px; background: var(--elevated); color: var(--t2);
+  font-family: var(--mono); font-size: 7px; font-weight: 600; line-height: 11px;
+  text-align: center; font-variant-numeric: tabular-nums;
+}
+.rail-ct.attn { background: var(--accent); color: #fff; }
+.rail-ct.empty { display: none; }
 .dock-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
 
 /* Panel positions */
@@ -153,7 +196,7 @@ body {
   background: rgba(17,20,24,0.78); padding: 5px 12px;
   border-radius: var(--r); border: 1px solid rgba(56,62,71,0.3);
 }
-.legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--t2); letter-spacing: 0.02em; white-space: nowrap; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #C5CBD3; letter-spacing: 0.02em; white-space: nowrap; }
 .legend-item svg { width: 11px; height: 11px; stroke-width: 1; flex-shrink: 0; }
 .legend-sw { width: 9px; height: 9px; border-radius: 2px; border: 1px solid rgba(255,255,255,0.12); flex-shrink: 0; }
 .legend-sep { width: 1px; height: 12px; background: rgba(255,255,255,0.14); }
@@ -350,7 +393,8 @@ button.mod-slot:focus-visible { outline: 2px solid var(--accent); outline-offset
 /* ═══ RIGHT PANEL: CONTEXT — collapsible sections ═══ */
 /* Attention rows are .lrow used as buttons — same anatomy, actionable. */
 .att-row {
-  width: 100%; font-family: var(--sans); text-align: left; cursor: pointer;
+  width: 100%; background: transparent; color: inherit;
+  font-family: var(--sans); text-align: left; cursor: pointer;
   border-left: none; border-right: none; border-top: none;
 }
 button.att-row:hover { background: var(--accent-soft); }
@@ -384,6 +428,7 @@ div.att-row { cursor: default; }
 .order-stripe.move { background: var(--accent); } .order-stripe.attack { background: var(--red); }
 .order-stripe.defend { background: var(--green); } .order-stripe.scout { background: var(--amber); }
 .order-stripe.hold { background: var(--t3); } .order-stripe.build { background: var(--green); }
+.order-stripe.guard { background: var(--amber); }
 .order-stripe.train { background: var(--accent); } .order-stripe.stance { background: var(--t3); }
 .order-body { flex: 1; display: flex; align-items: center; padding: 5px 8px; gap: 6px; min-width: 0; }
 .order-badge {
@@ -396,6 +441,7 @@ div.att-row { cursor: default; }
 .order-badge.defend { background: var(--green-soft); color: var(--green); }
 .order-badge.scout { background: var(--amber-soft); color: var(--amber); }
 .order-badge.hold { background: var(--elevated); color: var(--t2); }
+.order-badge.guard { background: var(--amber-soft); color: var(--amber); }
 .order-badge.build { background: var(--green-soft); color: var(--green); }
 .order-badge.train { background: var(--accent-soft); color: var(--accent-text); }
 .order-badge.stance { background: var(--elevated); color: var(--t2); }
@@ -459,7 +505,7 @@ div.att-row { cursor: default; }
 }
 .f-row:hover { background: var(--raised); }
 .f-row.critical { border-left-color: var(--red); background: var(--red-soft); }
-.f-row.critical:hover { background: rgba(231,106,110,0.10); }
+.f-row.critical:hover { background: var(--red-dim); }
 .f-row.warning { border-left-color: var(--amber); }
 .f-row.info { border-left-color: var(--accent); }
 .f-row.routine { border-left-color: transparent; }
@@ -565,7 +611,7 @@ div.att-row { cursor: default; }
   display: flex; align-items: center; justify-content: center; gap: 3px;
   white-space: nowrap; min-width: 0; overflow: hidden;
 }
-.seg-btn:hover { color: var(--t2); background: rgba(255,255,255,0.03); }
+.seg-btn:hover { color: var(--t2); background: var(--raised); }
 .seg-btn.active {
   flex-grow: var(--seg-grow);
   background: var(--seg-on); color: var(--t1);
@@ -592,7 +638,7 @@ div.att-row { cursor: default; }
  * Works on .seg-btn, .dock-hdr, or standalone.
  */
 .seg-ct {
-  --ct-font: 7px; --ct-dot: 4px; --ct-dim: 0.55; --ct-tone: currentColor;
+  --ct-font: 7px; --ct-dot: 4px; --ct-dim: 1; --ct-tone: var(--t2);
   font-family: var(--mono); font-size: var(--ct-font); font-weight: 600;
   color: var(--ct-tone); opacity: var(--ct-dim); font-variant-numeric: tabular-nums;
   display: flex; align-items: center; gap: 2px;
@@ -600,7 +646,7 @@ div.att-row { cursor: default; }
 }
 /* On the raised active segment the count would otherwise inherit
    full-contrast white, so pull it back to a supporting weight. */
-.seg-btn.active .seg-ct { opacity: 0.6; }
+.seg-btn.active .seg-ct { --ct-tone: var(--t2); }
 .seg-ct.attn, .seg-btn.active .seg-ct.attn { --ct-tone: var(--accent-text); opacity: 1; }
 .seg-ct.attn::before {
   content: ''; width: var(--ct-dot); height: var(--ct-dot); border-radius: 50%;
@@ -653,8 +699,8 @@ div.att-row { cursor: default; }
  */
 .build-scroll { flex: 1; overflow-y: auto; min-height: 0; }
 .build-row {
-  display: grid; grid-template-columns: 30px 1fr auto;
-  gap: 7px; align-items: center; width: 100%;
+  display: grid; grid-template-columns: 18px minmax(0,1fr) auto;
+  gap: 8px; align-items: center; width: 100%;
   padding: 4px 10px; min-height: 26px;
   border: none; border-bottom: 1px solid var(--border-subtle);
   background: transparent; color: var(--t2);
@@ -663,16 +709,19 @@ div.att-row { cursor: default; }
 }
 .build-row:hover { background: var(--raised); color: var(--t1); }
 .build-row:active { background: var(--accent-soft); }
-.build-role {
-  font-family: var(--mono); font-size: 7px; font-weight: 600; letter-spacing: 0.04em;
-  color: var(--t3); text-align: center; padding: 1px 0;
-  border-radius: 2px; background: var(--elevated);
+.build-role { display: flex; align-items: center; justify-content: center; color: var(--t3); }
+.build-role svg { width: 15px; height: 15px; }
+.build-row:hover .build-role { color: var(--accent-text); }
+/* Prerequisite takes the trailing slot on locked rows, so it can never
+   push past the panel edge the way an inline note did. */
+.build-need {
+  font-family: var(--mono); font-size: 8px; font-weight: 600; letter-spacing: 0.03em;
+  color: var(--t3); background: var(--elevated); border-radius: 2px; padding: 1px 4px;
 }
 .build-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .build-cost { font-family: var(--mono); font-size: 9px; color: var(--t3); font-variant-numeric: tabular-nums; }
 .build-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-.build-note { font-family: var(--mono); font-size: 8px; color: var(--t3); margin-left: 6px; }
-.build-note.warn { color: var(--amber); }
+.build-cost.warn { color: var(--amber); }
 /* Affordable now — the default, most-legible state */
 .build-row.ready .build-name { color: var(--t1); }
 /* Producible but cost exceeds EconomyInfo.cash */
@@ -680,7 +729,7 @@ div.att-row { cursor: default; }
 .build-row.poor .build-name { color: var(--t2); }
 /* No powered facility can produce it — BuildingInfoModel.can_produce.
    Held above the contrast floor so the reason stays readable. */
-.build-row.locked { opacity: 0.6; cursor: not-allowed; }
+.build-row.locked { cursor: not-allowed; }
 .build-row.locked .build-name, .build-row.locked .build-cost { color: var(--t3); }
 .build-row.locked:hover { background: transparent; }
 
@@ -720,6 +769,12 @@ div.att-row { cursor: default; }
 
   <!-- LEFT PANEL: segmented [Units | Build | Orders] -->
   <div class="dock dock-left" id="panel-contacts">
+      <div class="dock-rail">
+        <button class="rail-expand" onclick="toggleDock('panel-contacts')" title="Expand panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
+        <button class="rail-btn" data-group="left" data-tab="units" title="Units"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/></svg><span class="rail-ct" id="rail-units-ct"></span></button>
+        <button class="rail-btn" data-group="left" data-tab="build" title="Build"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-5h6v5"/></svg><span class="rail-ct" id="rail-build-ct"></span></button>
+        <button class="rail-btn" data-group="left" data-tab="orders" title="Orders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg><span class="rail-ct" id="rail-orders-ct"></span></button>
+      </div>
     <div class="dock-hdr" onclick="event.target.closest('.seg-ctrl') || toggleDock('panel-contacts')">
       <div class="seg-ctrl" data-group="left">
         <button class="seg-btn active" data-tab="units">Units <span class="seg-ct" id="seg-units-ct"></span></button>
@@ -786,32 +841,45 @@ div.att-row { cursor: default; }
 
   <!-- RIGHT PANEL: segmented [Intel | Production] -->
   <div class="dock dock-right" id="panel-context">
+      <div class="dock-rail">
+        <button class="rail-expand" onclick="toggleDock('panel-context')" title="Expand panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+        <button class="rail-btn" data-group="right" data-tab="alerts" title="Alerts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 00-6 6c0 5-2 6-2 6h16s-2-1-2-6a6 6 0 00-6-6z"/><path d="M10.5 20a2 2 0 003 0"/></svg><span class="rail-ct" id="rail-alerts-ct"></span></button>
+        <button class="rail-btn" data-group="right" data-tab="force" title="Force"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4v5c0 5.25-3.5 9.74-8 11-4.5-1.26-8-5.75-8-11V7z"/></svg><span class="rail-ct" id="rail-force-ct"></span></button>
+        <button class="rail-btn" data-group="right" data-tab="intel" title="Intel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/></svg><span class="rail-ct" id="rail-intel-ct"></span></button>
+        <button class="rail-btn" data-group="right" data-tab="production" title="Production"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 21V10l6 4V10l6 4V8l8 5v8z"/><path d="M2 21h20"/></svg><span class="rail-ct" id="rail-production-ct"></span></button>
+      </div>
     <div class="dock-hdr" onclick="event.target.closest('.seg-ctrl') || toggleDock('panel-context')">
       <div class="seg-ctrl" data-group="right">
-        <button class="seg-btn active" data-tab="intel">Intel <span class="seg-ct" id="seg-intel-ct"></span></button>
-        <button class="seg-btn" data-tab="production">Production <span class="seg-ct" id="seg-prod-ct"></span></button>
+        <button class="seg-btn active" data-tab="alerts">Alerts <span class="seg-ct" id="seg-alerts-ct"></span></button>
+        <button class="seg-btn" data-tab="force">Force</button>
+        <button class="seg-btn" data-tab="intel">Intel <span class="seg-ct" id="seg-intel-ct"></span></button>
+        <button class="seg-btn" data-tab="production">Prod <span class="seg-ct" id="seg-prod-ct"></span></button>
       </div>
       <svg class="dock-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
     </div>
     <div class="dock-body">
 
-      <!-- TAB: Intel — [Overview | Tracks | Analysis] -->
-      <div class="tab-view active" data-group="right" data-tab="intel">
+      <!-- TAB: Alerts — the to-do list, free to grow on its own -->
+      <div class="tab-view active" data-group="right" data-tab="alerts">
+        <div class="scroll-y" id="alerts-body"></div>
+      </div>
+
+      <!-- TAB: Force — us: MilitaryInfo + PerformanceScore -->
+      <div class="tab-view" data-group="right" data-tab="force">
+        <div class="scroll-y" id="force-body"></div>
+      </div>
+
+      <!-- TAB: Intel — them: [Tracks | Analysis] -->
+      <div class="tab-view" data-group="right" data-tab="intel">
         <div class="seg-sub">
           <div class="seg-ctrl sm" data-group="intel">
-            <button class="seg-btn active" data-tab="over">Overview</button>
-            <button class="seg-btn" data-tab="tracks">Tracks <span class="seg-ct" id="seg-tracks-ct"></span></button>
+            <button class="seg-btn active" data-tab="tracks">Tracks <span class="seg-ct" id="seg-tracks-ct"></span></button>
             <button class="seg-btn" data-tab="cnn">Analysis <span class="seg-ct" id="seg-cnn-ct"></span></button>
           </div>
         </div>
 
-        <!-- Force state: MilitaryInfo + PerformanceScore -->
-        <div class="tab-view active" data-group="intel" data-tab="over">
-          <div class="scroll-y" id="overview-body"></div>
-        </div>
-
         <!-- ISR contacts — their behaviour, decay and last known position -->
-        <div class="tab-view" data-group="intel" data-tab="tracks">
+        <div class="tab-view active" data-group="intel" data-tab="tracks">
           <div class="contact-filters" id="isr-filters">
             <button class="filter-chip active" data-cf="all" onclick="filterContacts('all')">All</button>
             <button class="filter-chip" data-cf="vehicle" onclick="filterContacts('vehicle')">Veh</button>
@@ -846,6 +914,9 @@ div.att-row { cursor: default; }
 
   <!-- BOTTOM: FEED -->
   <div class="dock dock-bottom" id="panel-feed">
+      <div class="dock-rail">
+        <button class="rail-expand" onclick="toggleDock('panel-feed')" title="Expand panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg></button>
+      </div>
     <div class="dock-hdr" onclick="toggleDock('panel-feed')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
       <span class="dock-title">Battle Feed</span>
@@ -1149,7 +1220,7 @@ function updateGrid() {
   var lc = document.getElementById('panel-contacts').classList.contains('collapsed');
   var rc = document.getElementById('panel-context').classList.contains('collapsed');
   var bc = document.getElementById('panel-feed').classList.contains('collapsed');
-  ws.style.gridTemplateColumns = (lc ? '28px' : '220px') + ' 1fr ' + (rc ? '28px' : '300px');
+  ws.style.gridTemplateColumns = (lc ? '36px' : '220px') + ' 1fr ' + (rc ? '36px' : '300px');
   ws.style.gridTemplateRows = '1fr ' + (bc ? '32px' : '210px');
 }
 
@@ -1163,6 +1234,7 @@ function setIndicator(id, value, attn) {
   el.textContent = n > 99 ? '99+' : String(n);
   el.classList.toggle('empty', n === 0);
   el.classList.toggle('attn', !!attn && n > 0);
+  if (n > 99) el.textContent = '99+';
 }
 
 // Recomputes every segment indicator from state. Single source of truth.
@@ -1178,6 +1250,10 @@ function updateIndicators() {
   var idleFacs = idleFacilityCount();
   var capAlerts = alertCount(CAPACITY_MODULES);
 
+  var alerts = attentionItems();
+  var alertUrgent = alerts.filter(function(a) { return a.tone === 'bad' || a.tone === 'warn'; }).length;
+  setIndicator('seg-alerts-ct', alerts.length, alertUrgent > 0);
+
   setIndicator('seg-units-ct', selected.size || getVisibleUnits().length, selected.size > 0);
   setIndicator('seg-build-ct', buildable, false);
   setIndicator('seg-orders-ct', orders.length, orders.length > 0);
@@ -1190,6 +1266,16 @@ function updateIndicators() {
   setIndicator('seg-fac-ct', idleFacs, idleFacs > 0);
   setIndicator('seg-queues-ct', ACTIVE_PRODUCTION.length, false);
   setIndicator('seg-cap-ct', capAlerts, capAlerts > 0);
+
+  // The rail shows the same counts as corner badges, so a collapsed
+  // panel still reports what is waiting inside it.
+  setIndicator('rail-units-ct', selected.size, selected.size > 0);
+  setIndicator('rail-build-ct', 0, false);
+  setIndicator('rail-orders-ct', orders.length, orders.length > 0);
+  setIndicator('rail-alerts-ct', alerts.length, alertUrgent > 0);
+  setIndicator('rail-force-ct', 0, false);
+  setIndicator('rail-intel-ct', contacts.length, threats.length > 0);
+  setIndicator('rail-production-ct', ACTIVE_PRODUCTION.length, idleFacs > 0 || capAlerts > 0);
 }
 
 // ═══ DESIGN SYSTEM: tab group controller ═══
@@ -1199,18 +1285,31 @@ function updateIndicators() {
 // delegated listener below picks it up with no new JS.
 var TAB_HOOKS = {
   left:  function(k) { if (k === 'build') renderBuildView(); },
-  right: function(k) { if (k === 'production') renderProduction(); },
+  right: function(k) {
+    if (k === 'production') renderProduction();
+    if (k === 'alerts') renderAlerts();
+    if (k === 'force') renderForce();
+  },
   prod:  function() { renderProduction(); },
-  intel: function(k) { if (k === 'over') renderOverview(); },
+  intel: function() {},
 };
 function switchTab(group, key) {
-  document.querySelectorAll('.seg-ctrl[data-group="' + group + '"] .seg-btn')
+  document.querySelectorAll('.seg-ctrl[data-group="' + group + '"] .seg-btn, .rail-btn[data-group="' + group + '"]')
     .forEach(function(b) { b.classList.toggle('active', b.dataset.tab === key); });
   document.querySelectorAll('.tab-view[data-group="' + group + '"]')
     .forEach(function(v) { v.classList.toggle('active', v.dataset.tab === key); });
   if (TAB_HOOKS[group]) TAB_HOOKS[group](key);
 }
 document.addEventListener('click', function(e) {
+  // Rail icons carry the same tab contract as segments, and reopen the
+  // panel they belong to so a collapsed dock is still navigable.
+  var rail = e.target.closest('.rail-btn');
+  if (rail) {
+    var dock = rail.closest('.dock');
+    switchTab(rail.dataset.group, rail.dataset.tab);
+    if (dock.classList.contains('collapsed')) toggleDock(dock.id);
+    return;
+  }
   var btn = e.target.closest('.seg-btn');
   if (!btn) return;
   var ctrl = btn.closest('.seg-ctrl');
@@ -1262,6 +1361,7 @@ function renderUnits() {
     });
     list.appendChild(el);
   });
+  if (!visible.length) list.innerHTML = '<div class="list-empty">No units in this category.</div>';
   updateIndicators();
 }
 
@@ -1320,8 +1420,9 @@ function queueFromCmd() {
     var actionMap = {move:'move', attack:'attack_move', defend:'defend', scout:'scout', guard:'guard'};
     orders.push({type:actionMap[activeAct] || activeAct, units:Array.from(selected), target_x:x, target_y:y});
   }
+  var act = activeAct;
   closeCmd(); syncQueue();
-  showToast(activeAct.charAt(0).toUpperCase() + activeAct.slice(1) + ' queued'); bounceBadge();
+  showToast(act.charAt(0).toUpperCase() + act.slice(1) + ' queued'); bounceBadge();
 }
 
 // ═══ DESIGN SYSTEM: modular toolbar renderer ═══
@@ -1409,8 +1510,8 @@ function attentionItems() {
   return out;
 }
 
-function renderOverview() {
-  var el = document.getElementById('overview-body');
+function renderAlerts() {
+  var el = document.getElementById('alerts-body');
   if (!el) return;
   var items = attentionItems();
 
@@ -1426,11 +1527,15 @@ function renderOverview() {
       '<div class="lrow-trail ' + a.tone + '">' + a.count + '</div>' +
     '</' + tag + '>';
   }).join('') : '<div class="list-empty">Nothing needs your attention.</div>';
-
-  // Force state kept to the three figures that inform a decision;
-  // kills were being reported three separate ways.
-  html += '<div class="grp-label">Force</div>';
   el.innerHTML = html;
+}
+
+// Force is about us; Intel is about them. Keeping both under one
+// "Overview" was what made that tab unable to grow.
+function renderForce() {
+  var el = document.getElementById('force-body');
+  if (!el) return;
+  el.innerHTML = '<div class="grp-label sticky">Standing Force</div>';
   var force = document.createElement('div');
   renderModBar(force, [
     {k:'Army Value', get:function() { return {v:'$' + MILITARY.army_value.toLocaleString()}; }},
@@ -1574,6 +1679,34 @@ var ROLE_ABBR = {
 };
 function roleAbbr(r) { return ROLE_ABBR[r] || r.slice(0, 3).toUpperCase(); }
 
+// Role glyphs. The combat roles borrow APP-6 unit symbology, which is
+// what these shapes already mean to anyone who reads a military map:
+// crossed box = infantry, oval = armour, filled dot = artillery,
+// single diagonal = reconnaissance. The rest are plain pictograms.
+var ROLE_ICON = {
+  'Command':      '<path d="M4 2v12M4 2.8h8l-2 2.6 2 2.6H4"/>',
+  'Power':        '<path d="M9 2L4.4 9H8l-1 5 4.6-7H8z"/>',
+  'Economy':      '<path d="M2.5 5.5h11v5h-11z"/><path d="M2.5 8h11"/>',
+  'Production':   '<path d="M2 13.5V7l4 2.5V7l4 2.5V6l4 2.5v5z"/>',
+  'Support':      '<path d="M8 3.5v9M3.5 8h9"/>',
+  'Tech':         '<path d="M5.5 5.5h5v5h-5z"/><path d="M8 2v3.5M8 10.5V14M2 8h3.5M10.5 8H14"/>',
+  'Anti-Infantry':'<path d="M2.5 4.5h11v7h-11z"/><path d="M2.5 4.5l11 7M13.5 4.5l-11 7"/>',
+  'Anti-Armor':   '<path d="M4 5.5h6a2.5 2.5 0 010 5H4a2.5 2.5 0 010-5z"/><path d="M13.5 3.5l-11 9"/>',
+  'Anti-Air':     '<path d="M2 12a6 6 0 0112 0"/><path d="M8 13.5V4M5 7l3-3 3 3"/>',
+  'Armor':        '<path d="M4 5h7a3 3 0 010 6H4a3 3 0 010-6z"/>',
+  'Artillery':    '<path d="M2.5 4.5h11v7h-11z"/><circle cx="8" cy="8" r="2.2" fill="currentColor"/>',
+  'Recon':        '<path d="M2.5 4.5h11v7h-11z"/><path d="M13.5 4.5l-11 7"/>',
+  'Transport':    '<path d="M1.5 5h8v5.5h-8z"/><path d="M9.5 7h2.6L14.5 9.3v1.2h-5z"/><circle cx="4" cy="12" r="1.3"/><circle cx="11.5" cy="12" r="1.3"/>',
+  'Assault':      '<path d="M8 1.8c2.2 2.8 4.2 4.2 4.2 7a4.2 4.2 0 01-8.4 0c0-1.8.9-2.9 2-4 .2 1 .7 1.5 1.2 1.5 0-2 .4-3.2 1-4.5z"/>',
+  'Special':      '<path d="M8 1.8l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6z"/>',
+  'Gunship':      '<path d="M1.5 3.5h13M8 3.5v3"/><path d="M4.5 6.5h7l1 6h-9z"/>',
+  'Strike':       '<path d="M8 1.5l1.2 7.2 5.3 2.3v1.5L8 10.8l-6.5 1.7v-1.5l5.3-2.3z"/>',
+};
+function roleIcon(r) {
+  return '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" ' +
+    'stroke-linejoin="round">' + (ROLE_ICON[r] || '<circle cx="8" cy="8" r="4"/>') + '</svg>';
+}
+
 // Which building type produces what, independent of what is currently
 // standing. Lets a locked row say how to get to yes instead of just no.
 var PRODUCED_BY = {
@@ -1653,7 +1786,7 @@ function renderBuildView() {
     roleBar.innerHTML = ['<button class="filter-chip' + (buildRole === 'all' ? ' active' : '') + '" data-br="all">All</button>']
       .concat(groups.map(function(g) {
         return '<button class="filter-chip' + (buildRole === g.role ? ' active' : '') + '" data-br="' + g.role +
-          '" title="' + g.role + '">' + roleAbbr(g.role) + '</button>';
+          '" title="' + g.role + '">' + g.role + '</button>';
       })).join('');
     roleBar.querySelectorAll('.filter-chip').forEach(function(b) {
       b.onclick = function() { buildRole = b.dataset.br; renderBuildView(); };
@@ -1676,14 +1809,20 @@ function renderBuildView() {
       ? ' · built at ' + (BUILDING_DB[facility] ? BUILDING_DB[facility].name : facility) +
         (poor ? ' · costs $' + (info.cost - ECONOMY.cash).toLocaleString() + ' more than you have' : '')
       : (need && need.length ? ' · needs ' + need.join(' or ') : ' · deploy an MCV to place one'));
-    var note = facility
-      ? (poor ? '<span class="build-note warn">-$' + (info.cost - ECONOMY.cash).toLocaleString() + '</span>' : '')
-      : '<span class="build-note">' + (need && need.length ? 'needs ' + need[0] : 'from an MCV') + '</span>';
+    // The trailing cell holds one fact, not two: a price when the item
+    // is buildable, otherwise the prerequisite. A locked item's price is
+    // not the actionable part, so the requirement takes the slot rather
+    // than running past the panel edge.
+    var needKey = facility ? null : Object.keys(PRODUCED_BY).filter(function(bk) {
+      return PRODUCED_BY[bk].indexOf(key) !== -1;
+    })[0];
+    var trail = facility
+      ? '<span class="build-cost' + (poor ? ' warn' : '') + '">$' + info.cost.toLocaleString() + '</span>'
+      : '<span class="build-need">' + (needKey ? needKey.toUpperCase() : 'MCV') + '</span>';
     return '<button class="' + cls + '"' + (facility ? '' : ' disabled') +
       ' onclick="queueProd(\'' + cat.action + '\',\'' + key + '\')" title="' + tip + '">' +
-      '<span class="build-role" title="' + info.role + '">' + roleAbbr(info.role) + '</span>' +
-      '<span class="build-name">' + info.name + note + '</span>' +
-      '<span class="build-cost">$' + info.cost.toLocaleString() + '</span></button>';
+      '<span class="build-role" title="' + info.role + '">' + roleIcon(info.role) + '</span>' +
+      '<span class="build-name">' + info.name + '</span>' + trail + '</button>';
   }
 
   var html = '';
@@ -1828,7 +1967,7 @@ function syncQueue() {
   dot.classList.toggle('has-orders', orders.length > 0);
   updateIndicators();
 
-  if (!orders.length) { cards.innerHTML = ''; empty.style.display = 'flex'; renderOverview(); return; }
+  if (!orders.length) { cards.innerHTML = ''; empty.style.display = 'flex'; renderAlerts(); return; }
   empty.style.display = 'none';
   cards.innerHTML = orders.map(function(o, i) {
     var desc = '', unitLabel = '', unitNames = '', eta = '';
@@ -1864,7 +2003,7 @@ function syncQueue() {
         '<button class="order-rm" onclick="rmOrder(' + i + ')"><svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 2l8 8M10 2l-8 8"/></svg></button>' +
       '</div></div>';
   }).join('');
-  renderOverview();
+  renderAlerts();
 }
 function rmOrder(i) { orders.splice(i, 1); syncQueue(); }
 function clearOrders() { orders = []; syncQueue(); }
@@ -2157,7 +2296,7 @@ document.querySelector('.seg-ctrl[data-group="right"] .seg-btn[data-tab="product
 document.getElementById('btn-exec').title = 'Commit this turn  (Enter)';
 
 // ═══ INIT ═══
-renderMap(); renderUnits(); renderOverview(); renderContacts(); renderCNN();
+renderMap(); renderUnits(); renderAlerts(); renderForce(); renderContacts(); renderCNN();
 renderBuildView(); renderProduction(); renderFeed(); syncQueue();
 updateStatusBar(); updateIndicators();
 </script>
