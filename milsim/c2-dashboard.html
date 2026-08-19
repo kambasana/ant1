@@ -769,18 +769,9 @@ div.att-row { cursor: default; }
 
   <!-- LEFT PANEL: segmented [Units | Build | Orders] -->
   <div class="dock dock-left" id="panel-contacts">
-      <div class="dock-rail">
-        <button class="rail-expand" onclick="toggleDock('panel-contacts')" title="Expand panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
-        <button class="rail-btn" data-group="left" data-tab="units" title="Units"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/></svg><span class="rail-ct" id="rail-units-ct"></span></button>
-        <button class="rail-btn" data-group="left" data-tab="build" title="Build"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-5h6v5"/></svg><span class="rail-ct" id="rail-build-ct"></span></button>
-        <button class="rail-btn" data-group="left" data-tab="orders" title="Orders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg><span class="rail-ct" id="rail-orders-ct"></span></button>
-      </div>
+      <div class="dock-rail" data-group="left" data-dock="panel-contacts"></div>
     <div class="dock-hdr" onclick="event.target.closest('.seg-ctrl') || toggleDock('panel-contacts')">
-      <div class="seg-ctrl" data-group="left">
-        <button class="seg-btn active" data-tab="units">Units <span class="seg-ct" id="seg-units-ct"></span></button>
-        <button class="seg-btn" data-tab="build">Build <span class="seg-ct" id="seg-build-ct"></span></button>
-        <button class="seg-btn" data-tab="orders">Orders <span class="seg-ct" id="seg-orders-ct"></span></button>
-      </div>
+      <div class="seg-ctrl" data-group="left"></div>
       <svg class="dock-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
     </div>
     <div class="dock-body">
@@ -841,20 +832,9 @@ div.att-row { cursor: default; }
 
   <!-- RIGHT PANEL: segmented [Intel | Production] -->
   <div class="dock dock-right" id="panel-context">
-      <div class="dock-rail">
-        <button class="rail-expand" onclick="toggleDock('panel-context')" title="Expand panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
-        <button class="rail-btn" data-group="right" data-tab="alerts" title="Alerts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 00-6 6c0 5-2 6-2 6h16s-2-1-2-6a6 6 0 00-6-6z"/><path d="M10.5 20a2 2 0 003 0"/></svg><span class="rail-ct" id="rail-alerts-ct"></span></button>
-        <button class="rail-btn" data-group="right" data-tab="force" title="Force"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4v5c0 5.25-3.5 9.74-8 11-4.5-1.26-8-5.75-8-11V7z"/></svg><span class="rail-ct" id="rail-force-ct"></span></button>
-        <button class="rail-btn" data-group="right" data-tab="intel" title="Intel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/></svg><span class="rail-ct" id="rail-intel-ct"></span></button>
-        <button class="rail-btn" data-group="right" data-tab="production" title="Production"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 21V10l6 4V10l6 4V8l8 5v8z"/><path d="M2 21h20"/></svg><span class="rail-ct" id="rail-production-ct"></span></button>
-      </div>
+      <div class="dock-rail" data-group="right" data-dock="panel-context"></div>
     <div class="dock-hdr" onclick="event.target.closest('.seg-ctrl') || toggleDock('panel-context')">
-      <div class="seg-ctrl" data-group="right">
-        <button class="seg-btn active" data-tab="alerts">Alerts <span class="seg-ct" id="seg-alerts-ct"></span></button>
-        <button class="seg-btn" data-tab="force">Force</button>
-        <button class="seg-btn" data-tab="intel">Intel <span class="seg-ct" id="seg-intel-ct"></span></button>
-        <button class="seg-btn" data-tab="production">Prod <span class="seg-ct" id="seg-prod-ct"></span></button>
-      </div>
+      <div class="seg-ctrl" data-group="right"></div>
       <svg class="dock-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
     </div>
     <div class="dock-body">
@@ -872,10 +852,7 @@ div.att-row { cursor: default; }
       <!-- TAB: Intel — them: [Tracks | Analysis] -->
       <div class="tab-view" data-group="right" data-tab="intel">
         <div class="seg-sub">
-          <div class="seg-ctrl sm" data-group="intel">
-            <button class="seg-btn active" data-tab="tracks">Tracks <span class="seg-ct" id="seg-tracks-ct"></span></button>
-            <button class="seg-btn" data-tab="cnn">Analysis <span class="seg-ct" id="seg-cnn-ct"></span></button>
-          </div>
+          <div class="seg-ctrl sm" data-group="intel"></div>
         </div>
 
         <!-- ISR contacts — their behaviour, decay and last known position -->
@@ -898,16 +875,14 @@ div.att-row { cursor: default; }
       <!-- TAB: Production — [Facilities | Queues | Capacity] -->
       <div class="tab-view" data-group="right" data-tab="production">
         <div class="seg-sub">
-          <div class="seg-ctrl sm" data-group="prod">
-            <button class="seg-btn active" data-tab="fac">Facilities <span class="seg-ct" id="seg-fac-ct"></span></button>
-            <button class="seg-btn" data-tab="queues">Queues <span class="seg-ct" id="seg-queues-ct"></span></button>
-            <button class="seg-btn" data-tab="cap">Capacity <span class="seg-ct" id="seg-cap-ct"></span></button>
-          </div>
+          <div class="seg-ctrl sm" data-group="prod"></div>
         </div>
         <div class="tab-view active" data-group="prod" data-tab="fac"><div class="scroll-y" id="fac-list"></div></div>
         <div class="tab-view" data-group="prod" data-tab="queues"><div class="scroll-y" id="queue-list"></div></div>
-        <div class="tab-view" data-group="prod" data-tab="cap"><div class="scroll-y" id="cap-bar"></div></div>
       </div>
+
+      <!-- TAB: Capacity — the means of production, as toolbar modules -->
+      <div class="tab-view" data-group="right" data-tab="cap"><div class="scroll-y" id="cap-bar"></div></div>
 
     </div>
   </div>
@@ -1237,45 +1212,111 @@ function setIndicator(id, value, attn) {
   if (n > 99) el.textContent = '99+';
 }
 
-// Recomputes every segment indicator from state. Single source of truth.
+// Every badge, in both presentations, from the one declaration.
 function updateIndicators() {
-  var contacts = ISR_CONTACTS.filter(function(c) { return !c.is_destroyed; });
-  var threats = contacts.filter(function(c) { return c.is_visible && c.can_attack; });
-  var hot = CNN_DATA.hot_spots.filter(function(h) { return h.score >= 0.8; });
-  var producible = producibleSet(), buildable = 0;
-  BUILD_CATS.forEach(function(c) {
-    catalogFor(c).forEach(function(k) { if (producible[k]) buildable++; });
+  Object.keys(MENUS).forEach(function(group) {
+    MENUS[group].items.forEach(function(it) {
+      if (!it.count) return;
+      var r = it.count() || {};
+      setIndicator('ct-' + group + '-' + it.tab, r.n, r.attn);
+      setIndicator('rct-' + group + '-' + it.tab, r.n, r.attn);
+    });
   });
+}
 
-  var idleFacs = idleFacilityCount();
-  var capAlerts = alertCount(CAPACITY_MODULES);
+// ═══ DESIGN SYSTEM: Menu ═══
+// A menu is declared once, here, and mounted into as many presentations
+// as a panel needs: the segmented control when the dock is open, the
+// icon rail when it is collapsed, and the count on both. Each item is
+// self-contained — label, glyph, and the function that reports its own
+// badge — so adding one is a single entry with no markup to touch and
+// no indicator list to keep in sync.
+var ICON = {
+  units:  '<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/>',
+  build:  '<path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-5h6v5"/>',
+  orders: '<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/>',
+  alerts: '<path d="M12 3a6 6 0 00-6 6c0 5-2 6-2 6h16s-2-1-2-6a6 6 0 00-6-6z"/><path d="M10.5 20a2 2 0 003 0"/>',
+  force:  '<path d="M12 3l8 4v5c0 5.25-3.5 9.74-8 11-4.5-1.26-8-5.75-8-11V7z"/>',
+  intel:  '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/>',
+  prod:   '<path d="M2 21V10l6 4V10l6 4V8l8 5v8z"/><path d="M2 21h20"/>',
+  cap:    '<path d="M3 18a9 9 0 0118 0"/><path d="M12 18l5-5"/><path d="M3 18h18"/>',
+};
+function svgIcon(d) {
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
+    'stroke-linecap="round" stroke-linejoin="round">' + d + '</svg>';
+}
 
-  var alerts = attentionItems();
-  var alertUrgent = alerts.filter(function(a) { return a.tone === 'bad' || a.tone === 'warn'; }).length;
-  setIndicator('seg-alerts-ct', alerts.length, alertUrgent > 0);
+// count() returns {n, attn} or nothing at all for items that carry none.
+var MENUS = {
+  left: {items: [
+    {tab:'units',  label:'Units',  key:'1', icon:ICON.units,
+     count:function() { return {n:selected.size || getVisibleUnits().length, attn:selected.size > 0}; }},
+    {tab:'build',  label:'Build',  key:'2', icon:ICON.build},
+    {tab:'orders', label:'Orders', key:'3', icon:ICON.orders,
+     count:function() { return {n:orders.length, attn:orders.length > 0}; }},
+  ]},
+  right: {items: [
+    {tab:'alerts', label:'Alerts', title:'Needs attention', icon:ICON.alerts,
+     count:function() {
+       var a = attentionItems();
+       return {n:a.length, attn:a.some(function(x) { return x.tone === 'bad' || x.tone === 'warn'; })};
+     }},
+    {tab:'force',  label:'Force',  title:'Standing force and lines of effort', icon:ICON.force},
+    {tab:'intel',  label:'Intel',  title:'ISR tracks and tactical analysis', key:'I', icon:ICON.intel,
+     count:function() {
+       var c = liveContacts();
+       return {n:c.length, attn:c.some(function(x) { return x.is_visible && x.can_attack; })};
+     }},
+    {tab:'production', label:'Prod', title:'Production facilities and queues', key:'P', icon:ICON.prod,
+     count:function() { return {n:ACTIVE_PRODUCTION.length, attn:idleFacilityCount() > 0}; }},
+    {tab:'cap',    label:'Cap',    title:'Capacity — the means of production', icon:ICON.cap,
+     count:function() { var n = alertCount(CAPACITY_MODULES); return {n:n, attn:n > 0}; }},
+  ]},
+  // Sub-menus use the same component; they simply have no rail.
+  intel: {sm:true, items: [
+    {tab:'tracks', label:'Tracks', title:'ISR contacts',
+     count:function() { var c = liveContacts(); return {n:c.length, attn:c.some(function(x) { return x.is_visible && x.can_attack; })}; }},
+    {tab:'cnn',    label:'Analysis', title:'CNN tactical analysis',
+     count:function() {
+       var h = CNN_DATA.hot_spots.filter(function(x) { return x.score >= 0.8; });
+       return {n:h.length, attn:h.length > 0};
+     }},
+  ]},
+  prod: {sm:true, items: [
+    {tab:'fac',    label:'Facilities', title:'Producing structures',
+     count:function() { var n = idleFacilityCount(); return {n:n, attn:n > 0}; }},
+    {tab:'queues', label:'Queues', title:'Active production queues',
+     count:function() { return {n:ACTIVE_PRODUCTION.length}; }},
+  ]},
+};
+function liveContacts() { return ISR_CONTACTS.filter(function(c) { return !c.is_destroyed; }); }
 
-  setIndicator('seg-units-ct', selected.size || getVisibleUnits().length, selected.size > 0);
-  setIndicator('seg-build-ct', buildable, false);
-  setIndicator('seg-orders-ct', orders.length, orders.length > 0);
-  // Top-level counts roll up: the number shows scale, attn shows that
-  // something inside one of the sub-tabs wants the commander's eye.
-  setIndicator('seg-intel-ct', contacts.length, threats.length > 0);
-  setIndicator('seg-prod-ct', ACTIVE_PRODUCTION.length, idleFacs > 0 || capAlerts > 0);
-  setIndicator('seg-tracks-ct', contacts.length, threats.length > 0);
-  setIndicator('seg-cnn-ct', hot.length, hot.length > 0);
-  setIndicator('seg-fac-ct', idleFacs, idleFacs > 0);
-  setIndicator('seg-queues-ct', ACTIVE_PRODUCTION.length, false);
-  setIndicator('seg-cap-ct', capAlerts, capAlerts > 0);
-
-  // The rail shows the same counts as corner badges, so a collapsed
-  // panel still reports what is waiting inside it.
-  setIndicator('rail-units-ct', selected.size, selected.size > 0);
-  setIndicator('rail-build-ct', 0, false);
-  setIndicator('rail-orders-ct', orders.length, orders.length > 0);
-  setIndicator('rail-alerts-ct', alerts.length, alertUrgent > 0);
-  setIndicator('rail-force-ct', 0, false);
-  setIndicator('rail-intel-ct', contacts.length, threats.length > 0);
-  setIndicator('rail-production-ct', ACTIVE_PRODUCTION.length, idleFacs > 0 || capAlerts > 0);
+// Renders every presentation of every menu. Called once at startup.
+function mountMenus() {
+  Object.keys(MENUS).forEach(function(group) {
+    var menu = MENUS[group];
+    var ctrl = document.querySelector('.seg-ctrl[data-group="' + group + '"]');
+    if (ctrl) {
+      ctrl.innerHTML = menu.items.map(function(it, i) {
+        var hint = (it.title || it.label) + (it.key ? '  (' + it.key + ')' : '');
+        return '<button class="seg-btn' + (i === 0 ? ' active' : '') + '" data-tab="' + it.tab +
+          '" title="' + hint + '">' + it.label +
+          (it.count ? ' <span class="seg-ct" id="ct-' + group + '-' + it.tab + '"></span>' : '') + '</button>';
+      }).join('');
+    }
+    var rail = document.querySelector('.dock-rail[data-group="' + group + '"]');
+    if (rail) {
+      var dir = rail.closest('.dock-right') ? 'M15 18l-6-6 6-6' : 'M9 18l6-6-6-6';
+      rail.innerHTML = '<button class="rail-expand" onclick="toggleDock(\'' + rail.dataset.dock +
+        '\')" title="Expand panel">' + svgIcon('<path d="' + dir + '"/>') + '</button>' +
+        menu.items.map(function(it, i) {
+          var hint = (it.title || it.label) + (it.key ? '  (' + it.key + ')' : '');
+          return '<button class="rail-btn' + (i === 0 ? ' active' : '') + '" data-group="' + group +
+            '" data-tab="' + it.tab + '" title="' + hint + '">' + svgIcon(it.icon) +
+            (it.count ? '<span class="rail-ct" id="rct-' + group + '-' + it.tab + '"></span>' : '') + '</button>';
+        }).join('');
+    }
+  });
 }
 
 // ═══ DESIGN SYSTEM: tab group controller ═══
@@ -1289,6 +1330,7 @@ var TAB_HOOKS = {
     if (k === 'production') renderProduction();
     if (k === 'alerts') renderAlerts();
     if (k === 'force') renderForce();
+    if (k === 'cap') renderCapacity();
   },
   prod:  function() { renderProduction(); },
   intel: function() {},
@@ -2288,14 +2330,10 @@ document.addEventListener('keydown', function(e) {
   var fn = KEYS[e.key] || KEYS[e.key.toLowerCase()];
   if (fn) { e.preventDefault(); fn(); }
 });
-document.querySelectorAll('.seg-ctrl[data-group="left"] .seg-btn').forEach(function(b, i) {
-  b.title = b.textContent.trim().replace(/\s+\d+$/, '') + '  (' + (i + 1) + ')';
-});
-document.querySelector('.seg-ctrl[data-group="right"] .seg-btn[data-tab="intel"]').title = 'Intel  (I)';
-document.querySelector('.seg-ctrl[data-group="right"] .seg-btn[data-tab="production"]').title = 'Production  (P)';
 document.getElementById('btn-exec').title = 'Commit this turn  (Enter)';
 
 // ═══ INIT ═══
+mountMenus();
 renderMap(); renderUnits(); renderAlerts(); renderForce(); renderContacts(); renderCNN();
 renderBuildView(); renderProduction(); renderFeed(); syncQueue();
 updateStatusBar(); updateIndicators();
