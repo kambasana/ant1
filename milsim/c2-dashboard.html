@@ -167,57 +167,51 @@ body {
 .filter-chip:active { transform: scale(0.95); }
 .filter-chip.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-text); }
 
-.unit-action-bar {
-  display: flex; align-items: center; gap: 3px;
-  padding: 0 8px; height: 0; overflow: hidden;
-  background: var(--accent-soft); border-bottom: 1px solid transparent; flex-shrink: 0;
-  transition: height 200ms var(--ease-emphasized), padding 200ms var(--ease-emphasized), border-color 200ms var(--ease-decel);
+/* ═══ CMD BAR ACTIONS — action buttons in bottom command bar ═══ */
+.cmd-bar-actions {
+  display: none; align-items: center; gap: 3px; margin-right: 10px;
 }
-.unit-action-bar.visible { height: 34px; padding: 0 8px; border-bottom-color: var(--accent); }
+.cmd-bar-actions.visible { display: flex; }
 .sel-count {
   font-family: var(--mono); font-size: 10px; font-weight: 600;
   color: var(--accent-text); margin-right: 4px; white-space: nowrap; font-variant-numeric: tabular-nums;
 }
 .act-btn {
   display: flex; align-items: center; gap: 3px;
-  padding: 3px 6px; border-radius: var(--r);
+  padding: 5px 7px; border-radius: var(--r);
   border: 1px solid transparent; background: transparent;
   color: var(--t1); font-family: var(--sans); font-size: 10px; font-weight: 500; cursor: pointer;
   transition: background 100ms var(--ease-decel), transform 80ms var(--ease-decel); white-space: nowrap;
 }
 .act-btn:hover { background: var(--raised); }
 .act-btn:active { transform: scale(0.93); }
-.act-btn.active { background: var(--surface); border-color: var(--accent); color: var(--accent-text); }
-.act-btn svg { width: 12px; height: 12px; stroke-linecap: round; stroke-linejoin: round; }
-.act-sep { width: 1px; height: 14px; background: var(--border); margin: 0 1px; flex-shrink: 0; }
+.act-btn.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-text); }
+.act-btn svg { width: 14px; height: 14px; stroke-linecap: round; stroke-linejoin: round; }
+.act-sep { width: 1px; height: 18px; background: var(--border); margin: 0 2px; flex-shrink: 0; }
 .act-deselect {
-  margin-left: auto; padding: 3px 6px; border-radius: var(--r);
+  padding: 4px 7px; border-radius: var(--r);
   border: none; background: transparent; color: var(--t3);
-  font-family: var(--sans); font-size: 9px; cursor: pointer;
+  font-family: var(--sans); font-size: 10px; cursor: pointer;
 }
-.act-deselect:hover { color: var(--t1); }
+.act-deselect:hover { color: var(--t1); background: var(--raised); }
 
-.cmd-inline {
-  display: flex; align-items: center; gap: 4px;
-  max-height: 0; overflow: hidden; width: 100%;
-  transition: max-height 200ms var(--ease-emphasized), padding 200ms var(--ease-emphasized), opacity 200ms var(--ease-decel);
-  opacity: 0; padding: 0 8px; background: var(--raised);
-  border-bottom: 1px solid transparent; flex-shrink: 0;
+.cmd-inline-bar {
+  display: none; align-items: center; gap: 4px;
 }
-.cmd-inline.open { max-height: 34px; opacity: 1; padding: 4px 8px; border-bottom-color: var(--border); }
-.cmd-inline label { font-size: 9px; color: var(--t3); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; flex-shrink: 0; }
-.cmd-inline input, .cmd-inline select {
-  padding: 3px 6px; border-radius: 3px;
-  border: 1px solid var(--border); background: var(--surface);
+.cmd-inline-bar.open { display: flex; }
+.cmd-inline-bar label { font-size: 9px; color: var(--t3); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; flex-shrink: 0; }
+.cmd-inline-bar input, .cmd-inline-bar select {
+  padding: 4px 6px; border-radius: 3px;
+  border: 1px solid var(--border); background: var(--bg);
   color: var(--t1); font-family: var(--mono); font-size: 10px; outline: none; width: 48px;
 }
-.cmd-inline input:focus { border-color: var(--accent); }
-.cmd-inline .cmd-go {
-  margin-left: auto; padding: 3px 10px; border-radius: 3px;
+.cmd-inline-bar input:focus { border-color: var(--accent); }
+.cmd-inline-bar .cmd-go {
+  padding: 4px 12px; border-radius: 3px;
   border: none; background: var(--accent); color: #fff;
   font-family: var(--sans); font-size: 10px; font-weight: 600; cursor: pointer; flex-shrink: 0;
 }
-.cmd-inline .cmd-go:hover { background: var(--accent-hover); }
+.cmd-inline-bar .cmd-go:hover { background: var(--accent-hover); }
 
 /* Unit rows */
 .scroll-y { overflow-y: auto; flex: 1; min-height: 0; }
@@ -540,6 +534,63 @@ body {
 .orders-count-badge.bounce { animation: badge-pop 400ms var(--ease-spring); }
 @keyframes badge-pop { 0% { transform: scale(1); } 40% { transform: scale(1.25); } 100% { transform: scale(1); } }
 
+/* ═══ SEGMENTED CONTROL — left panel switcher ═══ */
+.seg-ctrl {
+  display: flex; height: 20px; border-radius: 4px;
+  background: var(--bg); border: 1px solid var(--border);
+  overflow: hidden; flex-shrink: 0;
+}
+.seg-btn {
+  flex: 1; border: none; background: transparent;
+  color: var(--t3); font-family: var(--sans); font-size: 9px; font-weight: 600;
+  letter-spacing: 0.03em; cursor: pointer; padding: 0 8px;
+  transition: color 100ms var(--ease-decel), background 100ms var(--ease-decel);
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+  white-space: nowrap;
+}
+.seg-btn:hover { color: var(--t2); background: rgba(255,255,255,0.03); }
+.seg-btn.active { background: var(--accent-soft); color: var(--accent-text); }
+.seg-btn svg { width: 10px; height: 10px; flex-shrink: 0; }
+.seg-btn + .seg-btn { border-left: 1px solid var(--border); }
+
+.left-tab-view { flex: 1; display: none; flex-direction: column; overflow: hidden; min-height: 0; }
+.left-tab-view.active { display: flex; }
+
+/* ═══ BUILD VIEW — production grid ═══ */
+.build-scroll { flex: 1; overflow-y: auto; padding: 6px 8px; min-height: 0; }
+.build-cat-label {
+  font-size: 8px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--t3); margin: 6px 0 3px; padding-bottom: 2px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.build-cat-label:first-child { margin-top: 0; }
+.build-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+.build-item {
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 6px; border-radius: 3px;
+  border: 1px solid var(--border); background: var(--raised);
+  color: var(--t2); font-family: var(--mono); font-size: 9px;
+  cursor: pointer; min-width: 0; overflow: hidden;
+  transition: border-color 80ms var(--ease-decel), color 80ms var(--ease-decel), transform 80ms var(--ease-decel);
+}
+.build-item:hover { border-color: var(--t3); color: var(--t1); }
+.build-item:active { transform: scale(0.95); }
+.build-item-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; font-weight: 500; }
+.build-item-cost { font-size: 7px; color: var(--t3); flex-shrink: 0; }
+
+/* Active production in build view */
+.build-active { padding: 4px 8px; border-bottom: 1px solid var(--border-subtle); flex-shrink: 0; }
+.build-active-label {
+  font-size: 8px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--t3); margin-bottom: 3px;
+  display: flex; align-items: center; gap: 4px;
+}
+.build-active-label .ct-pill {
+  font-family: var(--mono); font-size: 8px; font-weight: 600;
+  padding: 0 4px; border-radius: 100px;
+  background: var(--accent-soft); color: var(--accent-text);
+}
+
 /* ═══ RESPONSIVE ═══ */
 @media (max-width: 1024px) {
   .workspace {
@@ -571,39 +622,37 @@ body {
 <!-- WORKSPACE — Dock panel layout -->
 <div class="workspace" id="workspace">
 
-  <!-- LEFT: CONTACTS -->
+  <!-- LEFT: UNITS / BUILD (segmented control) -->
   <div class="dock dock-left" id="panel-contacts">
-    <div class="dock-hdr" onclick="toggleDock('panel-contacts')">
+    <div class="dock-hdr" onclick="event.target.closest('.seg-ctrl') || toggleDock('panel-contacts')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4-4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-      <span class="dock-title">Contacts</span>
+      <div class="seg-ctrl">
+        <button class="seg-btn active" data-lt="units" onclick="event.stopPropagation();switchLeftTab('units')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4-4v2"/><circle cx="9" cy="7" r="4"/></svg>Units</button>
+        <button class="seg-btn" data-lt="build" onclick="event.stopPropagation();switchLeftTab('build')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20h20M5 20V8l7-5 7 5v12"/><rect x="9" y="12" width="6" height="8"/></svg>Build</button>
+      </div>
       <span class="dock-badge" id="contacts-badge">12</span>
       <svg class="dock-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
     </div>
     <div class="dock-body">
-      <div class="dock-search"><input type="text" placeholder="Search units..." id="contacts-search" oninput="searchUnits(this.value)"></div>
-      <div class="filter-bar" id="units-toolbar">
-        <button class="filter-chip active" data-f="all">All</button>
-        <button class="filter-chip" data-f="infantry">Inf</button>
-        <button class="filter-chip" data-f="vehicle">Veh</button>
-        <button class="filter-chip" data-f="building">Bld</button>
+
+      <!-- TAB: Units list -->
+      <div class="left-tab-view active" id="ltab-units">
+        <div class="dock-search"><input type="text" placeholder="Search units..." id="contacts-search" oninput="searchUnits(this.value)"></div>
+        <div class="filter-bar" id="units-toolbar">
+          <button class="filter-chip active" data-f="all">All</button>
+          <button class="filter-chip" data-f="infantry">Inf</button>
+          <button class="filter-chip" data-f="vehicle">Veh</button>
+          <button class="filter-chip" data-f="building">Bld</button>
+        </div>
+        <div class="scroll-y" id="unit-list"></div>
       </div>
-      <div class="unit-action-bar" id="unit-action-bar">
-        <span class="sel-count" id="sel-count">0</span>
-        <button class="act-btn" data-act="move" onclick="pickAction('move')" title="Move"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
-        <button class="act-btn" data-act="attack" onclick="pickAction('attack')" title="Attack-Move"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></button>
-        <button class="act-btn" data-act="defend" onclick="pickAction('defend')" title="Defend"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5.25-3.5 9.74-8 11-4.5-1.26-8-5.75-8-11V7l8-4z"/></svg></button>
-        <button class="act-btn" data-act="scout" onclick="pickAction('scout')" title="Scout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></button>
-        <button class="act-btn" data-act="guard" onclick="pickAction('guard')" title="Guard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4M12 16h.01"/></svg></button>
-        <div class="act-sep"></div>
-        <button class="act-btn" data-act="stop" onclick="queueStop()" title="Stop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12"/></svg></button>
-        <button class="act-btn" data-act="stance" onclick="pickAction('stance')" title="Set Stance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg></button>
-        <button class="act-deselect" onclick="selectNone()" title="Deselect">&#x2715;</button>
+
+      <!-- TAB: Build / Train -->
+      <div class="left-tab-view" id="ltab-build">
+        <div class="build-active" id="build-active-area"></div>
+        <div class="build-scroll" id="build-scroll"></div>
       </div>
-      <div class="cmd-inline" id="cmd-inline">
-        <div id="cmd-fields"></div>
-        <button class="cmd-go" onclick="queueFromCmd()">Queue</button>
-      </div>
-      <div class="scroll-y" id="unit-list"></div>
+
     </div>
   </div>
 
@@ -701,15 +750,6 @@ body {
           <div class="ctx-body" id="active-prod-body"></div>
         </div>
 
-        <!-- Production Commands — categorized by queue_type with costs -->
-        <div class="ctx-section" id="ctx-prod">
-          <div class="ctx-hdr" onclick="toggleCtx('ctx-prod')">
-            <span class="ctx-label">Build / Train</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-          </div>
-          <div class="ctx-body" id="prod-body"></div>
-        </div>
-
       </div>
     </div>
   </div>
@@ -739,8 +779,25 @@ body {
 
 <div class="toast" id="toast"></div>
 
-<!-- CMD BAR -->
+<!-- CMD BAR — action buttons appear when units selected -->
 <div class="cmd-bar">
+  <div class="cmd-bar-actions" id="cmd-bar-actions">
+    <span class="sel-count" id="sel-count">0</span>
+    <button class="act-btn" data-act="move" onclick="pickAction('move')" title="Move"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+    <button class="act-btn" data-act="attack" onclick="pickAction('attack')" title="Attack-Move"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></button>
+    <button class="act-btn" data-act="defend" onclick="pickAction('defend')" title="Defend"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5.25-3.5 9.74-8 11-4.5-1.26-8-5.75-8-11V7l8-4z"/></svg></button>
+    <button class="act-btn" data-act="scout" onclick="pickAction('scout')" title="Scout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></button>
+    <button class="act-btn" data-act="guard" onclick="pickAction('guard')" title="Guard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4M12 16h.01"/></svg></button>
+    <div class="act-sep"></div>
+    <button class="act-btn" data-act="stop" onclick="queueStop()" title="Stop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12"/></svg></button>
+    <button class="act-btn" data-act="stance" onclick="pickAction('stance')" title="Set Stance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg></button>
+    <button class="act-deselect" onclick="selectNone()" title="Deselect">&#x2715;</button>
+    <div class="act-sep"></div>
+    <div class="cmd-inline-bar" id="cmd-inline">
+      <div id="cmd-fields"></div>
+      <button class="cmd-go" onclick="queueFromCmd()">Queue</button>
+    </div>
+  </div>
   <div class="cmd-queue-count">
     <div class="dot" id="q-dot"></div>
     <span id="q-count">0 orders queued</span>
@@ -989,6 +1046,17 @@ function switchPanelTab(tab) {
   document.querySelectorAll('.panel-tab-view').forEach(function(v) { v.classList.remove('active'); });
   document.getElementById('ptab-' + tab).classList.add('active');
 }
+function switchLeftTab(tab) {
+  document.querySelectorAll('.seg-btn').forEach(function(b) { b.classList.toggle('active', b.dataset.lt === tab); });
+  document.querySelectorAll('.left-tab-view').forEach(function(v) { v.classList.remove('active'); });
+  document.getElementById('ltab-' + tab).classList.add('active');
+  var badge = document.getElementById('contacts-badge');
+  if (tab === 'build') {
+    badge.textContent = Object.keys(BUILDING_DB).length + Object.keys(UNIT_DB).length;
+  } else {
+    badge.textContent = getVisibleUnits().length;
+  }
+}
 
 // ═══ LEFT PANEL: OWN UNITS ═══
 function searchUnits(q) { unitSearch = q.toLowerCase(); renderUnits(); }
@@ -1050,10 +1118,10 @@ document.querySelectorAll('#units-toolbar .filter-chip').forEach(function(b) {
 function selectNone() { selected.clear(); lastClickIdx = -1; closeCmd(); renderUnits(); updateToolbar(); }
 
 function updateToolbar() {
-  var actionBar = document.getElementById('unit-action-bar');
+  var bar = document.getElementById('cmd-bar-actions');
   var count = document.getElementById('sel-count');
   var hasSelection = selected.size > 0;
-  actionBar.classList.toggle('visible', hasSelection);
+  bar.classList.toggle('visible', hasSelection);
   count.textContent = selected.size + ' sel';
   if (!hasSelection) closeCmd();
 }
@@ -1247,24 +1315,43 @@ function renderActiveProduction() {
   }).join('');
 }
 
-// ═══ ORDERS TAB — PRODUCTION COMMANDS (categorized with costs) ═══
-function renderProductionCommands() {
-  var el = document.getElementById('prod-body');
+// ═══ LEFT PANEL — BUILD VIEW (production grid + active queues) ═══
+function renderBuildView() {
+  // Active production at top
+  var activeEl = document.getElementById('build-active-area');
+  if (ACTIVE_PRODUCTION.length) {
+    activeEl.innerHTML = '<div class="build-active-label">In Progress <span class="ct-pill">' + ACTIVE_PRODUCTION.length + '</span></div>' +
+      ACTIVE_PRODUCTION.map(function(p) {
+        var pct = Math.round(p.progress * 100);
+        var db = UNIT_DB[p.item] || BUILDING_DB[p.item];
+        var label = db ? db.name : p.item.toUpperCase();
+        return '<div class="prod-queue-item">' +
+          '<span class="prod-q-type">' + p.queue_type.slice(0,3) + '</span>' +
+          '<span class="prod-q-name">' + label + '</span>' +
+          '<div class="prod-q-bar"><div class="prod-q-fill" style="width:' + pct + '%"></div></div>' +
+          '<span class="prod-q-pct">' + pct + '%</span></div>';
+      }).join('');
+  } else {
+    activeEl.innerHTML = '';
+  }
+
+  // Build grid — categorized with 2-column layout
+  var el = document.getElementById('build-scroll');
   var cats = [
     {label:'Structures', items:['powr','apwr','barr','tent','proc','weap','dome','fix','hpad','afld','sam','tsla','gun','ftur'], db:BUILDING_DB, action:'build'},
-    {label:'Infantry', items:['e1','e2','e3','e4','e6','spy','dog','shok','medi'], db:UNIT_DB, action:'train'},
-    {label:'Vehicles', items:['1tnk','2tnk','3tnk','4tnk','arty','v2rl','apc','jeep','harv','mnly','mcv'], db:UNIT_DB, action:'train'},
-    {label:'Aircraft', items:['heli','hind','mig','yak'], db:UNIT_DB, action:'train'},
+    {label:'Infantry',   items:['e1','e2','e3','e4','e6','spy','dog','shok','medi'], db:UNIT_DB, action:'train'},
+    {label:'Vehicles',   items:['1tnk','2tnk','3tnk','4tnk','arty','v2rl','apc','jeep','harv','mnly','mcv'], db:UNIT_DB, action:'train'},
+    {label:'Aircraft',   items:['heli','hind','mig','yak'], db:UNIT_DB, action:'train'},
   ];
   el.innerHTML = cats.map(function(cat) {
-    return '<div class="prod-group">' +
-      '<div class="prod-group-label">' + cat.label + '</div>' +
-      '<div class="prod-section">' + cat.items.map(function(key) {
+    return '<div class="build-cat-label">' + cat.label + '</div>' +
+      '<div class="build-grid">' + cat.items.map(function(key) {
         var info = cat.db[key];
         if (!info) return '';
-        return '<button class="prod-btn" onclick="queueProd(\'' + cat.action + '\',\'' + key + '\')" title="' + info.name + ' — $' + info.cost + '">' +
-          key.toUpperCase() + '<span style="font-size:7px;color:var(--t3);margin-left:2px">$' + info.cost + '</span></button>';
-      }).join('') + '</div></div>';
+        return '<button class="build-item" onclick="queueProd(\'' + cat.action + '\',\'' + key + '\')" title="' + info.name + '">' +
+          '<span class="build-item-name">' + info.name + '</span>' +
+          '<span class="build-item-cost">$' + info.cost + '</span></button>';
+      }).join('') + '</div>';
   }).join('');
 }
 function queueProd(action, item) {
@@ -1509,6 +1596,6 @@ window.addEventListener('resize', function() { renderMap(); });
 
 // ═══ INIT ═══
 renderMap(); renderUnits(); renderOverview(); renderContacts(); renderCNN();
-renderActiveProduction(); renderProductionCommands(); renderFeed(); syncQueue();
+renderActiveProduction(); renderBuildView(); renderFeed(); syncQueue();
 updateStatusBar();
 </script>
