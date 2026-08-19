@@ -292,30 +292,7 @@ body {
 .prod-q-fill { height: 100%; border-radius: 1px; background: var(--green); }
 .prod-q-pct { font-family: var(--mono); font-size: 9px; color: var(--t3); width: 24px; text-align: right; font-variant-numeric: tabular-nums; flex-shrink: 0; }
 
-/* ═══ RIGHT PANEL: CONTEXT — sub-tabs ═══ */
-.panel-tabs {
-  display: flex; height: 26px; border-bottom: 1px solid var(--border);
-  background: var(--surface); flex-shrink: 0;
-}
-.panel-tab {
-  flex: 1; border: none; background: transparent;
-  color: var(--t3); font-family: var(--sans); font-size: 10px; font-weight: 600;
-  letter-spacing: 0.03em; cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: color 100ms var(--ease-decel), border-color 100ms var(--ease-decel);
-  display: flex; align-items: center; justify-content: center; gap: 5px;
-}
-.panel-tab:hover { color: var(--t2); background: var(--raised); }
-.panel-tab.active { color: var(--accent-text); border-bottom-color: var(--accent); }
-.panel-tab .tab-ct {
-  font-family: var(--mono); font-size: 8px; font-weight: 600;
-  padding: 0 4px; border-radius: 100px;
-  background: var(--elevated); color: var(--t3); font-variant-numeric: tabular-nums;
-}
-.panel-tab.active .tab-ct { background: var(--accent-soft); color: var(--accent-text); }
-.panel-tab-view { flex: 1; display: none; flex-direction: column; overflow-y: auto; min-height: 0; }
-.panel-tab-view.active { display: flex; }
-
+/* ═══ RIGHT PANEL: CONTEXT — collapsible sections ═══ */
 .ctx-section { border-bottom: 1px solid var(--border-subtle); }
 .ctx-section:last-child { border-bottom: none; }
 .ctx-hdr {
@@ -531,30 +508,65 @@ body {
   transition: opacity 150ms var(--ease-decel), transform 200ms var(--ease-spring);
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
-.orders-count-badge.bounce { animation: badge-pop 400ms var(--ease-spring); }
 @keyframes badge-pop { 0% { transform: scale(1); } 40% { transform: scale(1.25); } 100% { transform: scale(1); } }
 
-/* ═══ SEGMENTED CONTROL — left panel switcher ═══ */
+/* ═══ DESIGN SYSTEM: Segmented Control ═══
+ * Composable tab-switcher component.
+ * Usage: .seg-ctrl > .seg-btn[data-tab] > label + optional .seg-ct
+ * Indicator: .seg-ct shows inline count suffix.
+ * Attention: .seg-ct.attn adds a dot prefix for "needs action" state.
+ * Customise: --seg-h (height), --seg-r (radius), --seg-font (size).
+ */
 .seg-ctrl {
-  display: flex; height: 20px; border-radius: 4px;
+  --seg-h: 20px; --seg-r: 4px; --seg-font: 9px;
+  display: flex; height: var(--seg-h); border-radius: var(--seg-r);
   background: var(--bg); border: 1px solid var(--border);
-  overflow: hidden; flex-shrink: 0;
+  overflow: hidden; flex-shrink: 0; flex: 1;
 }
 .seg-btn {
   flex: 1; border: none; background: transparent;
-  color: var(--t3); font-family: var(--sans); font-size: 9px; font-weight: 600;
-  letter-spacing: 0.03em; cursor: pointer; padding: 0 8px;
+  color: var(--t3); font-family: var(--sans); font-size: var(--seg-font); font-weight: 600;
+  letter-spacing: 0.03em; cursor: pointer; padding: 0 4px;
   transition: color 100ms var(--ease-decel), background 100ms var(--ease-decel);
-  display: flex; align-items: center; justify-content: center; gap: 4px;
-  white-space: nowrap;
+  display: flex; align-items: center; justify-content: center; gap: 3px;
+  white-space: nowrap; min-width: 0;
 }
 .seg-btn:hover { color: var(--t2); background: rgba(255,255,255,0.03); }
 .seg-btn.active { background: var(--accent-soft); color: var(--accent-text); }
-.seg-btn svg { width: 10px; height: 10px; flex-shrink: 0; }
 .seg-btn + .seg-btn { border-left: 1px solid var(--border); }
 
-.left-tab-view { flex: 1; display: none; flex-direction: column; overflow: hidden; min-height: 0; }
-.left-tab-view.active { display: flex; }
+/* ═══ DESIGN SYSTEM: Inline Count Indicator ═══
+ * Composable badge for any tab/segment/header.
+ * .seg-ct           — neutral inline count, reduced opacity
+ * .seg-ct.attn      — attention state: dot prefix, full opacity, accent tint
+ * .seg-ct.empty     — zero state: hidden
+ * .seg-ct.bounce    — one-shot pop when the count changes
+ * Customise: --ct-font, --ct-dot, --ct-dim, --ct-tone.
+ * Works on .seg-btn, .dock-hdr, or standalone.
+ */
+.seg-ct {
+  --ct-font: 7px; --ct-dot: 4px; --ct-dim: 0.55; --ct-tone: currentColor;
+  font-family: var(--mono); font-size: var(--ct-font); font-weight: 600;
+  color: var(--ct-tone); opacity: var(--ct-dim); font-variant-numeric: tabular-nums;
+  display: flex; align-items: center; gap: 2px;
+  transition: opacity 100ms var(--ease-decel), color 100ms var(--ease-decel);
+}
+.seg-btn.active .seg-ct { opacity: 0.9; }
+.seg-ct.attn { --ct-tone: var(--accent-text); opacity: 1; }
+.seg-ct.attn::before {
+  content: ''; width: var(--ct-dot); height: var(--ct-dot); border-radius: 50%;
+  background: currentColor; flex-shrink: 0;
+}
+.seg-ct.empty { display: none; }
+.seg-ct.bounce { animation: badge-pop 400ms var(--ease-spring); }
+
+/* ═══ DESIGN SYSTEM: Tab View Container ═══
+ * Generic switchable content panel.
+ * .tab-view         — hidden by default
+ * .tab-view.active  — visible, fills parent
+ */
+.tab-view { flex: 1; display: none; flex-direction: column; overflow: hidden; min-height: 0; }
+.tab-view.active { display: flex; }
 
 /* ═══ BUILD VIEW — production grid ═══ */
 .build-scroll { flex: 1; overflow-y: auto; padding: 6px 8px; min-height: 0; }
@@ -622,21 +634,20 @@ body {
 <!-- WORKSPACE — Dock panel layout -->
 <div class="workspace" id="workspace">
 
-  <!-- LEFT: UNITS / BUILD (segmented control) -->
+  <!-- LEFT PANEL: segmented [Units | Build | Orders] -->
   <div class="dock dock-left" id="panel-contacts">
     <div class="dock-hdr" onclick="event.target.closest('.seg-ctrl') || toggleDock('panel-contacts')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4-4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
       <div class="seg-ctrl">
-        <button class="seg-btn active" data-lt="units" onclick="event.stopPropagation();switchLeftTab('units')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4-4v2"/><circle cx="9" cy="7" r="4"/></svg>Units</button>
-        <button class="seg-btn" data-lt="build" onclick="event.stopPropagation();switchLeftTab('build')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20h20M5 20V8l7-5 7 5v12"/><rect x="9" y="12" width="6" height="8"/></svg>Build</button>
+        <button class="seg-btn active" data-lt="units" onclick="event.stopPropagation();switchLeftTab('units')">Units <span class="seg-ct" id="seg-units-ct"></span></button>
+        <button class="seg-btn" data-lt="build" onclick="event.stopPropagation();switchLeftTab('build')">Build <span class="seg-ct" id="seg-build-ct"></span></button>
+        <button class="seg-btn" data-lt="orders" onclick="event.stopPropagation();switchLeftTab('orders')">Orders <span class="seg-ct" id="seg-orders-ct"></span></button>
       </div>
-      <span class="dock-badge" id="contacts-badge">12</span>
       <svg class="dock-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
     </div>
     <div class="dock-body">
 
       <!-- TAB: Units list -->
-      <div class="left-tab-view active" id="ltab-units">
+      <div class="tab-view active" id="ltab-units">
         <div class="dock-search"><input type="text" placeholder="Search units..." id="contacts-search" oninput="searchUnits(this.value)"></div>
         <div class="filter-bar" id="units-toolbar">
           <button class="filter-chip active" data-f="all">All</button>
@@ -648,9 +659,21 @@ body {
       </div>
 
       <!-- TAB: Build / Train -->
-      <div class="left-tab-view" id="ltab-build">
+      <div class="tab-view" id="ltab-build">
         <div class="build-active" id="build-active-area"></div>
         <div class="build-scroll" id="build-scroll"></div>
+      </div>
+
+      <!-- TAB: Orders queue -->
+      <div class="tab-view" id="ltab-orders">
+        <div class="orders-actions"><button onclick="clearOrders()">Clear All</button></div>
+        <div class="scroll-y">
+          <div id="order-cards"></div>
+          <div class="orders-empty" id="orders-empty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
+            <span>No orders queued</span>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -666,91 +689,61 @@ body {
     </div>
   </div>
 
-  <!-- RIGHT: CONTEXT -->
+  <!-- RIGHT PANEL: Intel (overview + ISR contacts + CNN) -->
   <div class="dock dock-right" id="panel-context">
     <div class="dock-hdr" onclick="toggleDock('panel-context')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
-      <span class="dock-title">Intel & Orders</span>
+      <span class="dock-title">Intel</span>
       <svg class="dock-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
     </div>
-    <div class="dock-body">
-      <!-- Sub-tabs: Situation vs Orders -->
-      <div class="panel-tabs">
-        <button class="panel-tab active" data-ptab="situation" onclick="switchPanelTab('situation')">Situation</button>
-        <button class="panel-tab" data-ptab="orders" onclick="switchPanelTab('orders')">Orders <span class="tab-ct" id="orders-badge">0</span></button>
+    <div class="dock-body" style="overflow-y:auto">
+
+      <!-- Overview: EconomyInfo + MilitaryInfo + PerformanceScore -->
+      <div class="ctx-section" id="ctx-sitrep">
+        <div class="ctx-hdr" onclick="toggleCtx('ctx-sitrep')">
+          <span class="ctx-label">Overview</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <div class="ctx-body" id="overview-body"></div>
       </div>
 
-      <!-- TAB: Situation — overview + contacts + CNN -->
-      <div class="panel-tab-view active" id="ptab-situation">
-
-        <!-- Overview: EconomyInfo + MilitaryInfo + PerformanceScore -->
-        <div class="ctx-section" id="ctx-sitrep">
-          <div class="ctx-hdr" onclick="toggleCtx('ctx-sitrep')">
-            <span class="ctx-label">Overview</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-          </div>
-          <div class="ctx-body" id="overview-body"></div>
+      <!-- ISR Contacts — searchable, filterable, scrollable -->
+      <div class="ctx-section" id="ctx-contacts">
+        <div class="ctx-hdr" onclick="toggleCtx('ctx-contacts')">
+          <span class="ctx-label">ISR Contacts</span>
+          <span class="ctx-ct" id="contacts-ct">0</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
         </div>
-
-        <!-- ISR Contacts — searchable, filterable, scrollable -->
-        <div class="ctx-section" id="ctx-contacts" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
-          <div class="ctx-hdr" onclick="toggleCtx('ctx-contacts')">
-            <span class="ctx-label">ISR Contacts</span>
-            <span class="ctx-ct" id="contacts-ct">0</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        <div class="ctx-body" style="display:flex;flex-direction:column;overflow:hidden;padding-bottom:0">
+          <div class="contact-filters" id="isr-filters">
+            <button class="filter-chip active" data-cf="all" onclick="filterContacts('all')">All</button>
+            <button class="filter-chip" data-cf="vehicle" onclick="filterContacts('vehicle')">Veh</button>
+            <button class="filter-chip" data-cf="infantry" onclick="filterContacts('infantry')">Inf</button>
+            <button class="filter-chip" data-cf="building" onclick="filterContacts('building')">Bld</button>
           </div>
-          <div class="ctx-body" style="display:flex;flex-direction:column;overflow:hidden;padding-bottom:0">
-            <div class="contact-filters" id="isr-filters">
-              <button class="filter-chip active" data-cf="all" onclick="filterContacts('all')">All</button>
-              <button class="filter-chip" data-cf="vehicle" onclick="filterContacts('vehicle')">Veh</button>
-              <button class="filter-chip" data-cf="infantry" onclick="filterContacts('infantry')">Inf</button>
-              <button class="filter-chip" data-cf="building" onclick="filterContacts('building')">Bld</button>
-            </div>
-            <div class="scroll-y" id="isr-contact-list" style="flex:1;min-height:0"></div>
-          </div>
+          <div class="scroll-y" id="isr-contact-list"></div>
         </div>
-
-        <!-- CNN Tactical Analysis — attack priorities, defensive positions, hotspots -->
-        <div class="ctx-section" id="ctx-cnn">
-          <div class="ctx-hdr" onclick="toggleCtx('ctx-cnn')">
-            <span class="ctx-label">CNN Analysis</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-          </div>
-          <div class="ctx-body" id="cnn-body"></div>
-        </div>
-
       </div>
 
-      <!-- TAB: Orders — queue + production (each gets full height) -->
-      <div class="panel-tab-view" id="ptab-orders">
-
-        <!-- Orders Queue -->
-        <div class="ctx-section" id="ctx-orders" style="flex:1;overflow-y:auto">
-          <div class="ctx-hdr" onclick="toggleCtx('ctx-orders')">
-            <span class="ctx-label">Order Queue</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-          </div>
-          <div class="ctx-body">
-            <div class="orders-actions"><button onclick="clearOrders()">Clear All</button></div>
-            <div id="order-cards"></div>
-            <div class="orders-empty" id="orders-empty">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
-              <span>No orders queued</span>
-            </div>
-          </div>
+      <!-- CNN Tactical Analysis -->
+      <div class="ctx-section" id="ctx-cnn">
+        <div class="ctx-hdr" onclick="toggleCtx('ctx-cnn')">
+          <span class="ctx-label">CNN Analysis</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
         </div>
-
-        <!-- Active Production Queues (from ProductionInfoModel) -->
-        <div class="ctx-section" id="ctx-active-prod">
-          <div class="ctx-hdr" onclick="toggleCtx('ctx-active-prod')">
-            <span class="ctx-label">Active Production</span>
-            <span class="ctx-ct" id="active-prod-ct">0</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-          </div>
-          <div class="ctx-body" id="active-prod-body"></div>
-        </div>
-
+        <div class="ctx-body" id="cnn-body"></div>
       </div>
+
+      <!-- Active Production status -->
+      <div class="ctx-section" id="ctx-active-prod">
+        <div class="ctx-hdr" onclick="toggleCtx('ctx-active-prod')">
+          <span class="ctx-label">Production</span>
+          <span class="ctx-ct" id="active-prod-ct">0</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <div class="ctx-body" id="active-prod-body"></div>
+      </div>
+
     </div>
   </div>
 
@@ -1021,10 +1014,12 @@ function showToast(msg) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(function() { t.classList.remove('show'); }, 1800);
 }
-function bounceBadge() {
-  var b = document.getElementById('orders-badge');
+// Pulses an indicator in place — the count is the feedback, so the
+// user keeps their current tab instead of being yanked to Orders.
+function bounceBadge(id) {
+  var b = document.getElementById(id || 'seg-orders-ct');
+  if (!b) return;
   b.classList.remove('bounce'); void b.offsetWidth; b.classList.add('bounce');
-  switchPanelTab('orders');
 }
 
 // ═══ DOCK PANELS ═══
@@ -1041,21 +1036,29 @@ function updateGrid() {
   ws.style.gridTemplateRows = '1fr ' + (bc ? '28px' : '160px');
 }
 function toggleCtx(id) { document.getElementById(id).classList.toggle('collapsed'); }
-function switchPanelTab(tab) {
-  document.querySelectorAll('.panel-tab').forEach(function(b) { b.classList.toggle('active', b.dataset.ptab === tab); });
-  document.querySelectorAll('.panel-tab-view').forEach(function(v) { v.classList.remove('active'); });
-  document.getElementById('ptab-' + tab).classList.add('active');
+
+// ═══ DESIGN SYSTEM: indicator primitive ═══
+// setIndicator(id, value, attn) — universal count badge writer.
+// value 0/null hides the badge; attn raises it to the dot+accent state.
+function setIndicator(id, value, attn) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  var n = value || 0;
+  el.textContent = n > 99 ? '99+' : String(n);
+  el.classList.toggle('empty', n === 0);
+  el.classList.toggle('attn', !!attn && n > 0);
 }
+
+// Recomputes every segment indicator from state. Single source of truth.
+function updateIndicators() {
+  setIndicator('seg-units-ct', selected.size || getVisibleUnits().length, selected.size > 0);
+  setIndicator('seg-build-ct', ACTIVE_PRODUCTION.length, ACTIVE_PRODUCTION.length > 0);
+  setIndicator('seg-orders-ct', orders.length, orders.length > 0);
+}
+
 function switchLeftTab(tab) {
-  document.querySelectorAll('.seg-btn').forEach(function(b) { b.classList.toggle('active', b.dataset.lt === tab); });
-  document.querySelectorAll('.left-tab-view').forEach(function(v) { v.classList.remove('active'); });
-  document.getElementById('ltab-' + tab).classList.add('active');
-  var badge = document.getElementById('contacts-badge');
-  if (tab === 'build') {
-    badge.textContent = Object.keys(BUILDING_DB).length + Object.keys(UNIT_DB).length;
-  } else {
-    badge.textContent = getVisibleUnits().length;
-  }
+  document.querySelectorAll('.seg-ctrl .seg-btn').forEach(function(b) { b.classList.toggle('active', b.dataset.lt === tab); });
+  document.querySelectorAll('.dock-left .tab-view').forEach(function(v) { v.classList.toggle('active', v.id === 'ltab-' + tab); });
 }
 
 // ═══ LEFT PANEL: OWN UNITS ═══
@@ -1103,7 +1106,7 @@ function renderUnits() {
     });
     list.appendChild(el);
   });
-  document.getElementById('contacts-badge').textContent = visible.length;
+  updateIndicators();
 }
 
 document.querySelectorAll('#units-toolbar .filter-chip').forEach(function(b) {
@@ -1124,6 +1127,7 @@ function updateToolbar() {
   bar.classList.toggle('visible', hasSelection);
   count.textContent = selected.size + ' sel';
   if (!hasSelection) closeCmd();
+  updateIndicators();
 }
 
 function pickAction(act) {
@@ -1369,13 +1373,11 @@ function syncQueue() {
   var dot = document.getElementById('q-dot');
   var ct = document.getElementById('q-count');
   var btn = document.getElementById('btn-exec');
-  var badge = document.getElementById('orders-badge');
 
   ct.textContent = orders.length + ' order' + (orders.length !== 1 ? 's' : '') + ' queued';
   btn.disabled = orders.length === 0;
   dot.classList.toggle('has-orders', orders.length > 0);
-  badge.textContent = orders.length;
-  badge.classList.toggle('empty', orders.length === 0);
+  updateIndicators();
 
   if (!orders.length) { cards.innerHTML = ''; empty.style.display = 'flex'; renderOverview(); return; }
   empty.style.display = 'none';
