@@ -23,6 +23,8 @@ import math
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "openra-rl"))
 
+import pytest
+
 from milsim.cnn import (
     TacticalCNN,
     TacticalHeatmap,
@@ -318,13 +320,16 @@ def run_tests():
     # --- 13. Torch Detection ---
     print("\n13. Torch Integration")
     check("Torch detection", isinstance(_HAS_TORCH, bool))
+    import milsim.cnn as _cnn_mod
     if _HAS_TORCH:
         from milsim.cnn import TacticalFeatureExtractor
-        check("Feature extractor importable", True)
+        check("Feature extractor is a class", isinstance(TacticalFeatureExtractor, type))
         torch_cnn = TacticalCNN(use_torch=True)
         check("Torch CNN created", torch_cnn.using_torch)
     else:
-        check("Torch not available (OK for tests)", True)
+        # cnn.py only defines TacticalFeatureExtractor under `if _HAS_TORCH`.
+        check("No torch feature extractor exported",
+              not hasattr(_cnn_mod, "TacticalFeatureExtractor"))
         fallback = TacticalCNN(use_torch=True)
         check("Falls back to pure Python", not fallback.using_torch)
 
@@ -341,6 +346,27 @@ def run_tests():
         print(f"\n{total - passed} check(s) failed.")
 
     return passed == total
+
+
+def test_cnn_tactical_analysis():
+    """Every offline CNN check: spatial decode, heatmaps, priorities, kernels."""
+    assert run_tests(), (
+        "one or more CNN checks failed - see the [FAIL] lines in captured output"
+    )
+
+
+@pytest.mark.skipif(not _HAS_TORCH, reason="torch is not installed")
+def test_cnn_torch_backend():
+    """Exercise TacticalCNN's torch path.
+
+    Reported as SKIPPED without torch rather than folded into the pass count,
+    so the gap in coverage of cnn.py's torch branch stays visible.
+    """
+    from milsim.cnn import TacticalFeatureExtractor
+
+    assert isinstance(TacticalFeatureExtractor, type)
+    torch_cnn = TacticalCNN(use_torch=True)
+    assert torch_cnn.using_torch
 
 
 if __name__ == "__main__":

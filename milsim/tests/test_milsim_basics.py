@@ -15,6 +15,16 @@ Usage:
 
 import asyncio
 import sys
+import os
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "openra-rl"))
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import pytest
+
+from _openra_server import SERVER_URL, require_server_or_explain, start_hint
 
 from openra_env.client import OpenRAEnv
 from openra_env.models import ActionType, CommandModel, OpenRAAction
@@ -31,11 +41,19 @@ async def run_milsim_test():
         results.append((name, condition))
         print(f"  [{status}] {name}" + (f" — {detail}" if detail else ""))
 
+    def note(name, detail=""):
+        """Log something observed but not asserted.
+
+        Deliberately NOT appended to `results`: a line that can never fail is
+        not a passing check, and counting it inflates "Results: n/m passed".
+        """
+        print(f"  [INFO] {name}" + (f" — {detail}" if detail else ""))
+
     print("MilSim Foundation Tests")
     print("=" * 60)
 
     try:
-        async with OpenRAEnv(base_url="http://localhost:8000", message_timeout_s=120.0) as env:
+        async with OpenRAEnv(base_url=SERVER_URL, message_timeout_s=120.0) as env:
             # Test 1: Reset
             print("\n1. Environment Connection & Reset")
             result = await env.reset()
@@ -101,8 +119,8 @@ async def run_milsim_test():
             print("\n5. Spatial Intelligence (Fog of War / ISR)")
             check("Spatial tensor populated", obs.spatial_channels > 0,
                   f"{obs.spatial_channels} channels, {obs.map_info.width}x{obs.map_info.height}")
-            check("Fog of war active", True, "enemy contacts limited by observation")
-            check("Enemy intel available", True,
+            note("Fog of war active", "enemy contacts limited by observation")
+            note("Enemy intel available",
                   f"{len(obs.visible_enemies)} units, {len(obs.visible_enemy_buildings)} buildings visible")
 
             # Test 6: Military statistics (foundation for AAR)
@@ -123,10 +141,12 @@ async def run_milsim_test():
             check("Tick-by-tick control", tick_after > tick_before,
                   f"advanced {tick_after - tick_before} ticks (25 ticks ≈ 1 game-second)")
 
-    except ConnectionRefusedError:
-        print("\nERROR: Could not connect to server at localhost:8000")
-        print("Start it first:")
-        print("  OPENRA_PATH=./OpenRA python -m openra_env.server.app --port 8000")
+    # ConnectionRefusedError is a subclass of ConnectionError; the client
+    # wraps connect failures in a plain ConnectionError. Anything broader
+    # (a real OSError, a bad hostname) still gets the full traceback below.
+    except ConnectionError as e:
+        print(f"\nERROR: {e}")
+        print(start_hint())
         return False
     except Exception as e:
         print(f"\nERROR: {e}")
@@ -150,6 +170,20 @@ async def run_milsim_test():
     return passed == total
 
 
+@pytest.mark.integration
+def test_milsim_foundation(openra_server):
+    """OpenRA-RL foundation checks against a live server.
+
+    Skipped (never silently passed) when no server is reachable; the
+    `openra_server` fixture does the probing.
+    """
+    assert asyncio.run(run_milsim_test()), (
+        "one or more checks failed - see the [FAIL] lines in captured output"
+    )
+
+
 if __name__ == "__main__":
+    if not require_server_or_explain():
+        sys.exit(1)
     success = asyncio.run(run_milsim_test())
     sys.exit(0 if success else 1)

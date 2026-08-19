@@ -152,7 +152,7 @@ def run_tests():
     check("MCP package available", has_mcp)
     if has_mcp:
         from milsim.llm_commander import create_mcp_server
-        check("create_mcp_server importable", True)
+        check("create_mcp_server is callable", callable(create_mcp_server))
 
     # --- Results ---
     passed = sum(1 for _, ok in results if ok)
@@ -167,6 +167,13 @@ def run_tests():
         print(f"\n{total - passed} check(s) failed.")
 
     return passed == total
+
+
+def test_llm_commander_interfaces():
+    """Briefing formatting, order parsing, tool schemas and MCP server wiring."""
+    assert run_tests(), (
+        "one or more LLM commander checks failed - see the [FAIL] lines above"
+    )
 
 
 if __name__ == "__main__":

@@ -20,6 +20,12 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "openra-rl"))
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import pytest
+
+from _openra_server import SERVER_URL, require_server_or_explain, start_hint
+
 from openra_env.client import OpenRAEnv
 from openra_env.models import ActionType, CommandModel, OpenRAAction
 
@@ -36,11 +42,19 @@ async def run_isr_test():
         results.append((name, condition))
         print(f"  [{status}] {name}" + (f" — {detail}" if detail else ""))
 
+    def note(name, detail=""):
+        """Log something observed but not asserted.
+
+        Deliberately NOT appended to `results`: a line that can never fail is
+        not a passing check, and counting it inflates "Results: n/m passed".
+        """
+        print(f"  [INFO] {name}" + (f" — {detail}" if detail else ""))
+
     print("ISR System Tests")
     print("=" * 60)
 
     try:
-        async with OpenRAEnv(base_url="http://localhost:8000", message_timeout_s=120.0) as env:
+        async with OpenRAEnv(base_url=SERVER_URL, message_timeout_s=120.0) as env:
             wego = WEGOTurnManager(env, ticks_per_turn=75, execution_substeps=5)
             commander = Commander(wego)
             isr = ISRManager(
@@ -146,7 +160,7 @@ async def run_isr_test():
                         target_y=map_h - 10,
                     ),
                 ])
-                check("Recon orders issued", True,
+                note("Recon orders issued",
                       f"→ center ({target_x},{target_y}) and far corner")
 
             # Advance many turns to let scouts travel and find enemy
@@ -258,13 +272,17 @@ async def run_isr_test():
                 check("Intel level tracked", pre_level >= IntelLevel.DETECTED,
                       any_contact.intel_label)
             else:
-                check("Contact has ID", True, "skipped — no contacts")
-                check("First seen recorded", True, "skipped")
-                check("Observation count", True, "skipped")
-                check("Intel level tracked", True, "skipped")
+                note("Contact has ID", "skipped — no contacts")
+                note("First seen recorded", "skipped")
+                note("Observation count", "skipped")
+                note("Intel level tracked", "skipped")
 
-    except ConnectionRefusedError:
-        print("\nERROR: Could not connect to server at localhost:8000")
+    # ConnectionRefusedError is a subclass of ConnectionError; the client
+    # wraps connect failures in a plain ConnectionError. Anything broader
+    # (a real OSError, a bad hostname) still gets the full traceback below.
+    except ConnectionError as e:
+        print(f"\nERROR: {e}")
+        print(start_hint())
         return False
     except Exception as e:
         print(f"\nERROR: {e}")
@@ -290,6 +308,20 @@ async def run_isr_test():
     return passed == total
 
 
+@pytest.mark.integration
+def test_isr_system(openra_server):
+    """ISR contact/track pipeline against a live server.
+
+    Skipped (never silently passed) when no server is reachable; the
+    `openra_server` fixture does the probing.
+    """
+    assert asyncio.run(run_isr_test()), (
+        "one or more checks failed - see the [FAIL] lines in captured output"
+    )
+
+
 if __name__ == "__main__":
+    if not require_server_or_explain():
+        sys.exit(1)
     success = asyncio.run(run_isr_test())
     sys.exit(0 if success else 1)

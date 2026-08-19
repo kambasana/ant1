@@ -219,6 +219,13 @@ def run_knowledge_tests():
     return passed == total
 
 
+def test_game_knowledge_and_memory():
+    """Unit profiles, OPFOR intel, tactical memory and performance assessment."""
+    assert run_knowledge_tests(), (
+        "one or more knowledge/memory checks failed - see the [FAIL] lines above"
+    )
+
+
 if __name__ == "__main__":
     success = run_knowledge_tests()
     sys.exit(0 if success else 1)

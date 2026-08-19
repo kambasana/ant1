@@ -21,6 +21,12 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "openra-rl"))
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import pytest
+
+from _openra_server import SERVER_URL, require_server_or_explain, start_hint
+
 from openra_env.client import OpenRAEnv
 from milsim.wego import WEGOTurnManager
 from milsim.commander import Commander, TacticalOrder, OrderType
@@ -35,11 +41,19 @@ async def run_spatial_test():
         results.append((name, condition))
         print(f"  [{status}] {name}" + (f" — {detail}" if detail else ""))
 
+    def note(name, detail=""):
+        """Log something observed but not asserted.
+
+        Deliberately NOT appended to `results`: a line that can never fail is
+        not a passing check, and counting it inflates "Results: n/m passed".
+        """
+        print(f"  [INFO] {name}" + (f" — {detail}" if detail else ""))
+
     print("Spatial Intelligence Tests")
     print("=" * 60)
 
     try:
-        async with OpenRAEnv(base_url="http://localhost:8000", message_timeout_s=120.0) as env:
+        async with OpenRAEnv(base_url=SERVER_URL, message_timeout_s=120.0) as env:
             wego = WEGOTurnManager(env, ticks_per_turn=75, execution_substeps=5)
             commander = Commander(wego)
             spatial = SpatialIntel()
@@ -199,9 +213,9 @@ async def run_spatial_test():
                 check("Enemy spread", threat.enemy_spread >= 0,
                       f"{threat.enemy_spread} cells")
             else:
-                check("Enemy centroid", True, "no enemies visible yet")
-                check("Threat direction", True, "n/a")
-                check("Enemy spread", True, "n/a")
+                note("Enemy centroid", "no enemies visible yet")
+                note("Threat direction", "n/a")
+                note("Enemy spread", "n/a")
 
             # --- Phase 8: Approach Corridors ---
             print("\n8. Approach Corridors")
@@ -231,8 +245,12 @@ async def run_spatial_test():
             check("Exploration increased", exploration2.explored_pct > exploration.explored_pct,
                   f"{exploration.explored_pct}% → {exploration2.explored_pct}%")
 
-    except ConnectionRefusedError:
-        print("\nERROR: Could not connect to server at localhost:8000")
+    # ConnectionRefusedError is a subclass of ConnectionError; the client
+    # wraps connect failures in a plain ConnectionError. Anything broader
+    # (a real OSError, a bad hostname) still gets the full traceback below.
+    except ConnectionError as e:
+        print(f"\nERROR: {e}")
+        print(start_hint())
         return False
     except Exception as e:
         print(f"\nERROR: {e}")
@@ -254,6 +272,20 @@ async def run_spatial_test():
     return passed == total
 
 
+@pytest.mark.integration
+def test_spatial_intel(openra_server):
+    """Spatial intelligence against a live server.
+
+    Skipped (never silently passed) when no server is reachable; the
+    `openra_server` fixture does the probing.
+    """
+    assert asyncio.run(run_spatial_test()), (
+        "one or more checks failed - see the [FAIL] lines in captured output"
+    )
+
+
 if __name__ == "__main__":
+    if not require_server_or_explain():
+        sys.exit(1)
     success = asyncio.run(run_spatial_test())
     sys.exit(0 if success else 1)

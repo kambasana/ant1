@@ -22,6 +22,12 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "openra-rl"))
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import pytest
+
+from _openra_server import SERVER_URL, require_server_or_explain, start_hint
+
 from openra_env.client import OpenRAEnv
 from openra_env.models import ActionType, CommandModel
 
@@ -69,11 +75,19 @@ async def run_wego_test():
         results.append((name, condition))
         print(f"  [{status}] {name}" + (f" — {detail}" if detail else ""))
 
+    def note(name, detail=""):
+        """Log something observed but not asserted.
+
+        Deliberately NOT appended to `results`: a line that can never fail is
+        not a passing check, and counting it inflates "Results: n/m passed".
+        """
+        print(f"  [INFO] {name}" + (f" — {detail}" if detail else ""))
+
     print("WEGO Turn System Tests")
     print("=" * 60)
 
     try:
-        async with OpenRAEnv(base_url="http://localhost:8000", message_timeout_s=120.0) as env:
+        async with OpenRAEnv(base_url=SERVER_URL, message_timeout_s=120.0) as env:
             wego = WEGOTurnManager(env, ticks_per_turn=50, execution_substeps=5)
 
             # Start game
@@ -120,8 +134,8 @@ async def run_wego_test():
             place_cmds, placement_counter = _auto_place_commands(obs, placement_counter)
             orders.extend(place_cmds)
             result = await wego.execute_turn(orders)
-            check("Power plant queued", True)
-            check("Cash delta tracked", True, f"delta={result.bda.cash_delta}")
+            note("Power plant queued")
+            note("Cash delta tracked", f"delta={result.bda.cash_delta}")
 
             # Turns 5-8: Advance time for construction + auto-place
             print("\n5. Turns 5-8: Build & auto-place")
@@ -148,7 +162,7 @@ async def run_wego_test():
 
             if barracks_type:
                 orders.append(CommandModel(action=ActionType.BUILD, item_type=barracks_type))
-                check("Barracks type found", True, barracks_type)
+                note("Barracks type found", barracks_type)
             else:
                 check("Barracks type found", False, f"available: {available[:8]}")
                 orders.append(CommandModel(action=ActionType.NO_OP))
@@ -171,6 +185,7 @@ async def run_wego_test():
 
             # Turn 15: Train infantry
             print("\n8. Turn 15: Train infantry")
+            check("Barracks available to queue infantry", has_barracks)
             if has_barracks:
                 orders = [
                     CommandModel(action=ActionType.TRAIN, item_type="e1"),
@@ -180,10 +195,8 @@ async def run_wego_test():
                 place_cmds, placement_counter = _auto_place_commands(obs, placement_counter)
                 orders.extend(place_cmds)
                 result = await wego.execute_turn(orders)
-                check("Infantry training queued", True)
             else:
                 result = await wego.execute_turn([CommandModel(action=ActionType.NO_OP)])
-                check("Infantry training queued", False)
 
             # Turns 16-18: Let infantry train
             for _ in range(3):
@@ -224,10 +237,12 @@ async def run_wego_test():
                   all(h.turn_number == i + 1 for i, h in enumerate(history)))
             check("Game not prematurely over", not wego.is_game_over or wego.game_result != "")
 
-    except ConnectionRefusedError:
-        print("\nERROR: Could not connect to server at localhost:8000")
-        print("Start it first:")
-        print("  cd openra-rl && OPENRA_PATH=$(pwd)/OpenRA python -m openra_env.server.app --port 8000")
+    # ConnectionRefusedError is a subclass of ConnectionError; the client
+    # wraps connect failures in a plain ConnectionError. Anything broader
+    # (a real OSError, a bad hostname) still gets the full traceback below.
+    except ConnectionError as e:
+        print(f"\nERROR: {e}")
+        print(start_hint())
         return False
     except Exception as e:
         print(f"\nERROR: {e}")
@@ -249,6 +264,20 @@ async def run_wego_test():
     return passed == total
 
 
+@pytest.mark.integration
+def test_wego_turn_system(openra_server):
+    """Full WEGO turn cycle against a live server.
+
+    Skipped (never silently passed) when no server is reachable; the
+    `openra_server` fixture does the probing.
+    """
+    assert asyncio.run(run_wego_test()), (
+        "one or more checks failed - see the [FAIL] lines in captured output"
+    )
+
+
 if __name__ == "__main__":
+    if not require_server_or_explain():
+        sys.exit(1)
     success = asyncio.run(run_wego_test())
     sys.exit(0 if success else 1)

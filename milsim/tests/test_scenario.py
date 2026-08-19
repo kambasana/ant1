@@ -21,6 +21,12 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "openra-rl"))
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import pytest
+
+from _openra_server import SERVER_URL, require_server_or_explain, start_hint
+
 from openra_env.client import OpenRAEnv
 from milsim.wego import WEGOTurnManager
 from milsim.commander import Commander, TacticalOrder, OrderType
@@ -40,7 +46,7 @@ async def run_scenario_test():
     print("=" * 60)
 
     try:
-        async with OpenRAEnv(base_url="http://localhost:8000", message_timeout_s=120.0) as env:
+        async with OpenRAEnv(base_url=SERVER_URL, message_timeout_s=120.0) as env:
             wego = WEGOTurnManager(env, ticks_per_turn=75, execution_substeps=5)
             commander = Commander(wego)
             isr = ISRManager()
@@ -171,8 +177,12 @@ async def run_scenario_test():
             check("Scenario advancing", runner.current_turn == 6)
             check("Not complete (mid-scenario)", not runner.is_complete)
 
-    except ConnectionRefusedError:
-        print("\nERROR: Could not connect to server at localhost:8000")
+    # ConnectionRefusedError is a subclass of ConnectionError; the client
+    # wraps connect failures in a plain ConnectionError. Anything broader
+    # (a real OSError, a bad hostname) still gets the full traceback below.
+    except ConnectionError as e:
+        print(f"\nERROR: {e}")
+        print(start_hint())
         return False
     except Exception as e:
         print(f"\nERROR: {e}")
@@ -194,6 +204,20 @@ async def run_scenario_test():
     return passed == total
 
 
+@pytest.mark.integration
+def test_scenario_runner(openra_server):
+    """Scenario runner against a live server.
+
+    Skipped (never silently passed) when no server is reachable; the
+    `openra_server` fixture does the probing.
+    """
+    assert asyncio.run(run_scenario_test()), (
+        "one or more checks failed - see the [FAIL] lines in captured output"
+    )
+
+
 if __name__ == "__main__":
+    if not require_server_or_explain():
+        sys.exit(1)
     success = asyncio.run(run_scenario_test())
     sys.exit(0 if success else 1)
