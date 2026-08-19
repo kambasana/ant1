@@ -87,16 +87,11 @@ body {
 .sb-brand { font-weight: 700; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; }
 .sb-sep { width: 1px; height: 14px; background: var(--border); flex-shrink: 0; }
 .sb-spacer { flex: 1; min-width: 8px; }
-.sb-badge { padding: 2px 8px; border-radius: 100px; font-family: var(--mono); font-weight: 600; font-size: 10px; }
-.sb-turn { background: var(--accent-soft); color: var(--accent-text); }
-.sb-phase { text-transform: uppercase; letter-spacing: 0.05em; font-size: 9px; font-weight: 600; }
-.sb-phase.planning { background: var(--amber-soft); color: var(--amber); }
-.sb-phase.executing { background: var(--green-soft); color: var(--green); }
 
 /* ═══ WORKSPACE — Dock panel grid ═══ */
 .workspace {
   flex: 1; display: grid; overflow: hidden;
-  grid-template-columns: 244px 1fr 332px;
+  grid-template-columns: 268px 1fr 332px;
   grid-template-rows: 1fr 210px;
   grid-template-areas: "left map right" "left feed feed";
 }
@@ -293,8 +288,8 @@ body {
 .scroll-y { overflow-y: auto; flex: 1; min-height: 0; }
 ::-webkit-scrollbar { width: 3px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 .unit-row {
-  display: grid; grid-template-columns: 16px 1fr 28px 36px;
-  align-items: center; gap: 5px; padding: 4px 8px; height: 30px;
+  display: grid; grid-template-columns: 18px 14px minmax(0,1fr) 24px 28px;
+  align-items: center; gap: 4px; padding: 4px 8px; height: 30px;
   cursor: pointer; user-select: none;
   transition: background 80ms var(--ease-decel);
   box-shadow: inset 2px 0 0 transparent;
@@ -309,6 +304,9 @@ body {
 .unit-row:hover .unit-check { border-color: var(--t3); }
 .unit-row.selected .unit-check { background: var(--accent); border-color: var(--accent); transform: scale(1.1); }
 .unit-check svg { width: 8px; height: 8px; opacity: 0; color: #fff; } .unit-row.selected .unit-check svg { opacity: 1; }
+.unit-icon { display: flex; align-items: center; justify-content: center; color: var(--t3); }
+.unit-icon svg { width: 15px; height: 15px; }
+.unit-row:hover .unit-icon, .unit-row.selected .unit-icon { color: var(--accent-text); }
 .unit-info { min-width: 0; display: flex; align-items: baseline; gap: 4px; }
 .unit-name { font-size: 11px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .unit-id { font-family: var(--mono); font-size: 9px; color: var(--t3); flex-shrink: 0; }
@@ -568,7 +566,12 @@ div.att-row { cursor: default; }
   border-top: 1px solid var(--border);
   display: flex; align-items: center; padding: 0 14px; gap: 10px; flex-shrink: 0; z-index: 10;
 }
-.cmd-queue-count { font-family: var(--mono); font-size: 10px; color: var(--t2); display: flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cmd-queue-count {
+  border: none; background: transparent; cursor: pointer;
+  border-radius: var(--r); padding: 4px 8px; min-height: 24px;
+  font-family: var(--mono); font-size: 10px; color: var(--t2); display: flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cmd-queue-count:hover { background: var(--raised); color: var(--t1); }
+.cmd-queue-count:focus-visible { outline: 2px solid var(--accent); outline-offset: -1px; }
 .cmd-hint { font-size: 10px; color: var(--t3); }
 .cmd-hint b { font-family: var(--mono); font-weight: 600; color: var(--t2); background: var(--raised); border: 1px solid var(--border); border-radius: 3px; padding: 0 4px; }
 .cmd-bar-actions.visible ~ .cmd-hint { display: none; }
@@ -781,13 +784,12 @@ div.att-row { cursor: default; }
   <div class="sb-sep"></div>
   <div id="status-modules"></div>
   <div class="sb-spacer"></div>
-  <span class="sb-badge sb-phase planning" id="phase">Planning</span>
-  <span class="sb-badge sb-turn" id="turn">Turn 4</span>
+  <div id="status-state"></div>
   <div class="sb-sep"></div>
-  <div class="cmd-queue-count">
-    <div class="dot" id="q-dot"></div>
+  <button class="cmd-queue-count" id="q-jump" onclick="showPanel('left','orders')" title="Open the order queue">
+    <span class="dot" id="q-dot"></span>
     <span id="q-count">0 orders queued</span>
-  </div>
+  </button>
   <button class="btn-execute sm" id="btn-exec" disabled onclick="executeTurn()">Execute Turn</button>
 </div>
 
@@ -799,9 +801,9 @@ div.att-row { cursor: default; }
     <div class="dock-rail" data-dock="panel-contacts">
       <button class="rail-btn active" data-group="left" data-tab="units"></button>
       <button class="rail-btn" data-group="left" data-tab="build"></button>
+      <button class="rail-btn" data-group="left" data-tab="orders"></button>
       <button class="rail-btn" data-group="left" data-tab="production"></button>
       <button class="rail-btn" data-group="left" data-tab="cap"></button>
-      <button class="rail-btn" data-group="left" data-tab="orders"></button>
     </div>
     <div class="dock-main">
     <div class="dock-hdr">
@@ -847,12 +849,14 @@ div.att-row { cursor: default; }
 
       <!-- TAB: Orders queue -->
       <div class="tab-view" data-group="left" data-tab="orders">
+        <div class="grp-label sticky">Staged for this turn
+          <span class="grp-note">nothing happens until you commit</span></div>
         <div class="orders-actions"><button onclick="clearOrders()">Clear All</button></div>
         <div class="scroll-y">
           <div id="order-cards"></div>
           <div class="orders-empty" id="orders-empty">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
-            <span>No orders queued</span>
+            <span>No orders staged</span>
           </div>
         </div>
       </div>
@@ -1198,6 +1202,7 @@ var selected = new Set(), orders = [], unitFilter = 'all', activeAct = null;
 var feedFilter = 'all', feedSearch = '', unitSearch = '', contactFilter = 'all';
 var buildFilter = 'all', buildSearch = '', buildRole = 'all';
 var lastClickIdx = -1, toastTimer = null;
+var gamePhase = 'Planning', gameTurn = 4;
 
 function unitName(u) {
   var db = UNIT_DB[u.type];
@@ -1244,7 +1249,7 @@ function updateGrid() {
   var lc = document.getElementById('panel-contacts').classList.contains('collapsed');
   var rc = document.getElementById('panel-context').classList.contains('collapsed');
   var bc = document.getElementById('panel-feed').classList.contains('collapsed');
-  ws.style.gridTemplateColumns = (lc ? '36px' : '244px') + ' 1fr ' + (rc ? '36px' : '332px');
+  ws.style.gridTemplateColumns = (lc ? '36px' : '268px') + ' 1fr ' + (rc ? '36px' : '332px');
   ws.style.gridTemplateRows = '1fr ' + (bc ? '32px' : '210px');
 }
 
@@ -1301,12 +1306,12 @@ var MENUS = {
     {tab:'units',  label:'Units',  key:'1', icon:ICON.units,
      count:function() { return {n:selected.size || getVisibleUnits().length, attn:selected.size > 0}; }},
     {tab:'build',  label:'Build',  key:'2', icon:ICON.build},
-    {tab:'production', label:'Prod', head:'Production', title:'Production facilities and queues', key:'3', icon:ICON.prod,
-     count:function() { return {n:ACTIVE_PRODUCTION.length, attn:idleFacilityCount() > 0}; }},
-    {tab:'cap',    label:'Cap',    head:'Capacity', key:'4', title:'Capacity — the means of production', icon:ICON.cap,
-     count:function() { var n = alertCount(CAPACITY_MODULES); return {n:n, attn:n > 0}; }},
-    {tab:'orders', label:'Orders', key:'5', icon:ICON.orders,
+    {tab:'orders', label:'Orders', title:'Orders staged for this turn', key:'3', icon:ICON.orders,
      count:function() { return {n:orders.length, attn:orders.length > 0}; }},
+    {tab:'production', label:'Prod', head:'Production', title:'What is being built right now', key:'4', icon:ICON.prod,
+     count:function() { return {n:ACTIVE_PRODUCTION.length, attn:idleFacilityCount() > 0}; }},
+    {tab:'cap',    label:'Cap',    head:'Capacity', key:'5', title:'Capacity — the means of production', icon:ICON.cap,
+     count:function() { var n = alertCount(CAPACITY_MODULES); return {n:n, attn:n > 0}; }},
   ]},
   right: {title:'title-right', items: [
     {tab:'alerts', label:'Alerts', title:'Needs attention', icon:ICON.alerts,
@@ -1452,6 +1457,7 @@ function renderUnits() {
     var hpCls = hp > 70 ? 'hp-ok' : hp > 35 ? 'hp-warn' : 'hp-crit';
     var st = u.stance >= 0 && u.stance < STANCES.length ? STANCES[u.stance] : '?';
     el.innerHTML =
+      '<div class="unit-icon">' + glyph(ITEM_ICON[u.type]) + '</div>' +
       '<div class="unit-check"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 6l3 3 5-5"/></svg></div>' +
       '<div class="unit-info"><span class="unit-name">' + unitName(u) + '</span><span class="unit-id">#' + u.actor_id + '</span></div>' +
       '<div class="unit-stance">' + st + '</div>' +
@@ -1818,13 +1824,13 @@ var ITEM_ICON = {
   'tsla':'M8 14.2V9M5.4 9h5.2M6.4 6.8h3.2M7 4.6h2M8 2.6V1M4.6 3.6l2.2 1.4M11.4 3.6L9.2 5',
   'ftur':'M5.6 14.2h4.8V9.4H5.6z M8 9.4c1.8-1.8 2.8-2.8 2.8-4.6C10.8 3 8 .8 8 .8S5.2 3 5.2 4.8c0 1.8 1 2.8 2.8 4.6z',
   'sam':'M8 1.2l2.2 4.4v5.2H5.8V5.6z M5.8 10.8L3.4 14.2h9.2l-2.4-3.4M8 14.2v-1.4',
-  'e1':'M8 2a1.6 1.6 0 100 3.2A1.6 1.6 0 008 2M5.8 6h4.4v4.4H5.8z M6.2 10.4l-1.2 3.8M9.8 10.4l1.2 3.8M10.2 7.2l3.6-2.4',
+  'e1':'M8 2.2a1.5 1.5 0 100 3 1.5 1.5 0 000-3M8 5.2v4.6M5.2 7.2h5.6M8 9.8l-2.2 4.4M8 9.8l2.2 4.4M10.8 7.2l3.4-2.6',
   'dog':'M2.2 8.6l1.6-2.6 2 1h4.6l1.6-2 1.6 2.6v3.2H4.4z M5 11.8v2.4M11.4 11.8v2.4M13.6 6l1.2-2.2',
-  'e3':'M8 1.8a1.5 1.5 0 100 3 1.5 1.5 0 000-3M5.8 5.6h4.4V10H5.8z M6.2 10l-1.2 4.2M9.8 10l1.2 4.2M3 6.4h10.4',
+  'e3':'M8 1.8a1.5 1.5 0 100 3 1.5 1.5 0 000-3M8 4.8v5M8 9.8l-2.2 4.4M8 9.8l2.2 4.4M2.4 6.6h11.2M13.6 6.6l-1.4-1.2',
   'e2':'M8 4.6a4.2 4.2 0 100 8.4 4.2 4.2 0 000-8.4M6.8 2.6h2.4v2H6.8z M9.2 3.2L12 1.4',
   'e4':'M1.6 7.4h5.6v2.6H1.6z M7.2 9.6c2.2-.8 4-1.6 4-3.6 0-1.6-1.6-3.2-1.6-3.2s.4 2.2-1 2.8c0 0-.6-1.6-2-2.2',
-  'shok':'M8 1.8a1.5 1.5 0 100 3 1.5 1.5 0 000-3M5.8 5.6h4.4V10H5.8z M6.2 10l-1.2 4.2M9.8 10l1.2 4.2M13.6 4.2l-2.6 3.2h1.8l-1.2 3',
-  'e6':'M2.6 10.4h10.8M4.4 10.4V8a3.6 3.6 0 017.2 0v2.4M8 4.4V2.6M5.6 11.4v2.8M10.4 11.4v2.8',
+  'shok':'M6.6 1.8a1.5 1.5 0 100 3 1.5 1.5 0 000-3M6.6 4.8v5M4 7h5.2M6.6 9.8l-2 4.4M6.6 9.8l2 4.4M13.4 3.4l-2.6 3.6h1.9l-1.5 3.4',
+  'e6':'M4.2 6.2a3.8 3.8 0 017.6 0M2.8 6.2h10.4M8 6.2v4M8 10.2l-2.2 4M8 10.2l2.2 4M5.4 7.8h5.2',
   'medi':'M8 1.8a6.2 6.2 0 100 12.4A6.2 6.2 0 008 1.8M8 4.8v6.4M4.8 8h6.4',
   'e7':'M8 1.4l1.9 4 4.4.6-3.2 3.1.8 4.4L8 11.4l-3.9 2.1.8-4.4L1.7 6l4.4-.6z',
   'spy':'M1.6 6.6h12.8M4.2 6.6C4.2 3.4 5.8 2.2 8 2.2s3.8 1.2 3.8 4.4M3.6 10.2a2 2 0 104 0 2 2 0 00-4 0M8.4 10.2a2 2 0 104 0 2 2 0 00-4 0M7.6 10.6h.8',
@@ -1849,7 +1855,7 @@ var CAT_ICON = {
   'all':'M2 2h5.2v5.2H2zM8.8 2H14v5.2H8.8zM2 8.8h5.2V14H2zM8.8 8.8H14V14H8.8z',
   'Building':'M3 14.2V4L8 1.8 13 4v10.2M6.2 14.2v-4.4h3.6v4.4',
   'Defense':'M8 1.4l5.6 2.4v4.2c0 3.6-2.4 6.4-5.6 7.2-3.2-.8-5.6-3.6-5.6-7.2V3.8z',
-  'Infantry':'M8 1.8a1.7 1.7 0 100 3.4 1.7 1.7 0 000-3.4M5.6 6.2h4.8v5.2H5.6z M6 11.4l-1.2 3M10 11.4l1.2 3',
+  'Infantry':'M2.2 4.6h11.6v6.8H2.2z M2.2 4.6l11.6 6.8M13.8 4.6L2.2 11.4',
   'Vehicle':'M2 10.8h12v3.2H2z M4 7.2h7v3.6H4z M11 8.6h3.4',
   'Aircraft':'M8 1l1.1 6.4 5.7 3.2v1.6L9.2 10.4v2.2l2.2 1.6v.8L8 13.8l-3.4 1.8v-.8l2.2-1.6v-2.2L1.2 12.2v-1.6L6.9 7.4z',
 };
@@ -2166,7 +2172,14 @@ var STATUS_MODULES = [
     return {v:String(n), tone: n > UNITS.length / 2 ? 'bad' : n ? 'warn' : 'ok', act:'selectIdle()'};
   }},
 ];
+var STATE_MODULES = [
+  {k:'Phase', help:'Planning accepts orders; executing commits them', get:function() {
+    return {v:gamePhase, tone: gamePhase === 'Planning' ? 'warn' : 'ok'};
+  }},
+  {k:'Turn', help:'Current game turn', get:function() { return {v:String(gameTurn)}; }},
+];
 function updateStatusBar() {
+  renderModBar(document.getElementById('status-state'), STATE_MODULES, 'inline');
   renderModBar(document.getElementById('status-modules'), STATUS_MODULES, 'inline');
 }
 
@@ -2189,14 +2202,10 @@ function executeTurn() {
     return;
   }
   execArmed = false; btn.classList.remove('warn');
-  var ph = document.getElementById('phase');
-  var tn = document.getElementById('turn');
-  ph.textContent = 'Executing'; ph.className = 'sb-badge sb-phase executing';
+  gamePhase = 'Executing'; updateStatusBar();
   btn.classList.add('executing'); btn.textContent = 'Executing...'; btn.disabled = true;
   setTimeout(function() {
-    var t = parseInt(tn.textContent.replace('Turn ', '')) + 1;
-    tn.textContent = 'Turn ' + t;
-    ph.textContent = 'Planning'; ph.className = 'sb-badge sb-phase planning';
+    gameTurn += 1; gamePhase = 'Planning'; updateStatusBar();
     btn.classList.remove('executing'); btn.textContent = 'Execute Turn';
     orders = []; syncQueue();
   }, 1500);
@@ -2402,6 +2411,14 @@ function renderMap() {
 }
 window.addEventListener('resize', function() { renderMap(); });
 
+// Opens a panel on a given view, expanding its dock if it is shut.
+var DOCK_OF = {left:'panel-contacts', right:'panel-context'};
+function showPanel(group, tab) {
+  switchTab(group, tab);
+  var d = document.getElementById(DOCK_OF[group]);
+  if (d && d.classList.contains('collapsed')) toggleDock(d.id);
+}
+
 // ═══ PIN / AUTO-HIDE ═══
 // Pinned panels stay put. Unpinned ones behave like an auto-hiding tool
 // window: they fall shut when the pointer leaves and reopen on a rail
@@ -2426,11 +2443,13 @@ function togglePin(id) {
 // A tool this dense should be drivable from the keyboard. Hints live in
 // the segment tooltips and the command-bar hint line.
 var KEYS = {
-  '1': function() { switchTab('left', 'units'); },
-  '2': function() { switchTab('left', 'build'); },
-  '3': function() { switchTab('left', 'orders'); },
-  'i': function() { switchTab('right', 'intel'); },
-  'p': function() { switchTab('right', 'production'); },
+  '1': function() { showPanel('left', 'units'); },
+  '2': function() { showPanel('left', 'build'); },
+  '3': function() { showPanel('left', 'orders'); },
+  '4': function() { showPanel('left', 'production'); },
+  '5': function() { showPanel('left', 'cap'); },
+  'i': function() { showPanel('right', 'intel'); },
+  'a': function() { showPanel('right', 'alerts'); },
   'd': function() { selectIdle(); },
   'a': function() { selected.clear(); UNITS.forEach(function(u) { selected.add(u.actor_id); }); renderUnits(); updateToolbar(); },
   'Escape': function() { selectNone(); },
