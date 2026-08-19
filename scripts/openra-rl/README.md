@@ -49,3 +49,33 @@ The right home for these changes is a pull request upstream. Until that
 lands, the patch has to be reapplied after every fresh clone of openra-rl,
 and it will rot as upstream moves. Treat a failing `--check` as the signal
 to rebase it or push it upstream, not to force it.
+
+## amd64-image-tag.patch
+
+Against a current `yxc20089/OpenRA-RL`. One file, `openra_env/cli/docker_manager.py`.
+
+`_image_tag()` hardcodes `latest`, and the published `latest` manifest is
+**arm64-only**. On any x86 host `server start` dies with:
+
+```
+no matching manifest for linux/amd64/v3 in the manifest list entries
+```
+
+Docker 29 asks for a microarchitecture variant, so the message mentions
+`amd64/v3`, but an explicit `--platform linux/amd64` fails the same way —
+there is genuinely no amd64 entry under `latest`. Every **versioned** tag
+(0.2.1, 0.3.1, 0.4.0, 0.4.1) does carry amd64.
+
+The patch adds an `OPENRA_RL_VERSION` environment override so a version can be
+pinned without editing code. Verified on Windows: with the variable set,
+`_image_tag()` returns the pinned tag; without it, `latest` as before.
+
+Workaround needing no patch — pull a versioned tag and retag it locally:
+
+```
+docker pull --platform linux/amd64 ghcr.io/yxc20089/openra-rl:0.4.1
+docker tag ghcr.io/yxc20089/openra-rl:0.4.1 ghcr.io/yxc20089/openra-rl:latest
+```
+
+Applied separately from `milsim-fixes.patch` because the two were captured
+against different upstream commits.

@@ -1,4 +1,4 @@
-# Running MilSim on Windows
+﻿# Running MilSim on Windows
 
 This guide covers installing and running the MilSim platform on Windows using
 the PowerShell scripts in `scripts\windows\`.
@@ -575,3 +575,51 @@ but it requires changes to `milsim\` itself.
 
 Treat the first run on a real Windows machine as the acceptance test. See
 [docs/RELEASE.md](RELEASE.md).
+
+### `no matching manifest for linux/amd64` when starting the server
+
+`openra-rl server start` fails with:
+
+```
+Error response from daemon: no matching manifest for linux/amd64/v3
+in the manifest list entries: no match for platform in manifest: not found
+```
+
+The published `latest` image is **arm64-only**. Docker 29 requests a
+microarchitecture variant so the message says `amd64/v3`, but passing
+`--platform linux/amd64` fails identically — there is no amd64 entry under
+`latest` at all. Versioned tags do have one.
+
+Pull a versioned tag and point `latest` at it locally:
+
+```powershell
+docker pull --platform linux/amd64 ghcr.io/yxc20089/openra-rl:0.4.1
+docker tag ghcr.io/yxc20089/openra-rl:0.4.1 ghcr.io/yxc20089/openra-rl:latest
+```
+
+Confirmed working on Windows 11 with Docker 29.7.2. See
+`scripts\openra-rl\amd64-image-tag.patch` for a source fix adding an
+`OPENRA_RL_VERSION` override.
+
+### Ollama Cloud instead of a local model
+
+For a machine without the VRAM for a local model, sign in and use a
+`-cloud` tagged model. The local daemon proxies to the cloud, so
+`OLLAMA_HOST` stays `http://localhost:11434` and no API key is needed:
+
+```powershell
+ollama signin
+[Environment]::SetEnvironmentVariable('MILSIM_LLM_PROVIDER','ollama','User')
+[Environment]::SetEnvironmentVariable('MILSIM_LLM_MODEL','gpt-oss:20b-cloud','User')
+```
+
+`gpt-oss:20b-cloud` and `gpt-oss:120b-cloud` are the cloud models that
+resolve; the 20b is the cheaper of the two and supports tool calling, which
+`-Mode fc` needs.
+
+**Budget for reasoning tokens.** gpt-oss emits a `reasoning` field before
+`content`, and it is charged against `max_tokens`. A request capped at 10
+tokens returned empty content and `finish_reason: length` — the trace had
+consumed the whole budget. Keep `max_tokens` well above the length of the
+orders you expect. `reasoning_effort` and `think` had no useful effect on
+this endpoint.

@@ -1,0 +1,27 @@
+﻿diff --git a/openra_env/cli/docker_manager.py b/openra_env/cli/docker_manager.py
+index e7ebe20..0865c90 100644
+--- a/openra_env/cli/docker_manager.py
++++ b/openra_env/cli/docker_manager.py
+@@ -1,4 +1,4 @@
+-"""Docker orchestration for the OpenRA-RL game server."""
++﻿"""Docker orchestration for the OpenRA-RL game server."""
+ 
+ import json
+ import os
+@@ -47,8 +47,14 @@ def check_docker() -> bool:
+ 
+ 
+ def _image_tag(version: Optional[str] = None) -> str:
+-    """Return the full image tag for a given version (default: latest)."""
+-    tag = version or "latest"
++    """Return the full image tag for a given version.
++
++    Defaults to $OPENRA_RL_VERSION, then "latest". The override matters:
++    the published "latest" manifest is arm64-only, so on x86 Docker fails
++    with "no matching manifest for linux/amd64", while every versioned tag
++    (0.2.1 through 0.4.1) does carry amd64. Pin a version on x86 hosts.
++    """
++    tag = version or os.environ.get("OPENRA_RL_VERSION", "").strip() or "latest"
+     return f"{IMAGE_REPO}:{tag}"
+ 
+ 
