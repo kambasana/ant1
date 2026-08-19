@@ -23,14 +23,14 @@
   --red-dim: #2A1518;
   --t1: #F6F7F9;
   --t2: #ABB3BF;
-  --t3: #5F6B7C;
+  --t3: #8F99A8;
   --mono: 'IBM Plex Mono', 'SF Mono', 'Consolas', monospace;
   --sans: 'Inter', -apple-system, system-ui, sans-serif;
   --r: 4px;
   --r-lg: 8px;
   --status-h: 36px;
   --cmd-h: 44px;
-  --dock-hdr: 28px;
+  --dock-hdr: 32px;
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-decel: cubic-bezier(0, 0, 0.2, 1);
   --ease-emphasized: cubic-bezier(0.05, 0.7, 0.1, 1);
@@ -51,7 +51,7 @@
     --green: #238551; --green-soft: rgba(35,133,81,0.06); --green-dim: #E8F5EE;
     --amber: #C87619; --amber-soft: rgba(200,118,25,0.06); --amber-dim: #FDF3E6;
     --red: #CD4246; --red-soft: rgba(205,66,70,0.04); --red-dim: #FDECEC;
-    --t1: #1C2127; --t2: #5F6B7C; --t3: #8F99A8;
+    --t1: #1C2127; --t2: #5F6B7C; --t3: #5F6B7C;
     --seg-on: var(--surface); --seg-on-shadow: 0 1px 2px rgba(16,22,26,0.18);
   }
 }
@@ -62,7 +62,7 @@
   --green: #32A467; --green-soft: rgba(50,164,103,0.08); --green-dim: #132A1E;
   --amber: #EC9A3C; --amber-soft: rgba(236,154,60,0.08); --amber-dim: #2A2014;
   --red: #E76A6E; --red-soft: rgba(231,106,110,0.06); --red-dim: #2A1518;
-  --t1: #F6F7F9; --t2: #ABB3BF; --t3: #5F6B7C;
+  --t1: #F6F7F9; --t2: #ABB3BF; --t3: #8F99A8;
   --seg-on: var(--elevated); --seg-on-shadow: none;
 }
 
@@ -97,7 +97,7 @@ body {
 .workspace {
   flex: 1; display: grid; overflow: hidden;
   grid-template-columns: 220px 1fr 300px;
-  grid-template-rows: 1fr 160px;
+  grid-template-rows: 1fr 210px;
   grid-template-areas: "left map right" "left feed feed";
 }
 
@@ -153,8 +153,10 @@ body {
   background: rgba(17,20,24,0.78); padding: 5px 12px;
   border-radius: var(--r); border: 1px solid rgba(56,62,71,0.3);
 }
-.legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--t2); letter-spacing: 0.02em; }
-.legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--t2); letter-spacing: 0.02em; white-space: nowrap; }
+.legend-item svg { width: 11px; height: 11px; stroke-width: 1; flex-shrink: 0; }
+.legend-sw { width: 9px; height: 9px; border-radius: 2px; border: 1px solid rgba(255,255,255,0.12); flex-shrink: 0; }
+.legend-sep { width: 1px; height: 12px; background: rgba(255,255,255,0.14); }
 
 /* ═══ LEFT PANEL: CONTACTS ═══ */
 .filter-bar {
@@ -162,9 +164,9 @@ body {
   padding: 4px 8px; border-bottom: 1px solid var(--border-subtle); flex-shrink: 0;
 }
 .filter-bar.compact { gap: 3px; }
-.filter-bar.compact .filter-chip { padding: 3px 6px; }
+.filter-bar.compact .filter-chip { padding: 4px 7px; }
 .filter-chip {
-  padding: 3px 8px; border-radius: 100px;
+  min-height: 24px; padding: 4px 9px; border-radius: 100px;
   border: 1px solid var(--border); background: transparent;
   color: var(--t2); font-family: var(--sans); font-size: 10px; cursor: pointer;
   transition: border-color 100ms var(--ease-decel), color 100ms var(--ease-decel), transform 80ms var(--ease-decel);
@@ -265,6 +267,10 @@ body {
 }
 .mod-slot.warn { border-color: var(--amber); background: var(--amber-soft); }
 .mod-slot.bad { border-color: var(--red); background: var(--red-soft); }
+button.mod-slot { font-family: var(--sans); text-align: left; cursor: pointer; }
+button.mod-slot::after { content: ' ›'; color: var(--t3); font-size: 10px; }
+button.mod-slot:hover { border-color: var(--accent); }
+button.mod-slot:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .mod-k { display: block; font-size: 8px; color: var(--t3); text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.3; }
 .mod-v { font-family: var(--mono); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .mod-v.ok { color: var(--green); } .mod-v.warn { color: var(--amber); } .mod-v.bad { color: var(--red); }
@@ -342,13 +348,27 @@ body {
 .cnn-fill { height: 100%; border-radius: 1px; }
 
 /* ═══ RIGHT PANEL: CONTEXT — collapsible sections ═══ */
-/* Performance dimension bars */
-.sitrep-row { display: flex; align-items: center; gap: 6px; font-size: 10px; }
-.sitrep-label { color: var(--t3); font-size: 9px; min-width: 65px; flex-shrink: 0; }
-.sitrep-val { font-family: var(--mono); font-size: 10px; font-weight: 600; color: var(--t1); font-variant-numeric: tabular-nums; }
-.sitrep-val.g { color: var(--green); } .sitrep-val.r { color: var(--red); }
-.sitrep-bar-wrap { flex: 1; height: 2px; border-radius: 1px; background: var(--elevated); overflow: hidden; }
-.sitrep-bar { height: 100%; border-radius: 1px; background: var(--green); transition: width 300ms var(--ease-decel); }
+/* Attention rows are .lrow used as buttons — same anatomy, actionable. */
+.att-row {
+  width: 100%; font-family: var(--sans); text-align: left; cursor: pointer;
+  border-left: none; border-right: none; border-top: none;
+}
+button.att-row:hover { background: var(--accent-soft); }
+button.att-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+div.att-row { cursor: default; }
+
+/* Lines of effort — full labels, one bar colour, explicit trend glyph */
+.loe-wrap { padding: 4px 10px 10px; }
+.loe-row {
+  display: grid; grid-template-columns: 76px minmax(0,1fr) 22px 24px;
+  gap: 5px; align-items: center; min-height: 18px;
+}
+.loe-label { font-size: 10px; color: var(--t2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.loe-track { height: 4px; border-radius: 2px; background: var(--elevated); overflow: hidden; }
+.loe-fill { height: 100%; border-radius: 2px; background: var(--accent); transition: width 300ms var(--ease-decel); }
+.loe-val { font-family: var(--mono); font-size: 10px; font-weight: 600; color: var(--t1); text-align: right; font-variant-numeric: tabular-nums; }
+.loe-trend { font-family: var(--mono); font-size: 8px; color: var(--t3); text-align: right; }
+.loe-trend.up { color: var(--green); } .loe-trend.down { color: var(--red); }
 
 /* Order cards */
 .order-card {
@@ -423,7 +443,7 @@ body {
 .feed-bar input:focus { border-color: var(--accent); }
 .feed-bar input::placeholder { color: var(--t3); }
 .feed-filter {
-  padding: 2px 7px; border-radius: 100px;
+  min-height: 24px; padding: 4px 9px; border-radius: 100px;
   border: 1px solid transparent; background: transparent;
   color: var(--t3); font-family: var(--sans); font-size: 9px; cursor: pointer;
   transition: color 80ms var(--ease-decel), border-color 80ms var(--ease-decel);
@@ -454,6 +474,19 @@ body {
 .f-tag.move { background: var(--accent-soft); color: var(--accent-text); }
 .f-tag.system { background: var(--elevated); color: var(--t3); }
 .f-msg { flex: 1; font-size: 11px; color: var(--t2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Coordinates the log mentions are links to that cell */
+.f-coord {
+  font-family: var(--mono); font-size: 10px; font-weight: 600;
+  color: var(--accent-text); background: var(--accent-soft);
+  border: 1px solid transparent; border-radius: 3px;
+  padding: 1px 5px; margin: 0 1px; cursor: pointer;
+}
+.f-coord::before { content: '⌖ '; opacity: 0.7; }
+.f-coord:hover { border-color: var(--accent); background: var(--raised); }
+.f-coord:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.f-hp { display: inline-flex; align-items: center; gap: 5px; margin-left: 8px; font-family: var(--mono); font-size: 9px; color: var(--t3); }
+.f-hp-bar { display: inline-block; width: 34px; height: 3px; border-radius: 2px; background: var(--elevated); overflow: hidden; }
+.f-hp-fill { display: block; height: 100%; border-radius: 2px; }
 .f-row.critical .f-msg { color: var(--red); font-weight: 600; }
 .f-row.warning .f-msg { color: var(--amber); font-weight: 500; }
 .f-row.info .f-msg { color: var(--t1); }
@@ -466,6 +499,7 @@ body {
 }
 .cmd-queue-count { font-family: var(--mono); font-size: 10px; color: var(--t2); display: flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .cmd-hint { font-size: 10px; color: var(--t3); }
+.cmd-hint b { font-family: var(--mono); font-weight: 600; color: var(--t2); background: var(--raised); border: 1px solid var(--border); border-radius: 3px; padding: 0 4px; }
 .cmd-bar-actions.visible ~ .cmd-hint { display: none; }
 .cmd-queue-count .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); display: none; }
 .cmd-queue-count .dot.has-orders { display: block; animation: pulse 1.5s ease infinite; }
@@ -478,9 +512,14 @@ body {
 }
 .btn-execute:hover { transform: translateY(-1px) scale(1.02); box-shadow: 0 4px 16px rgba(45,114,210,0.3); }
 .btn-execute:active { transform: translateY(0) scale(0.97); }
-.btn-execute:disabled { opacity: 0.3; cursor: not-allowed; transform: none; box-shadow: none; }
+.btn-execute:disabled {
+  background: var(--raised); color: var(--t3); border: 1px solid var(--border);
+  cursor: not-allowed; transform: none; box-shadow: none;
+}
 /* Size variant for the top menu bar */
-.btn-execute.sm { padding: 5px 16px; border-radius: var(--r); font-size: 11px; }
+.btn-execute.sm { padding: 6px 16px; border-radius: var(--r); font-size: 11px; min-height: 26px; }
+.btn-execute.warn { background: var(--amber); color: #1C2127; }
+.btn-execute.warn:hover { background: var(--amber); }
 .btn-execute.executing { background: var(--green); animation: exec-pulse 1s var(--ease-standard) infinite; }
 @keyframes exec-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.8; } }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
@@ -507,7 +546,7 @@ body {
  * Customise: --seg-h (height), --seg-r (radius), --seg-font (size).
  */
 .seg-ctrl {
-  --seg-h: 20px; --seg-r: 4px; --seg-font: 9px; --seg-grow: 1.15;
+  --seg-h: 24px; --seg-r: 4px; --seg-font: 9px; --seg-grow: 1.15;
   display: flex; height: var(--seg-h); border-radius: var(--seg-r);
   background: var(--bg); border: 1px solid var(--border);
   overflow: hidden; flex-shrink: 0; flex: 1;
@@ -535,7 +574,7 @@ body {
 .seg-btn.active:hover { background: var(--seg-on); }
 .seg-btn + .seg-btn { border-left: 1px solid var(--border); }
 /* Size variant for nested/second-level menus */
-.seg-ctrl.sm { --seg-h: 18px; --seg-font: 8px; }
+.seg-ctrl.sm { --seg-h: 22px; --seg-font: 8px; }
 .seg-ctrl.sm .seg-ct { --ct-dot: 3px; }
 /* Row wrapper when a control sits in a panel body rather than a header */
 .seg-sub {
@@ -616,7 +655,7 @@ body {
 .build-row {
   display: grid; grid-template-columns: 30px 1fr auto;
   gap: 7px; align-items: center; width: 100%;
-  padding: 3px 10px; min-height: 22px;
+  padding: 4px 10px; min-height: 26px;
   border: none; border-bottom: 1px solid var(--border-subtle);
   background: transparent; color: var(--t2);
   font-family: var(--sans); font-size: 10px; text-align: left; cursor: pointer;
@@ -631,11 +670,19 @@ body {
 }
 .build-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .build-cost { font-family: var(--mono); font-size: 9px; color: var(--t3); font-variant-numeric: tabular-nums; }
-/* No powered facility can produce it — BuildingInfoModel.can_produce */
-.build-row.locked { opacity: 0.3; cursor: not-allowed; }
-.build-row.locked:hover { background: transparent; color: var(--t2); }
+.build-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.build-note { font-family: var(--mono); font-size: 8px; color: var(--t3); margin-left: 6px; }
+.build-note.warn { color: var(--amber); }
+/* Affordable now — the default, most-legible state */
+.build-row.ready .build-name { color: var(--t1); }
 /* Producible but cost exceeds EconomyInfo.cash */
-.build-row.poor .build-cost { color: var(--red); }
+.build-row.poor .build-cost { color: var(--amber); }
+.build-row.poor .build-name { color: var(--t2); }
+/* No powered facility can produce it — BuildingInfoModel.can_produce.
+   Held above the contrast floor so the reason stays readable. */
+.build-row.locked { opacity: 0.6; cursor: not-allowed; }
+.build-row.locked .build-name, .build-row.locked .build-cost { color: var(--t3); }
+.build-row.locked:hover { background: transparent; }
 
 
 /* ═══ RESPONSIVE ═══ */
@@ -721,10 +768,19 @@ body {
   <!-- CENTER: MAP -->
   <div class="map-center" id="map-frame">
     <canvas id="map-canvas"></canvas>
+    <!-- Shape carries the friend/foe distinction as well as hue, since
+         red/blue is a common colour-vision confusion. The legend names
+         the shapes and the terrain, not the two colours nobody needed. -->
     <div class="map-legend">
-      <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div> Friendly</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> Hostile</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div> Resources</div>
+      <div class="legend-item"><svg viewBox="0 0 12 12"><circle cx="6" cy="6" r="4" fill="var(--accent)" stroke="var(--accent-text)"/></svg> Own unit</div>
+      <div class="legend-item"><svg viewBox="0 0 12 12"><rect x="2" y="2" width="8" height="8" fill="var(--accent)" stroke="var(--accent-text)"/></svg> Own structure</div>
+      <div class="legend-item"><svg viewBox="0 0 12 12"><path d="M6 1.5 10.5 6 6 10.5 1.5 6Z" fill="var(--red)" stroke="#FF9194"/></svg> Enemy unit</div>
+      <div class="legend-item"><svg viewBox="0 0 12 12"><rect x="2" y="2" width="8" height="8" fill="#CD4246" stroke="var(--red)"/></svg> Enemy structure</div>
+      <div class="legend-sep"></div>
+      <div class="legend-item"><span class="legend-sw" style="background:rgb(20,30,16)"></span> Open</div>
+      <div class="legend-item"><span class="legend-sw" style="background:rgb(14,26,12)"></span> Woods</div>
+      <div class="legend-item"><span class="legend-sw" style="background:rgb(30,32,29)"></span> High ground</div>
+      <div class="legend-item"><span class="legend-sw" style="background:rgb(12,25,45)"></span> Water</div>
     </div>
   </div>
 
@@ -832,7 +888,7 @@ body {
       <button class="cmd-go" onclick="queueFromCmd()">Queue</button>
     </div>
   </div>
-  <div class="cmd-hint" id="cmd-hint">Select units to issue orders &mdash; shift-click for a range, ctrl-click to toggle</div>
+  <div class="cmd-hint" id="cmd-hint">Keys: <b>1</b>/<b>2</b>/<b>3</b> panels &middot; <b>I</b>/<b>P</b> intel, production &middot; <b>D</b> select idle &middot; <b>A</b> all &middot; <b>Esc</b> clear &middot; <b>Enter</b> commit turn</div>
   <div class="cmd-spacer"></div>
 </div>
 
@@ -995,6 +1051,19 @@ var ACTIVE_PRODUCTION = [
   {queue_type:'Infantry', item:'e3',   progress:0.72, remaining_ticks:45,  remaining_cost:84,   paused:false},
 ];
 
+// DIMENSION_DESCRIPTIONS from assessment.py — surfaced as tooltips so
+// the abbreviations are never the only explanation available.
+var DIM_HELP = {
+  combat:'Kill/loss ratio, damage dealt vs taken',
+  economy:'Resource efficiency, harvester management',
+  infrastructure:'Base development, power management',
+  intelligence:'Map exploration, enemy scouting',
+  composition:'Force mix, tech diversity',
+  tempo:'Operational speed, initiative',
+  disruption:'Enemy disruption, harassment effectiveness',
+  outcome:'Win/loss terminal reward',
+};
+
 // ─── Performance Score (assessment.py PerformanceScore) ───
 var PERF_SCORE = {
   scalar: 0.62,
@@ -1011,19 +1080,22 @@ var PERF_SCORE = {
 };
 
 // ─── Battle Feed (from BattleDamageAssessment + game events) ───
+// Messages are written for a commander, not for the wire format. Field
+// names stay in the data; the strings say what happened in plain terms.
+// `hp` renders an inline health bar, coordinates become map links.
 var FEED_DATA = [
-  {turn:4, sev:'critical', cat:'combat', msg:'Medium Tank #42 destroyed enemy Rifle Squad at (58,26) — kills_cost +100'},
-  {turn:4, sev:'critical', cat:'combat', msg:'Rifle Inf #48 under fire at (54,28) — hp_percent 0.55'},
-  {turn:4, sev:'warning',  cat:'recon',  msg:'ISR: C-001 identified — Light Tank at (62,28), intel_level IDENTIFIED'},
-  {turn:4, sev:'info',     cat:'recon',  msg:'Ranger #44 completed recon sweep sector NE, 2 new contacts'},
-  {turn:3, sev:'routine',  cat:'prod',   msg:'Infantry queue complete: e3 Rocket Soldier delivered'},
-  {turn:3, sev:'info',     cat:'move',   msg:'Ranger #45 arrived at waypoint (18,12)'},
-  {turn:3, sev:'warning',  cat:'recon',  msg:'ISR: C-005 classified — building at (70,15), intel_level CLASSIFIED'},
-  {turn:2, sev:'critical', cat:'combat', msg:'BDA: Rifle Inf #48 took 45% damage at (54,28), units_lost delta +0'},
-  {turn:2, sev:'info',     cat:'move',   msg:'Heavy Tank #52 repositioned to defense line (11,15)'},
-  {turn:2, sev:'routine',  cat:'prod',   msg:'Building queue complete: powr Power Plant online, +100 power'},
-  {turn:1, sev:'routine',  cat:'move',   msg:'All units deployed to staging area'},
-  {turn:1, sev:'routine',  cat:'system', msg:'Game started — Tournament Arena 108x50'},
+  {turn:4, sev:'critical', cat:'combat', msg:'Medium Tank #42 destroyed an enemy rifle squad at (58,26) — worth $100'},
+  {turn:4, sev:'critical', cat:'combat', msg:'Rifle Inf #48 is under fire at (54,28)', hp:0.55},
+  {turn:4, sev:'warning',  cat:'recon',  msg:'Contact C-001 identified as a Light Tank at (62,28)'},
+  {turn:4, sev:'info',     cat:'recon',  msg:'Ranger #44 finished a recon sweep of the north-east — 2 new contacts'},
+  {turn:3, sev:'routine',  cat:'prod',   msg:'Rocket Soldier delivered from the barracks'},
+  {turn:3, sev:'info',     cat:'move',   msg:'Ranger #45 reached its waypoint at (18,12)'},
+  {turn:3, sev:'warning',  cat:'recon',  msg:'Contact C-005 classified as a structure at (70,15)'},
+  {turn:2, sev:'critical', cat:'combat', msg:'Rifle Inf #48 took 45% damage at (54,28) — no losses', hp:0.55},
+  {turn:2, sev:'info',     cat:'move',   msg:'Heavy Tank #52 repositioned to the defence line at (11,15)'},
+  {turn:2, sev:'routine',  cat:'prod',   msg:'Power Plant came online — 100 more power available'},
+  {turn:1, sev:'routine',  cat:'move',   msg:'All units deployed to the staging area'},
+  {turn:1, sev:'routine',  cat:'system', msg:'Game started on Tournament Arena, 108 by 50 cells'},
 ];
 
 // ─── State ───
@@ -1078,7 +1150,7 @@ function updateGrid() {
   var rc = document.getElementById('panel-context').classList.contains('collapsed');
   var bc = document.getElementById('panel-feed').classList.contains('collapsed');
   ws.style.gridTemplateColumns = (lc ? '28px' : '220px') + ' 1fr ' + (rc ? '28px' : '300px');
-  ws.style.gridTemplateRows = '1fr ' + (bc ? '28px' : '160px');
+  ws.style.gridTemplateRows = '1fr ' + (bc ? '32px' : '210px');
 }
 
 // ═══ DESIGN SYSTEM: indicator primitive ═══
@@ -1261,11 +1333,15 @@ function renderModBar(el, modules, variant) {
   el.innerHTML = '<div class="mod-bar ' + (variant || '') + '">' + modules.map(function(m) {
     var r = m.get() || {};
     var tone = r.tone || '';
-    return '<div class="mod-slot ' + tone + '">' +
+    // A metric worth acting on becomes a button rather than a readout.
+    var tag = r.act ? 'button' : 'div';
+    var help = (m.help || m.k) + (r.sub ? ' — ' + r.sub : '');
+    return '<' + tag + ' class="mod-slot ' + tone + (r.act ? ' act' : '') + '" title="' + help + '"' +
+      (r.act ? ' onclick="' + r.act + '"' : '') + '>' +
       '<span class="mod-k">' + m.k + '</span>' +
       '<span class="mod-v ' + tone + '">' + r.v + '</span>' +
       (r.sub ? '<span class="mod-sub">' + r.sub + '</span>' : '') +
-    '</div>';
+    '</' + tag + '>';
   }).join('') + '</div>';
 }
 function alertCount(modules) {
@@ -1275,47 +1351,115 @@ function alertCount(modules) {
   }).length;
 }
 
-// ═══ INTEL — OVERVIEW (MilitaryInfo + PerformanceScore) ═══
-// Force state. The means of production live under Production > Capacity.
-var OVERVIEW_MODULES = [
-  {k:'Army Val', get:function() { return {v:'$' + MILITARY.army_value.toLocaleString()}; }},
-  {k:'K/D', get:function() {
-    var kd = MILITARY.units_lost > 0 ? MILITARY.units_killed / MILITARY.units_lost : MILITARY.units_killed;
-    return {v:kd.toFixed(1), tone: kd >= 1 ? 'ok' : 'warn'};
-  }},
-  {k:'Kills $', get:function() { return {v:'$' + MILITARY.kills_cost.toLocaleString(), tone:'ok'}; }},
-  {k:'Losses $', get:function() { return {v:'$' + MILITARY.deaths_cost.toLocaleString()}; }},
-  {k:'Readiness', get:function() {
-    var hp = UNITS.length ? Math.round(UNITS.reduce(function(s,u){ return s + u.hp_percent; }, 0) / UNITS.length * 100) : 0;
-    return {v:hp + '%', tone: hp > 70 ? 'ok' : hp > 40 ? 'warn' : 'bad'};
-  }},
-  {k:'Idle', get:function() {
-    var n = UNITS.filter(function(u){ return u.is_idle; }).length;
-    return {v:n + '/' + UNITS.length, tone: n > UNITS.length / 2 ? 'warn' : ''};
-  }},
-];
+// ═══ INTEL — OVERVIEW ═══
+// A turn-based commander needs "what should I do", not "what happened".
+// Every entry below is a condition worth acting on, and every one is a
+// button that takes you to the thing it is talking about.
+function damagedUnits() { return UNITS.filter(function(u) { return u.hp_percent < 0.6; }); }
+function idleUnits()    { return UNITS.filter(function(u) { return u.is_idle; }); }
+
+function selectUnits(list, why) {
+  selected.clear();
+  list.forEach(function(u) { selected.add(u.actor_id); });
+  lastClickIdx = -1;
+  switchTab('left', 'units');
+  renderUnits(); updateToolbar();
+  showToast(list.length + ' ' + why + ' selected');
+}
+function selectIdle()    { selectUnits(idleUnits(), 'idle units'); }
+function selectDamaged() { selectUnits(damagedUnits(), 'damaged units'); }
+function goProduction(sub) { switchTab('right', 'production'); switchTab('prod', sub); }
+function goTracks() { switchTab('right', 'intel'); switchTab('intel', 'tracks'); }
+
+// Each item: {tone, label, detail, count, act}. Order is severity.
+function attentionItems() {
+  var out = [];
+  var idle = idleUnits(), hurt = damagedUnits();
+  var newContacts = ISR_CONTACTS.filter(function(c) { return !c.is_destroyed && c.turns_since_seen === 0; });
+  var idleFacs = producingBuildings().filter(function(b) { return b.is_powered && !b.is_producing; });
+  var head = ECONOMY.power_provided - ECONOMY.power_drained;
+
+  if (idle.length) out.push({
+    tone: idle.length > UNITS.length / 2 ? 'bad' : 'warn',
+    label:'Idle units', detail:'Standing by with no orders',
+    count: idle.length + '/' + UNITS.length, act:'selectIdle()',
+  });
+  if (hurt.length) out.push({
+    tone:'warn', label:'Damaged units', detail:'Below 60% health — consider withdrawing',
+    count:String(hurt.length), act:'selectDamaged()',
+  });
+  if (idleFacs.length) out.push({
+    tone:'warn', label:'Idle facilities', detail:'Producing nothing this turn',
+    count:String(idleFacs.length), act:"goProduction('fac')",
+  });
+  if (ECONOMY.harvester_count < 2) out.push({
+    tone:'warn', label:'Thin on harvesters', detail:'Income is one loss away from stalling',
+    count:String(ECONOMY.harvester_count), act:"goProduction('cap')",
+  });
+  if (head < 25) out.push({
+    tone: head < 0 ? 'bad' : 'warn', label:'Power margin low', detail:'New structures may brown out',
+    count:(head >= 0 ? '+' : '') + head, act:"goProduction('cap')",
+  });
+  if (newContacts.length) out.push({
+    tone:'', label:'New contacts', detail:'Seen this turn', count:String(newContacts.length), act:'goTracks()',
+  });
+  if (!orders.length) out.push({
+    tone:'bad', label:'No orders queued', detail:'Committing now would waste the turn', count:'0', act:'',
+  });
+  return out;
+}
 
 function renderOverview() {
   var el = document.getElementById('overview-body');
   if (!el) return;
-  renderModBar(el, OVERVIEW_MODULES);
+  var items = attentionItems();
 
-  // Performance dimensions as compact bars
-  var html = '<div style="padding:0 10px 10px">';
-  html += '<div class="grp-label">Lines of Effort</div>';
+  var html = '<div class="grp-label sticky">Needs Attention' +
+    '<span class="ct-pill' + (items.length ? '' : ' dim') + '">' + items.length + '</span></div>';
+
+  html += items.length ? items.map(function(a) {
+    var tag = a.act ? 'button' : 'div';
+    return '<' + tag + ' class="lrow att-row"' + (a.act ? ' onclick="' + a.act + '"' : '') + '>' +
+      '<div class="lrow-pip ' + a.tone + '"></div>' +
+      '<div class="lrow-body"><div class="lrow-title">' + a.label + '</div>' +
+        '<div class="lrow-meta"><span>' + a.detail + '</span></div></div>' +
+      '<div class="lrow-trail ' + a.tone + '">' + a.count + '</div>' +
+    '</' + tag + '>';
+  }).join('') : '<div class="list-empty">Nothing needs your attention.</div>';
+
+  // Force state kept to the three figures that inform a decision;
+  // kills were being reported three separate ways.
+  html += '<div class="grp-label">Force</div>';
+  el.innerHTML = html;
+  var force = document.createElement('div');
+  renderModBar(force, [
+    {k:'Army Value', get:function() { return {v:'$' + MILITARY.army_value.toLocaleString()}; }},
+    {k:'Kills / Lost', get:function() { return {v:MILITARY.units_killed + ' / ' + MILITARY.units_lost, tone: MILITARY.units_killed >= MILITARY.units_lost ? 'ok' : 'warn'}; }},
+    {k:'Readiness', get:function() {
+      var hp = UNITS.length ? Math.round(UNITS.reduce(function(s,u){ return s + u.hp_percent; }, 0) / UNITS.length * 100) : 0;
+      return {v:hp + '%', tone: hp > 70 ? 'ok' : hp > 40 ? 'warn' : 'bad'};
+    }},
+  ]);
+  el.appendChild(force.firstChild);
+
+  // Lines of effort. Full names, a stated scale, and one colour — the
+  // old threshold colouring made an amber 65 look heavier than a green
+  // 78, so the bars read as unsorted even though they were exact.
+  var loe = '<div class="grp-label">Lines of Effort' +
+    '<span class="grp-note">0&ndash;100, higher is better</span></div><div class="loe-wrap">';
   PERF_SCORE.dimensions.forEach(function(d) {
     var pct = Math.round(d.value * 100);
-    var col = pct > 65 ? 'var(--green)' : pct > 40 ? 'var(--amber)' : 'var(--red)';
-    var trend = d.trend > 0 ? ' +' : d.trend < 0 ? ' ' : '';
-    var trendV = d.trend !== 0 ? (d.trend * 100).toFixed(0) : '';
-    html += '<div class="sitrep-row" style="margin-bottom:1px">' +
-      '<span class="sitrep-label">' + d.name.charAt(0).toUpperCase() + d.name.slice(1,4) + '</span>' +
-      '<div class="sitrep-bar-wrap"><div class="sitrep-bar" style="width:' + pct + '%;background:' + col + '"></div></div>' +
-      '<span class="sitrep-val" style="width:30px;font-size:9px">' + pct + (trendV ? '<span style="color:' + (d.trend > 0 ? 'var(--green)' : 'var(--red)') + ';font-size:7px">' + trend + trendV + '</span>' : '') + '</span>' +
+    var tr = Math.round(d.trend * 100);
+    loe += '<div class="loe-row" title="' + DIM_HELP[d.name] + '">' +
+      '<span class="loe-label">' + d.name.charAt(0).toUpperCase() + d.name.slice(1) + '</span>' +
+      '<div class="loe-track"><div class="loe-fill" style="width:' + pct + '%"></div></div>' +
+      '<span class="loe-val">' + pct + '</span>' +
+      '<span class="loe-trend ' + (tr > 0 ? 'up' : tr < 0 ? 'down' : '') + '">' +
+        (tr > 0 ? '▲' + tr : tr < 0 ? '▼' + Math.abs(tr) : '·') + '</span>' +
     '</div>';
   });
-  html += '</div>';
-  el.insertAdjacentHTML('beforeend', html);
+  loe += '</div>';
+  el.insertAdjacentHTML('beforeend', loe);
 }
 
 // ═══ RIGHT PANEL — ISR CONTACTS ═══
@@ -1430,6 +1574,25 @@ var ROLE_ABBR = {
 };
 function roleAbbr(r) { return ROLE_ABBR[r] || r.slice(0, 3).toUpperCase(); }
 
+// Which building type produces what, independent of what is currently
+// standing. Lets a locked row say how to get to yes instead of just no.
+var PRODUCED_BY = {
+  fact:['powr','apwr','barr','tent','proc','weap','dome','fix','hpad','afld','atek','stek','gun','ftur','sam','tsla'],
+  barr:['e1','e2','e3','e4','e6','dog','medi','shok','e7','spy'],
+  tent:['e1','e2','e3','e4','e6','dog','medi','shok','e7','spy'],
+  weap:['1tnk','2tnk','3tnk','4tnk','ttnk','arty','v2rl','jeep','apc','harv','mcv','mnly'],
+  hpad:['heli','hind'],
+  afld:['mig','yak'],
+};
+// Buildings that could produce `item`, as display names.
+function requiredFor(item) {
+  var names = [];
+  Object.keys(PRODUCED_BY).forEach(function(b) {
+    if (PRODUCED_BY[b].indexOf(item) !== -1) names.push(BUILDING_DB[b] ? BUILDING_DB[b].name : b);
+  });
+  return names;
+}
+
 function catalogFor(c) {
   return Object.keys(c.db).filter(function(k) { return c.db[k].queue === c.key; });
 }
@@ -1500,18 +1663,26 @@ function renderBuildView() {
     roleBar.innerHTML = '';
   }
 
+  // Affordability is the primary state: what you can buy right now reads
+  // normally, what you cannot is marked at the price. A locked row says
+  // which building would unlock it rather than just going grey.
   function itemRow(cat, key) {
     var info = cat.db[key];
     var facility = producible[key];
     var poor = !!facility && info.cost > ECONOMY.cash;
-    var cls = 'build-row' + (facility ? (poor ? ' poor' : '') : ' locked');
-    var tip = info.name + ' · ' + info.role + ' · $' + info.cost + (facility
-      ? ' · from ' + (BUILDING_DB[facility] ? BUILDING_DB[facility].name : facility) + (poor ? ' · insufficient cash' : '')
-      : ' · no powered facility can produce this');
+    var cls = 'build-row' + (facility ? (poor ? ' poor' : ' ready') : ' locked');
+    var need = facility ? null : requiredFor(key);
+    var tip = info.name + ' · ' + info.role + ' · $' + info.cost.toLocaleString() + (facility
+      ? ' · built at ' + (BUILDING_DB[facility] ? BUILDING_DB[facility].name : facility) +
+        (poor ? ' · costs $' + (info.cost - ECONOMY.cash).toLocaleString() + ' more than you have' : '')
+      : (need && need.length ? ' · needs ' + need.join(' or ') : ' · deploy an MCV to place one'));
+    var note = facility
+      ? (poor ? '<span class="build-note warn">-$' + (info.cost - ECONOMY.cash).toLocaleString() + '</span>' : '')
+      : '<span class="build-note">' + (need && need.length ? 'needs ' + need[0] : 'from an MCV') + '</span>';
     return '<button class="' + cls + '"' + (facility ? '' : ' disabled') +
       ' onclick="queueProd(\'' + cat.action + '\',\'' + key + '\')" title="' + tip + '">' +
-      '<span class="build-role">' + roleAbbr(info.role) + '</span>' +
-      '<span class="build-name">' + info.name + '</span>' +
+      '<span class="build-role" title="' + info.role + '">' + roleAbbr(info.role) + '</span>' +
+      '<span class="build-name">' + info.name + note + '</span>' +
       '<span class="build-cost">$' + info.cost.toLocaleString() + '</span></button>';
   }
 
@@ -1701,20 +1872,25 @@ function clearOrders() { orders = []; syncQueue(); }
 // ═══ TOP MENU BAR — status modules ═══
 // The same module contract as Overview and Capacity, rendered inline.
 // Adding a global readout is one entry here.
+// "200/80" gave no clue which side was supply and which was demand — the
+// number that decides an RTS turn should not need decoding. Show the
+// margin, and put the raw pair behind it.
 var STATUS_MODULES = [
-  {k:'Credits', get:function() {
+  {k:'Credits', help:'Spendable cash (EconomyInfo.cash)', get:function() {
     return {v:'$' + ECONOMY.cash.toLocaleString(), tone: ECONOMY.cash < 500 ? 'warn' : 'ok'};
   }},
-  {k:'Power', get:function() {
+  {k:'Power spare', help:'Power generated minus power consumed', get:function() {
     var head = ECONOMY.power_provided - ECONOMY.power_drained;
     return {
-      v: ECONOMY.power_provided + '/' + ECONOMY.power_drained,
+      v:(head >= 0 ? '+' : '') + head,
+      sub: ECONOMY.power_provided + ' made, ' + ECONOMY.power_drained + ' used',
       tone: head < 0 ? 'bad' : head < 25 ? 'warn' : '',
     };
   }},
-  {k:'Units', get:function() { return {v:String(MILITARY.active_unit_count)}; }},
-  {k:'Kills', get:function() {
-    return {v:MILITARY.units_killed + '/' + MILITARY.units_lost, sub:'k/l'};
+  {k:'Units', help:'Your active units', get:function() { return {v:String(MILITARY.active_unit_count)}; }},
+  {k:'Idle', help:'Units with no orders — click to select them', get:function() {
+    var n = idleUnits().length;
+    return {v:String(n), tone: n > UNITS.length / 2 ? 'bad' : n ? 'warn' : 'ok', act:'selectIdle()'};
   }},
 ];
 function updateStatusBar() {
@@ -1722,9 +1898,24 @@ function updateStatusBar() {
 }
 
 // ═══ EXECUTE TURN ═══
+// Committing a turn is irreversible, so idle units get one interception
+// before it happens. The first click arms; the second commits.
+var execArmed = false;
 function executeTurn() {
   if (!orders.length) return;
   var btn = document.getElementById('btn-exec');
+  var idle = idleUnits().length;
+  if (idle > 0 && !execArmed) {
+    execArmed = true;
+    btn.classList.add('warn');
+    btn.textContent = 'Commit with ' + idle + ' idle?';
+    setTimeout(function() {
+      if (!execArmed) return;
+      execArmed = false; btn.classList.remove('warn'); btn.textContent = 'Execute Turn';
+    }, 4000);
+    return;
+  }
+  execArmed = false; btn.classList.remove('warn');
   var ph = document.getElementById('phase');
   var tn = document.getElementById('turn');
   ph.textContent = 'Executing'; ph.className = 'sb-badge sb-phase executing';
@@ -1749,13 +1940,46 @@ function renderFeed() {
   });
   scroll.innerHTML = data.map(function(e) {
     var tagLabel = e.cat.charAt(0).toUpperCase() + e.cat.slice(1);
+    // Every coordinate the log mentions becomes a link to that cell.
+    var msg = e.msg.replace(/\((\d+),\s*(\d+)\)/g, function(m, x, y) {
+      return '<button class="f-coord" onclick="focusCell(' + x + ',' + y + ')" ' +
+        'title="Show cell ' + x + ', ' + y + ' on the map">' + x + ', ' + y + '</button>';
+    });
+    var hp = '';
+    if (typeof e.hp === 'number') {
+      var pct = Math.round(e.hp * 100);
+      var cls = pct > 70 ? 'hp-ok' : pct > 35 ? 'hp-warn' : 'hp-crit';
+      hp = '<span class="f-hp"><span class="f-hp-bar"><span class="f-hp-fill ' + cls +
+        '" style="width:' + pct + '%"></span></span>' + pct + '% health</span>';
+    }
     return '<div class="f-row ' + e.sev + '">' +
       '<span class="f-turn">T' + e.turn + '</span>' +
       '<span class="f-tag ' + e.cat + '">' + tagLabel + '</span>' +
-      '<span class="f-msg">' + e.msg + '</span>' +
+      '<span class="f-msg">' + msg + hp + '</span>' +
     '</div>';
   }).join('');
   document.getElementById('feed-badge').textContent = data.length;
+}
+
+// Highlights a map cell referenced from the feed, and selects the unit
+// standing there if it is ours — the log points at something, clicking
+// it takes you to that something.
+var focusedCell = null, focusTimer = null;
+function focusCell(x, y) {
+  focusedCell = {x:x, y:y};
+  var hit = UNITS.filter(function(u) { return Math.abs(u.cell_x - x) <= 1 && Math.abs(u.cell_y - y) <= 1; });
+  if (hit.length) {
+    selected.clear();
+    hit.forEach(function(u) { selected.add(u.actor_id); });
+    switchTab('left', 'units');
+    renderUnits(); updateToolbar();
+    showToast('Selected ' + hit.length + ' unit' + (hit.length > 1 ? 's' : '') + ' near ' + x + ', ' + y);
+  } else {
+    showToast('Cell ' + x + ', ' + y);
+  }
+  renderMap();
+  clearTimeout(focusTimer);
+  focusTimer = setTimeout(function() { focusedCell = null; renderMap(); }, 4000);
 }
 function filterFeed(f) {
   feedFilter = f;
@@ -1829,9 +2053,11 @@ function renderMap() {
       var rd = Math.abs(row - rc), rw = 1.8 + Math.sin(col * 0.03) * 0.6;
       var r, g, b;
       if (!inB) { var v = 11 + elev * 5; r = Math.round(v + 1); g = Math.round(v); b = Math.round(v - 1); }
-      else if (ed < 3) { var v = 16 + ed * 4 + elev * 6; r = Math.round(v + 2); g = Math.round(v); b = Math.round(v - 1); }
+      // Edge shading is kept to a single cell — a wider falloff darkened
+      // six cells on every side and read as dead space rather than terrain.
+      else if (ed < 1) { var v = 18 + elev * 6; r = Math.round(v + 2); g = Math.round(v); b = Math.round(v - 1); }
       else if (rd < rw && elev < 0.62) { var d = 1 - rd / rw; r = Math.round(10 + d * 5); g = Math.round(20 + d * 10); b = Math.round(35 + d * 18); }
-      else if (elev > 0.68 || ed < 6) { var v = 22 + elev * 14 + (ed < 6 ? (ed - 3) * 2 : 0); r = Math.round(v + 3); g = Math.round(v + 1); b = Math.round(v - 2); }
+      else if (elev > 0.68) { var v = 22 + elev * 14; r = Math.round(v + 3); g = Math.round(v + 1); b = Math.round(v - 2); }
       else if (moist > 0.52 && elev > 0.3) { var sh = 0.7 + elev * 0.35; r = Math.round(14 * sh); g = Math.round(26 * sh); b = Math.round(12 * sh); }
       else { var sh = 0.8 + elev * 0.25; r = Math.round(20 * sh); g = Math.round(30 * sh); b = Math.round(16 * sh); }
       ctx.fillStyle = 'rgb(' + r + ',' + g + ',' + b + ')';
@@ -1846,13 +2072,15 @@ function renderMap() {
   ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1;
   ctx.strokeRect(ox, oy, MAP_W * cell, MAP_H * cell);
 
-  var fs = Math.max(7, Math.min(10, cell * 0.7));
-  ctx.fillStyle = 'rgba(255,255,255,0.12)';
-  ctx.font = '500 ' + fs + 'px "IBM Plex Mono", monospace';
+  // Both rulers: the feed shouts coordinates, so both axes must resolve.
+  var fs = Math.max(8, Math.min(11, cell * 0.7));
+  ctx.fillStyle = 'rgba(255,255,255,0.38)';
+  ctx.font = '600 ' + fs + 'px "IBM Plex Mono", monospace';
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-  for (var gx = 0; gx < MAP_W; gx += 10) ctx.fillText(gx.toString(), ox + gx * cell + cell / 2, oy + 2);
+  for (var gx = 0; gx < MAP_W; gx += 10) ctx.fillText(gx.toString(), ox + gx * cell + cell / 2, oy + 3);
   ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-  for (var gy = 10; gy < MAP_H; gy += 10) ctx.fillText(gy.toString(), ox + 3, oy + gy * cell + cell / 2);
+  var ry = Math.max(ox + 4, 4);
+  for (var gy = 0; gy < MAP_H; gy += 10) ctx.fillText(gy.toString(), ry, oy + gy * cell + cell / 2 + (gy === 0 ? fs : 0));
 
   var sz = Math.max(3.5, cell * 0.32);
   var mapMarkers = buildMapMarkers();
@@ -1883,8 +2111,50 @@ function renderMap() {
     }
   });
   ctx.shadowBlur = 0;
+
+  // Focus ring for a cell arrived at from the feed.
+  if (focusedCell) {
+    var fx = ox + focusedCell.x * cell + cell / 2, fy = oy + focusedCell.y * cell + cell / 2;
+    ctx.strokeStyle = cAccentT; ctx.lineWidth = 1.5;
+    ctx.shadowColor = cAccentT; ctx.shadowBlur = 10;
+    ctx.beginPath(); ctx.arc(fx, fy, Math.max(10, cell * 1.1), 0, Math.PI * 2); ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.beginPath();
+    ctx.moveTo(fx - cell * 2, fy); ctx.lineTo(fx - cell * 1.3, fy);
+    ctx.moveTo(fx + cell * 1.3, fy); ctx.lineTo(fx + cell * 2, fy);
+    ctx.moveTo(fx, fy - cell * 2); ctx.lineTo(fx, fy - cell * 1.3);
+    ctx.moveTo(fx, fy + cell * 1.3); ctx.lineTo(fx, fy + cell * 2);
+    ctx.stroke();
+  }
 }
 window.addEventListener('resize', function() { renderMap(); });
+
+// ═══ KEYBOARD ═══
+// A tool this dense should be drivable from the keyboard. Hints live in
+// the segment tooltips and the command-bar hint line.
+var KEYS = {
+  '1': function() { switchTab('left', 'units'); },
+  '2': function() { switchTab('left', 'build'); },
+  '3': function() { switchTab('left', 'orders'); },
+  'i': function() { switchTab('right', 'intel'); },
+  'p': function() { switchTab('right', 'production'); },
+  'd': function() { selectIdle(); },
+  'a': function() { selected.clear(); UNITS.forEach(function(u) { selected.add(u.actor_id); }); renderUnits(); updateToolbar(); },
+  'Escape': function() { selectNone(); },
+  'Enter': function() { var b = document.getElementById('btn-exec'); if (!b.disabled) executeTurn(); },
+};
+document.addEventListener('keydown', function(e) {
+  if (e.target.matches('input, select, textarea')) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  var fn = KEYS[e.key] || KEYS[e.key.toLowerCase()];
+  if (fn) { e.preventDefault(); fn(); }
+});
+document.querySelectorAll('.seg-ctrl[data-group="left"] .seg-btn').forEach(function(b, i) {
+  b.title = b.textContent.trim().replace(/\s+\d+$/, '') + '  (' + (i + 1) + ')';
+});
+document.querySelector('.seg-ctrl[data-group="right"] .seg-btn[data-tab="intel"]').title = 'Intel  (I)';
+document.querySelector('.seg-ctrl[data-group="right"] .seg-btn[data-tab="production"]').title = 'Production  (P)';
+document.getElementById('btn-exec').title = 'Commit this turn  (Enter)';
 
 // ═══ INIT ═══
 renderMap(); renderUnits(); renderOverview(); renderContacts(); renderCNN();
