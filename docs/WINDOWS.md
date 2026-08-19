@@ -27,6 +27,36 @@ the LLM commander and every scenario still need a live server on port 8000.
 
 ## Prerequisites
 
+### Installing them with winget
+
+`winget` ships with Windows 11 and current Windows 10. Run these in an
+**Administrator** PowerShell, then close and reopen the terminal so the new
+entries land on `PATH`.
+
+```powershell
+winget install --id Git.Git                 -e --accept-package-agreements
+winget install --id Python.Python.3.12      -e --accept-package-agreements
+winget install --id Docker.DockerDesktop    -e --accept-package-agreements
+winget install --id Ollama.Ollama           -e --accept-package-agreements
+winget install --id OpenJS.NodeJS.LTS       -e --accept-package-agreements   # only for Claude Code
+```
+
+Only if you intend to build the OpenRA engine from source rather than using
+the container — most people never need this:
+
+```powershell
+winget install --id Microsoft.DotNet.SDK.8  -e --accept-package-agreements
+```
+
+Package IDs move occasionally. If one is not found, `winget search ollama`
+(or whichever) will give you the current id.
+
+Verify before continuing:
+
+```powershell
+git --version; python --version; docker --version; ollama --version
+```
+
 **Required**
 
 - **Windows 10 21H2 / Windows 11** or newer.
@@ -40,10 +70,13 @@ the LLM commander and every scenario still need a live server on port 8000.
 - **Git**. `openra-rl` is *not* a submodule of this repository — it is
   gitignored here and must be cloned alongside `milsim\` as a second step:
   ```
-  git clone <repo-url> ant1
-  cd ant1
-  git clone --recurse-submodules https://github.com/yxc20089/OpenRA-RL.git openra-rl
+  git clone https://github.com/kambasana/ant1.git repo
+  cd repo
+  git clone --depth 1 https://github.com/yxc20089/OpenRA-RL.git openra-rl
   ```
+  Add `--recurse-submodules` to that second clone **only** if you plan to build
+  the OpenRA engine from source. The container path does not need the engine
+  sources, and the submodules are a large fetch.
   A plain `git clone` of this repo alone contains no Python packaging at all,
   and `setup.ps1` will stop at the layout check until `openra-rl\` is present.
 
