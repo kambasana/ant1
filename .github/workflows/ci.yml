@@ -226,12 +226,18 @@ jobs:
       - name: run.ps1 fails clearly with no game server
         shell: pwsh
         run: |
-          ./scripts/windows/run.ps1 -VenvPath ${{ runner.temp }}/psvenv -MaxTurns 1
-          if ($LASTEXITCODE -eq 0) {
+          # run.ps1 is expected to exit non-zero here. GitHub's pwsh shell
+          # appends `exit $LASTEXITCODE`, so without an explicit exit 0 the
+          # step inherits that 1 and fails even when the guard is satisfied.
+          pwsh -NoProfile -File ./scripts/windows/run.ps1 `
+            -VenvPath '${{ runner.temp }}/psvenv' -MaxTurns 1
+          $code = $LASTEXITCODE
+          if ($code -eq 0) {
             Write-Host 'run.ps1 should exit non-zero when no server is listening'
             exit 1
           }
-          Write-Host "exited $LASTEXITCODE as expected"
+          Write-Host "exited $code as expected"
+          exit 0
 
       - name: Advertised model matches the resolved default
         shell: pwsh
