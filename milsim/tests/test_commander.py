@@ -112,10 +112,24 @@ async def run_commander_test():
                 result, briefing = await commander.issue_orders([
                     TacticalOrder(order_type=OrderType.BUILD, item_type=barracks),
                 ])
-                for _ in range(5):
+                # Wait for it rather than budgeting a fixed five turns: against
+                # a live server the barracks took seven, so the old budget
+                # asserted on a building still in production. Same fix as
+                # test_wego_turns.
+                BARRACKS_MAX_TURNS = 15
+                has_barracks = False
+                waited = 0
+                for waited in range(1, BARRACKS_MAX_TURNS + 1):
+                    has_barracks = any(
+                        b["type"] in ("tent", "barr") for b in briefing.friendly_buildings
+                    )
+                    if has_barracks:
+                        break
                     result, briefing = await commander.advance_time()
-                has_barracks = any(b["type"] in ("tent", "barr") for b in briefing.friendly_buildings)
-                check("Barracks built", has_barracks, barracks)
+                has_barracks = has_barracks or any(
+                    b["type"] in ("tent", "barr") for b in briefing.friendly_buildings
+                )
+                check("Barracks built", has_barracks, f"{barracks} after {waited} turn(s)")
             else:
                 check("Barracks built", False, f"not available: {available[:5]}")
 
