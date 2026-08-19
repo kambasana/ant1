@@ -37,10 +37,15 @@ the LLM commander and every scenario still need a live server on port 8000.
   3.10 is a hard floor: `milsim\__main__.py` uses a `match` statement, and
   `openra-rl` declares `requires-python = ">=3.10"`.
   Avoid the Microsoft Store build — see [troubleshooting](#python-opens-the-microsoft-store).
-- **Git**, and clone with submodules — the OpenRA engine is a submodule:
+- **Git**. `openra-rl` is *not* a submodule of this repository — it is
+  gitignored here and must be cloned alongside `milsim\` as a second step:
   ```
-  git clone --recurse-submodules <repo-url>
+  git clone <repo-url> ant1
+  cd ant1
+  git clone --recurse-submodules https://github.com/yxc20089/OpenRA-RL.git openra-rl
   ```
+  A plain `git clone` of this repo alone contains no Python packaging at all,
+  and `setup.ps1` will stop at the layout check until `openra-rl\` is present.
 
 **Required to actually play a game**
 

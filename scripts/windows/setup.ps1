@@ -132,6 +132,8 @@ Write-Host "Repository: $RepoRoot"
 Write-Host "PowerShell: $($PSVersionTable.PSVersion) ($($PSVersionTable.PSEdition))"
 Write-Host ''
 
+$OpenRaRlUrl = 'https://github.com/yxc20089/OpenRA-RL.git'
+
 Write-Step 'Checking repository layout'
 $required = @(
     (Join-Path $MilsimDir '__main__.py'),
@@ -141,8 +143,9 @@ foreach ($item in $required) {
     if (-not (Test-Path -LiteralPath $item)) {
         Write-Err "Missing $item"
         Write-Host ''
-        Write-Host 'Run this script from inside a full checkout:' -ForegroundColor Yellow
-        Write-Host '  git clone --recurse-submodules <repo-url>' -ForegroundColor Yellow
+        Write-Host 'openra-rl is a separate checkout, not a submodule of this repo.' -ForegroundColor Yellow
+        Write-Host 'From the repository root, fetch it alongside milsim:' -ForegroundColor Yellow
+        Write-Host ('  git clone --recurse-submodules ' + $OpenRaRlUrl + ' openra-rl') -ForegroundColor Yellow
         Write-Host '  powershell -ExecutionPolicy Bypass -File scripts\windows\setup.ps1' -ForegroundColor Yellow
         exit 1
     }

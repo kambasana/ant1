@@ -25,6 +25,29 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "openra-rl"))
 
+from milsim.llm_provider import (
+    LLMClient,
+    LLMError,
+    LLMProviderConfig,
+    extract_message,
+)
+
+
+
+def _llm_config(args):
+    """Resolve the LLM provider from flags, config file and environment.
+
+    Replaces the two hardcoded OpenRouter loops this module used to carry:
+    provider choice, the no-API-key local path and the timeout all belong
+    to milsim.llm_provider now, so text and fc modes reach Ollama.
+    """
+    overrides = {}
+    for flag in ("provider", "model", "base_url", "api_key"):
+        value = getattr(args, flag, "")
+        if value:
+            overrides[flag] = value
+    return LLMProviderConfig.load(**overrides)
+
 
 def parse_args():
     p = argparse.ArgumentParser(description="MilSim — Military Simulation Commander")
@@ -42,6 +65,8 @@ def parse_args():
     p.add_argument("--quiet", action="store_true", help="Suppress turn-by-turn output")
 
     # LLM options (for text/fc modes)
+    p.add_argument("--provider", default="",
+                    help="LLM provider: ollama (default), openai, openrouter, lmstudio")
     p.add_argument("--model", default="", help="LLM model name")
     p.add_argument("--base-url", default="", help="LLM API base URL")
     p.add_argument("--api-key", default="", help="LLM API key")
@@ -133,8 +158,7 @@ async def run_structured_text(args):
             "Use the order syntax shown at the bottom of the briefing."
         )
 
-        base_url = args.base_url or "https://openrouter.ai/api/v1"
-        api_key = args.api_key or os.environ.get("OPENAI_API_KEY", "")
+        llm = LLMClient(_llm_config(args))
 
         turn = 0
         while not bridge.game_over and turn < args.max_turns:
@@ -149,22 +173,8 @@ async def run_structured_text(args):
                 {"role": "user", "content": briefing},
             ]
 
-            async with httpx.AsyncClient() as client:
-                resp = await client.post(
-                    f"{base_url}/chat/completions",
-                    json={
-                        "model": args.model,
-                        "messages": messages,
-                        "max_tokens": 512,
-                        "temperature": 0.3,
-                    },
-                    headers={"Authorization": f"Bearer {api_key}"},
-                    timeout=60.0,
-                )
-                resp.raise_for_status()
-                data = resp.json()
-
-            llm_response = data["choices"][0]["message"]["content"]
+            data = await llm.chat(messages, max_tokens=512, temperature=0.3)
+            llm_response = extract_message(data).get("content") or ""
             orders = text_cmd.parse_orders(llm_response)
 
             if not args.quiet:
@@ -214,8 +224,7 @@ async def run_function_calling(args):
 
         system_prompt = fc.get_system_prompt()
         tools = fc.get_tools()
-        base_url = args.base_url or "https://openrouter.ai/api/v1"
-        api_key = args.api_key or os.environ.get("OPENAI_API_KEY", "")
+        llm = LLMClient(_llm_config(args))
 
         messages = [
             {"role": "system", "content": system_prompt},
@@ -226,25 +235,8 @@ async def run_function_calling(args):
         while not bridge.game_over and turn < args.max_turns * 5:
             turn += 1
 
-            async with httpx.AsyncClient() as client:
-                resp = await client.post(
-                    f"{base_url}/chat/completions",
-                    json={
-                        "model": args.model,
-                        "messages": messages,
-                        "tools": tools,
-                        "tool_choice": "auto",
-                        "max_tokens": 1024,
-                        "temperature": 0.3,
-                    },
-                    headers={"Authorization": f"Bearer {api_key}"},
-                    timeout=60.0,
-                )
-                resp.raise_for_status()
-                data = resp.json()
-
-            choice = data["choices"][0]
-            msg = choice["message"]
+            data = await llm.chat(messages, tools=tools, max_tokens=1024, temperature=0.3)
+            msg = extract_message(data)
             messages.append(msg)
 
             if not msg.get("tool_calls"):
@@ -277,7 +269,7 @@ async def run_function_calling(args):
         print("\n" + bridge.get_aar())
 
 
-async def run_mcp_server(args):
+async def _build_mcp_server(args):
     """Run as MCP server for Claude Desktop / Claude Code."""
     from openra_env.client import OpenRAEnv
     from milsim.wego import WEGOTurnManager
@@ -300,6 +292,17 @@ async def run_mcp_server(args):
     bridge = CommanderBridge(commander, isr, scenario, verbose=True)
     server = create_mcp_server(bridge)
 
+    return server
+
+
+def run_mcp_server(args):
+    """FastMCP.run() starts its own event loop through anyio.
+
+    Calling it inside asyncio.run() raised "Already running asyncio in this
+    thread" unconditionally, so --mode mcp could never start. Build the
+    server in a loop that has finished, then hand off to FastMCP.
+    """
+    server = asyncio.run(_build_mcp_server(args))
     print("MilSim MCP server starting (stdio)...", file=sys.stderr)
     server.run()
 
@@ -315,7 +318,7 @@ def main():
         case "fc":
             asyncio.run(run_function_calling(args))
         case "mcp":
-            asyncio.run(run_mcp_server(args))
+            run_mcp_server(args)
 
 
 if __name__ == "__main__":

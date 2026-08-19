@@ -18,12 +18,10 @@ document was written. Re-measure rather than assume.
 ## Gate 0 — Preconditions
 
 - [ ] Release branch cut, and the working tree is clean (`git status --porcelain` is empty).
-- [ ] Submodules are checked out. The OpenRA engine is a submodule; a clone
-      without `--recurse-submodules` leaves `openra-rl/OpenRA` empty and every
-      engine-dependent step fails confusingly.
-      ```
-      git submodule status
-      ```
+- [ ] `openra-rl/` is present. It is NOT a submodule of this repo — it is
+      gitignored here and cloned separately
+      (`git clone --recurse-submodules https://github.com/yxc20089/OpenRA-RL.git openra-rl`).
+      A plain clone of this repo contains no Python packaging at all.
 - [ ] `openra-rl/config.yaml` contains no machine-specific absolute paths or
       credentials from a developer's box.
 - [ ] No API keys, tokens or `.env` files are staged. Check the diff, not just

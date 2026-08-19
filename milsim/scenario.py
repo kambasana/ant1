@@ -189,7 +189,7 @@ class ScenarioRunner:
 
     def load(self, path: str) -> ScenarioState:
         """Load a scenario from a YAML file."""
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             data = yaml.safe_load(f)
 
         scenario = data.get("Scenario", data)

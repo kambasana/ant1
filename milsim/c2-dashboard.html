@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>MilSim C2</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
@@ -417,8 +418,12 @@ button.mod-slot:focus-visible { outline: 2px solid var(--accent); outline-offset
 .lrow-meta {
   font-family: var(--mono); font-size: 8px; color: var(--t3);
   display: flex; align-items: center; gap: 5px;
-  overflow: hidden; white-space: nowrap;
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
 }
+/* A meta line carrying one run of prose truncates like .lrow-title does,
+   instead of stopping mid-word. Rows made of several short tokens keep
+   clipping at the edge — ellipsising each token would be noise. */
+.lrow-meta > span:only-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .lrow-meta .warn { color: var(--amber); }
 .lrow-tag {
   font-size: 7px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;
@@ -606,6 +611,10 @@ div.att-row { cursor: default; }
 .cmd-queue-count:focus-visible { outline: 2px solid var(--accent); outline-offset: -1px; }
 .cmd-hint { font-size: 10px; color: var(--t3); }
 .cmd-hint b { font-family: var(--mono); font-weight: 600; color: var(--t2); background: var(--raised); border: 1px solid var(--border); border-radius: 3px; padding: 0 4px; }
+/* Adjacent key chips need air between their borders, and an action with
+   no key says so in words rather than showing an empty chip. */
+.cmd-hint b + b, .cmd-hint b + .key-unbound, .cmd-hint .key-unbound + b { margin-left: 2px; }
+.cmd-hint .key-unbound { font-style: normal; color: var(--t3); }
 .cmd-bar-actions.visible ~ .cmd-hint { display: none; }
 .cmd-queue-count .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); display: none; }
 .cmd-queue-count .dot.has-orders { display: block; animation: pulse 1.5s ease infinite; }
@@ -1553,6 +1562,9 @@ var TAB_HOOKS = {
   intel: function() {},
 };
 function switchTab(group, key) {
+  // A key with no view behind it would deactivate every view and every
+  // button in the group, blanking the panel. Refuse instead.
+  if (!document.querySelector('.tab-view[data-group="' + group + '"][data-tab="' + key + '"]')) return;
   document.querySelectorAll('.seg-ctrl[data-group="' + group + '"] .seg-btn, .rail-btn[data-group="' + group + '"]')
     .forEach(function(b) { b.classList.toggle('active', b.dataset.tab === key); });
   document.querySelectorAll('.tab-view[data-group="' + group + '"]')
@@ -1733,7 +1745,7 @@ function selectUnits(list, why) {
   selected.clear();
   list.forEach(function(u) { selected.add(u.actor_id); });
   lastClickIdx = -1;
-  switchTab('left', 'units');
+  showPanel('left', 'units');
   renderUnits(); updateToolbar();
   showToast(list.length + ' ' + why + ' selected');
 }
@@ -2424,7 +2436,7 @@ function focusCell(x, y) {
   if (hit.length) {
     selected.clear();
     hit.forEach(function(u) { selected.add(u.actor_id); });
-    switchTab('left', 'units');
+    showPanel('left', 'units');
     renderUnits(); updateToolbar();
     showToast('Selected ' + hit.length + ' unit' + (hit.length > 1 ? 's' : '') + ' near ' + x + ', ' + y);
   } else {
@@ -2588,6 +2600,7 @@ function showPanel(group, tab) {
   switchTab(group, tab);
   var d = document.getElementById(DOCK_OF[group]);
   if (d && d.classList.contains('collapsed')) toggleDock(d.id);
+  if (d) armAutoHide(d);
 }
 
 // ═══ PIN / AUTO-HIDE ═══
@@ -2600,9 +2613,39 @@ function togglePin(id) {
   d.querySelector('.dock-pin').title = pinned ? 'Unpin to auto-hide' : 'Pin open';
   showToast(pinned ? 'Panel pinned' : 'Panel auto-hides');
 }
+// A dock opened from the keyboard or a jump button has never been
+// entered, so mouseleave alone would never fire and it would sit open
+// forever. Arm a one-shot watch instead: the first pointer move that is
+// confirmed outside the dock shuts it, and entering the dock disarms it
+// so the normal mouseleave rule takes over.
+var AUTOHIDE_GRACE = 500;   // ms of pointer-outside before an armed dock shuts
+function armAutoHide(d) {
+  if (!d.classList.contains('unpinned') || d.classList.contains('collapsed')) return;
+  if (d._autoHideArmed) return;
+  var timer = null;
+  var onMove = function(e) {
+    var r = d.getBoundingClientRect();
+    var inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+    if (inside) { disarm(); return; }   // pointer arrived — mouseleave owns it now
+    if (timer) return;                  // already counting down
+    timer = setTimeout(function() {
+      disarm();
+      if (d.classList.contains('unpinned') && !d.classList.contains('collapsed')) toggleDock(d.id);
+    }, AUTOHIDE_GRACE);
+  };
+  var disarm = function() {
+    clearTimeout(timer); timer = null;
+    d._autoHideArmed = false; d._autoHideDisarm = null;
+    document.removeEventListener('mousemove', onMove, true);
+  };
+  d._autoHideArmed = true;
+  d._autoHideDisarm = disarm;
+  document.addEventListener('mousemove', onMove, true);
+}
 ['panel-contacts', 'panel-context'].forEach(function(id) {
   var d = document.getElementById(id);
   d.addEventListener('mouseleave', function() {
+    if (d._autoHideDisarm) d._autoHideDisarm();
     if (d.classList.contains('unpinned') && !d.classList.contains('collapsed')) toggleDock(id);
   });
   d.querySelector('.dock-rail').addEventListener('mouseenter', function() {
@@ -2702,13 +2745,18 @@ function refreshKeyHints() {
     var id = TAB_ACTION[el.dataset.group + '/' + el.dataset.tab];
     var it = menuItem(el.dataset.group, el.dataset.tab);
     if (!id || !it || !CONFIG.keys[id]) return;
-    el.title = (it.title || it.label) + '  (' + CONFIG.keys[id].v + ')';
+    el.title = (it.title || it.label) + '  (' + (CONFIG.keys[id].v || 'unbound') + ')';
   });
   var ex = document.getElementById('btn-exec');
-  if (ex) ex.title = 'Commit this turn  (' + CONFIG.keys['turn.execute'].v + ')';
+  if (ex) ex.title = 'Commit this turn  (' + (CONFIG.keys['turn.execute'].v || 'unbound') + ')';
   var hint = document.getElementById('cmd-hint');
   if (!hint) return;
-  var k = function(id) { return '<b>' + CONFIG.keys[id].v + '</b>'; };
+  // An unbound action must not render an empty key chip — the chip has a
+  // border, so an empty one paints a stray box naming nothing.
+  var k = function(id) {
+    var v = CONFIG.keys[id].v;
+    return v ? '<b>' + v + '</b>' : '<i class="key-unbound">unbound</i>';
+  };
   hint.innerHTML = 'Panels ' + ACTIONS.slice(0, 9).map(function(a) { return k(a.id); }).join('') +
     ' &middot; ' + k('sel.idle') + ' idle &middot; ' + k('sel.all') + ' all &middot; ' +
     k('sel.none') + ' clear &middot; ' + k('turn.execute') + ' commit';
