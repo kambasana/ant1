@@ -769,9 +769,18 @@ div.att-row { cursor: default; }
 
   <!-- LEFT PANEL: segmented [Units | Build | Orders] -->
   <div class="dock dock-left" id="panel-contacts">
-      <div class="dock-rail" data-group="left" data-dock="panel-contacts"></div>
+    <div class="dock-rail" data-dock="panel-contacts">
+      <button class="rail-expand" onclick="toggleDock('panel-contacts')" title="Expand panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
+      <button class="rail-btn active" data-group="left" data-tab="units"></button>
+      <button class="rail-btn" data-group="left" data-tab="build"></button>
+      <button class="rail-btn" data-group="left" data-tab="orders"></button>
+    </div>
     <div class="dock-hdr" onclick="event.target.closest('.seg-ctrl') || toggleDock('panel-contacts')">
-      <div class="seg-ctrl" data-group="left"></div>
+      <div class="seg-ctrl" data-group="left">
+        <button class="seg-btn active" data-tab="units"></button>
+        <button class="seg-btn" data-tab="build"></button>
+        <button class="seg-btn" data-tab="orders"></button>
+      </div>
       <svg class="dock-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
     </div>
     <div class="dock-body">
@@ -832,9 +841,22 @@ div.att-row { cursor: default; }
 
   <!-- RIGHT PANEL: segmented [Intel | Production] -->
   <div class="dock dock-right" id="panel-context">
-      <div class="dock-rail" data-group="right" data-dock="panel-context"></div>
+    <div class="dock-rail" data-dock="panel-context">
+      <button class="rail-expand" onclick="toggleDock('panel-context')" title="Expand panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <button class="rail-btn active" data-group="right" data-tab="alerts"></button>
+      <button class="rail-btn" data-group="right" data-tab="force"></button>
+      <button class="rail-btn" data-group="right" data-tab="intel"></button>
+      <button class="rail-btn" data-group="right" data-tab="production"></button>
+      <button class="rail-btn" data-group="right" data-tab="cap"></button>
+    </div>
     <div class="dock-hdr" onclick="event.target.closest('.seg-ctrl') || toggleDock('panel-context')">
-      <div class="seg-ctrl" data-group="right"></div>
+      <div class="seg-ctrl" data-group="right">
+        <button class="seg-btn active" data-tab="alerts"></button>
+        <button class="seg-btn" data-tab="force"></button>
+        <button class="seg-btn" data-tab="intel"></button>
+        <button class="seg-btn" data-tab="production"></button>
+        <button class="seg-btn" data-tab="cap"></button>
+      </div>
       <svg class="dock-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
     </div>
     <div class="dock-body">
@@ -852,7 +874,10 @@ div.att-row { cursor: default; }
       <!-- TAB: Intel — them: [Tracks | Analysis] -->
       <div class="tab-view" data-group="right" data-tab="intel">
         <div class="seg-sub">
-          <div class="seg-ctrl sm" data-group="intel"></div>
+          <div class="seg-ctrl sm" data-group="intel">
+            <button class="seg-btn active" data-tab="tracks"></button>
+            <button class="seg-btn" data-tab="cnn"></button>
+          </div>
         </div>
 
         <!-- ISR contacts — their behaviour, decay and last known position -->
@@ -875,7 +900,10 @@ div.att-row { cursor: default; }
       <!-- TAB: Production — [Facilities | Queues | Capacity] -->
       <div class="tab-view" data-group="right" data-tab="production">
         <div class="seg-sub">
-          <div class="seg-ctrl sm" data-group="prod"></div>
+          <div class="seg-ctrl sm" data-group="prod">
+            <button class="seg-btn active" data-tab="fac"></button>
+            <button class="seg-btn" data-tab="queues"></button>
+          </div>
         </div>
         <div class="tab-view active" data-group="prod" data-tab="fac"><div class="scroll-y" id="fac-list"></div></div>
         <div class="tab-view" data-group="prod" data-tab="queues"><div class="scroll-y" id="queue-list"></div></div>
@@ -889,9 +917,9 @@ div.att-row { cursor: default; }
 
   <!-- BOTTOM: FEED -->
   <div class="dock dock-bottom" id="panel-feed">
-      <div class="dock-rail">
-        <button class="rail-expand" onclick="toggleDock('panel-feed')" title="Expand panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg></button>
-      </div>
+    <div class="dock-rail">
+      <button class="rail-expand" onclick="toggleDock('panel-feed')" title="Expand panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg></button>
+    </div>
     <div class="dock-hdr" onclick="toggleDock('panel-feed')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
       <span class="dock-title">Battle Feed</span>
@@ -1291,32 +1319,41 @@ var MENUS = {
 };
 function liveContacts() { return ISR_CONTACTS.filter(function(c) { return !c.is_destroyed; }); }
 
-// Renders every presentation of every menu. Called once at startup.
+function menuItem(group, tab) {
+  var menu = MENUS[group];
+  if (!menu) return null;
+  for (var i = 0; i < menu.items.length; i++) {
+    if (menu.items[i].tab === tab) return menu.items[i];
+  }
+  return null;
+}
+function itemHint(it) {
+  return (it.title || it.label) + (it.key ? '  (' + it.key + ')' : '');
+}
+
+// Each rail icon and each segment is its own element in the markup,
+// carrying only its group and tab. Mounting fills that one element from
+// its declaration — nothing writes a rail or a control as a whole. So an
+// item can be reordered, moved to another rail, or have separators put
+// between it and its neighbours by editing markup alone.
+function mountRailItem(el) {
+  var it = menuItem(el.dataset.group, el.dataset.tab);
+  if (!it) return;
+  el.title = itemHint(it);
+  el.innerHTML = svgIcon(it.icon) +
+    (it.count ? '<span class="rail-ct" id="rct-' + el.dataset.group + '-' + it.tab + '"></span>' : '');
+}
+function mountSegItem(el) {
+  var group = el.closest('.seg-ctrl').dataset.group;
+  var it = menuItem(group, el.dataset.tab);
+  if (!it) return;
+  el.title = itemHint(it);
+  el.innerHTML = it.label +
+    (it.count ? ' <span class="seg-ct" id="ct-' + group + '-' + it.tab + '"></span>' : '');
+}
 function mountMenus() {
-  Object.keys(MENUS).forEach(function(group) {
-    var menu = MENUS[group];
-    var ctrl = document.querySelector('.seg-ctrl[data-group="' + group + '"]');
-    if (ctrl) {
-      ctrl.innerHTML = menu.items.map(function(it, i) {
-        var hint = (it.title || it.label) + (it.key ? '  (' + it.key + ')' : '');
-        return '<button class="seg-btn' + (i === 0 ? ' active' : '') + '" data-tab="' + it.tab +
-          '" title="' + hint + '">' + it.label +
-          (it.count ? ' <span class="seg-ct" id="ct-' + group + '-' + it.tab + '"></span>' : '') + '</button>';
-      }).join('');
-    }
-    var rail = document.querySelector('.dock-rail[data-group="' + group + '"]');
-    if (rail) {
-      var dir = rail.closest('.dock-right') ? 'M15 18l-6-6 6-6' : 'M9 18l6-6-6-6';
-      rail.innerHTML = '<button class="rail-expand" onclick="toggleDock(\'' + rail.dataset.dock +
-        '\')" title="Expand panel">' + svgIcon('<path d="' + dir + '"/>') + '</button>' +
-        menu.items.map(function(it, i) {
-          var hint = (it.title || it.label) + (it.key ? '  (' + it.key + ')' : '');
-          return '<button class="rail-btn' + (i === 0 ? ' active' : '') + '" data-group="' + group +
-            '" data-tab="' + it.tab + '" title="' + hint + '">' + svgIcon(it.icon) +
-            (it.count ? '<span class="rail-ct" id="rct-' + group + '-' + it.tab + '"></span>' : '') + '</button>';
-        }).join('');
-    }
-  });
+  document.querySelectorAll('.rail-btn[data-group][data-tab]').forEach(mountRailItem);
+  document.querySelectorAll('.seg-ctrl[data-group] .seg-btn[data-tab]').forEach(mountSegItem);
 }
 
 // ═══ DESIGN SYSTEM: tab group controller ═══
