@@ -175,10 +175,21 @@ async def run_wego_test():
 
             result = await wego.execute_turn(orders)
 
-            # Turns 10-14: Build barracks + auto-place
-            print("\n7. Turns 10-14: Build barracks & advance")
-            for _ in range(5):
+            # Build barracks + auto-place. Wait for the building to appear
+            # rather than assuming a fixed number of turns: production time
+            # varies with tick rate and cash, and a hardcoded 5-turn budget
+            # failed against a live server while the game was working fine —
+            # the conyard and power plant had gone up and there was $4200 in
+            # the bank. The assertion is unchanged; only the window is.
+            BARRACKS_MAX_TURNS = 15
+            print(f"\n7. Build barracks & advance (up to {BARRACKS_MAX_TURNS} turns)")
+            has_barracks = False
+            turns_waited = 0
+            for turns_waited in range(1, BARRACKS_MAX_TURNS + 1):
                 obs = result.situation_after.observation
+                if any(b.type in ("tent", "barr") for b in obs.buildings):
+                    has_barracks = True
+                    break
                 place_cmds, placement_counter = _auto_place_commands(obs, placement_counter)
                 orders = place_cmds if place_cmds else [CommandModel(action=ActionType.NO_OP)]
                 result = await wego.execute_turn(orders)
@@ -186,8 +197,10 @@ async def run_wego_test():
                     break
 
             obs = result.situation_after.observation
-            has_barracks = any(b.type in ("tent", "barr") for b in obs.buildings)
-            check("Barracks built", has_barracks)
+            has_barracks = has_barracks or any(
+                b.type in ("tent", "barr") for b in obs.buildings
+            )
+            check("Barracks built", has_barracks, f"after {turns_waited} turn(s)")
 
             # Turn 15: Train infantry
             print("\n8. Turn 15: Train infantry")
