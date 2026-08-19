@@ -30,7 +30,7 @@
   --r-lg: 8px;
   --status-h: 36px;
   --cmd-h: 44px;
-  --dock-hdr: 32px;
+  --dock-hdr: 32px; --rail-w: 36px; --row-h: 32px; --build-row-h: 26px; --seg-grow: 1.15;
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-decel: cubic-bezier(0, 0, 0.2, 1);
   --ease-emphasized: cubic-bezier(0.05, 0.7, 0.1, 1);
@@ -145,6 +145,33 @@ body {
 .dock-pin:hover { background: var(--elevated); }
 .dock-pin:focus-visible { outline: 2px solid var(--accent); outline-offset: -1px; }
 
+/* Settings rows — label, control, unit */
+.set-row {
+  display: grid; grid-template-columns: minmax(0,1fr) 72px 22px;
+  gap: 6px; align-items: center; padding: 4px 10px; min-height: 28px;
+  border-bottom: 1px solid var(--border-subtle); font-size: 10px;
+}
+.set-label { color: var(--t2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.set-num, .set-key {
+  width: 100%; padding: 3px 6px; border-radius: 3px;
+  border: 1px solid var(--border); background: var(--bg); color: var(--t1);
+  font-family: var(--mono); font-size: 10px; outline: none; text-align: center;
+}
+.set-num:focus, .set-key:focus-visible { border-color: var(--accent); }
+.set-key { cursor: pointer; }
+.set-key:hover { border-color: var(--t3); background: var(--raised); }
+.set-key.capturing { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-text); }
+.set-unit { font-family: var(--mono); font-size: 8px; color: var(--t3); }
+.set-actions { padding: 10px; }
+.set-actions button {
+  width: 100%; padding: 6px; border-radius: var(--r);
+  border: 1px solid var(--border); background: transparent; color: var(--t2);
+  font-family: var(--sans); font-size: 10px; cursor: pointer;
+}
+.set-actions button:hover { border-color: var(--red); color: var(--red); }
+/* Settings sits at the foot of the rail, as tool palettes conventionally do */
+.rail-btn.rail-end { margin-top: auto; }
+
 /* ═══ DESIGN SYSTEM: Icon Rail ═══
  * What a segmented menu becomes when its panel is collapsed. Same tab
  * contract (data-group / data-tab), same selected treatment turned
@@ -154,7 +181,7 @@ body {
  */
 .dock-left .dock-rail, .dock-right .dock-rail {
   display: flex; flex-direction: column; align-items: center;
-  gap: 2px; padding: 4px 0; width: 36px; flex-shrink: 0;
+  gap: 2px; padding: 4px 0; width: var(--rail-w); flex-shrink: 0;
   background: var(--raised);
 }
 .dock-left .dock-rail { border-right: 1px solid var(--border); }
@@ -366,15 +393,19 @@ button.mod-slot:focus-visible { outline: 2px solid var(--accent); outline-offset
  * Customise: --lrow-h (min height), --lrow-trail (trailing column).
  */
 .lrow {
-  --lrow-h: 32px; --lrow-trail: 44px;
+  --lrow-h: var(--row-h); --lrow-trail: 44px;
   position: relative;
-  display: grid; grid-template-columns: 8px 1fr var(--lrow-trail);
+  display: grid; grid-template-columns: 8px minmax(0,1fr) var(--lrow-trail);
   gap: 6px; align-items: center;
   min-height: var(--lrow-h); padding: 4px 10px;
   border-bottom: 1px solid var(--border-subtle);
   font-size: 10px;
 }
 .lrow:hover { background: var(--raised); }
+.lrow.ico { grid-template-columns: 8px 17px minmax(0,1fr) var(--lrow-trail); }
+.lrow-icon { display: flex; align-items: center; justify-content: center; color: var(--t3); }
+.lrow-icon svg { width: 16px; height: 16px; }
+.lrow:hover .lrow-icon { color: var(--accent-text); }
 .lrow-pip { width: 6px; height: 6px; border-radius: 50%; background: var(--t3); }
 .lrow-pip.ok { background: var(--green); }
 .lrow-pip.warn { background: var(--amber); }
@@ -620,7 +651,7 @@ div.att-row { cursor: default; }
  * Customise: --seg-h (height), --seg-r (radius), --seg-font (size).
  */
 .seg-ctrl {
-  --seg-h: 24px; --seg-r: 4px; --seg-font: 9px; --seg-grow: 1.15;
+  --seg-h: 24px; --seg-r: 4px; --seg-font: 9px;
   display: flex; height: var(--seg-h); border-radius: var(--seg-r);
   background: var(--bg); border: 1px solid var(--border);
   overflow: hidden; flex-shrink: 0; flex: 1;
@@ -729,7 +760,7 @@ div.att-row { cursor: default; }
 .build-row {
   display: grid; grid-template-columns: 20px minmax(0,1fr) auto;
   gap: 8px; align-items: center; width: 100%;
-  padding: 4px 10px; min-height: 26px;
+  padding: 4px 10px; min-height: var(--build-row-h);
   border: none; border-bottom: 1px solid var(--border-subtle);
   background: transparent; color: var(--t2);
   font-family: var(--sans); font-size: 10px; text-align: left; cursor: pointer;
@@ -890,6 +921,7 @@ div.att-row { cursor: default; }
       <button class="rail-btn active" data-group="right" data-tab="alerts"></button>
       <button class="rail-btn" data-group="right" data-tab="force"></button>
       <button class="rail-btn" data-group="right" data-tab="intel"></button>
+      <button class="rail-btn rail-end" data-group="right" data-tab="settings"></button>
     </div>
     <div class="dock-main">
     <div class="dock-hdr">
@@ -907,6 +939,9 @@ div.att-row { cursor: default; }
       <div class="tab-view" data-group="right" data-tab="force">
         <div class="scroll-y" id="force-body"></div>
       </div>
+
+      <!-- TAB: Settings — rendered from the config schema -->
+      <div class="tab-view" data-group="right" data-tab="settings"><div class="scroll-y" id="settings-body"></div></div>
 
       <!-- TAB: Intel — them: [Tracks | Analysis] -->
       <div class="tab-view" data-group="right" data-tab="intel">
@@ -1197,6 +1232,113 @@ var FEED_DATA = [
   {turn:1, sev:'routine',  cat:'system', msg:'Game started on Tournament Arena, 108 by 50 cells'},
 ];
 
+
+// ═══════════════════════════════════════════════════════════════
+// CONFIG — every tunable in one place. Nothing below reads a literal
+// dimension, threshold or key; they all come from here, the settings
+// panel edits this object, and applyConfig pushes the layout values
+// out as CSS custom properties. Persisted per browser.
+// ═══════════════════════════════════════════════════════════════
+var DEFAULTS = {
+  layout: {
+    leftWidth:   {v:268, min:180, max:420, step:4,  label:'Left panel width',  unit:'px'},
+    rightWidth:  {v:332, min:220, max:480, step:4,  label:'Right panel width', unit:'px'},
+    railWidth:   {v:36,  min:28,  max:56,  step:2,  label:'Rail width',        unit:'px'},
+    feedHeight:  {v:210, min:80,  max:420, step:10, label:'Battle feed height',unit:'px'},
+    dockHeader:  {v:32,  min:24,  max:44,  step:2,  label:'Panel header',      unit:'px'},
+  },
+  density: {
+    rowHeight:      {v:32, min:24, max:44, step:2, label:'List row height',    unit:'px'},
+    buildRowHeight: {v:26, min:22, max:40, step:2, label:'Catalogue row height', unit:'px'},
+    segGrow:        {v:1.15, min:1, max:1.6, step:0.05, label:'Selected segment growth', unit:'x'},
+  },
+  thresholds: {
+    lowCash:       {v:500,  min:0,   max:5000, step:100,  label:'Low cash warning',       unit:'$'},
+    powerMargin:   {v:25,   min:0,   max:200,  step:5,    label:'Low power margin',       unit:'pw'},
+    minHarvesters: {v:2,    min:1,   max:8,    step:1,    label:'Minimum harvesters',     unit:''},
+    damagedHp:     {v:0.6,  min:0.1, max:0.95, step:0.05, label:'Damaged unit threshold', unit:'hp'},
+    idleShare:     {v:0.5,  min:0.1, max:1,    step:0.05, label:'Idle share before alarm',unit:'x'},
+    hotspotAlert:  {v:0.8,  min:0.1, max:1,    step:0.05, label:'Hotspot alert score',    unit:''},
+    staleContact:  {v:5,    min:1,   max:20,   step:1,    label:'Turns before a track is stale', unit:''},
+  },
+  keys: {},
+};
+
+// Actions a key can be bound to. The settings panel builds itself from
+// this list, so a new action needs no UI work.
+var ACTIONS = [
+  {id:'panel.units',      label:'Units panel',       def:'1', run:function() { showPanel('left','units'); }},
+  {id:'panel.build',      label:'Build panel',       def:'2', run:function() { showPanel('left','build'); }},
+  {id:'panel.orders',     label:'Orders panel',      def:'3', run:function() { showPanel('left','orders'); }},
+  {id:'panel.production', label:'Production panel',  def:'4', run:function() { showPanel('left','production'); }},
+  {id:'panel.capacity',   label:'Capacity panel',    def:'5', run:function() { showPanel('left','cap'); }},
+  {id:'panel.alerts',     label:'Alerts panel',      def:'6', run:function() { showPanel('right','alerts'); }},
+  {id:'panel.force',      label:'Force panel',       def:'7', run:function() { showPanel('right','force'); }},
+  {id:'panel.intel',      label:'Intel panel',       def:'8', run:function() { showPanel('right','intel'); }},
+  {id:'panel.settings',   label:'Settings panel',    def:'9', run:function() { showPanel('right','settings'); }},
+  {id:'sel.idle',         label:'Select idle units', def:'d', run:function() { selectIdle(); }},
+  {id:'sel.damaged',      label:'Select damaged',    def:'h', run:function() { selectDamaged(); }},
+  {id:'sel.all',          label:'Select all units',  def:'a', run:function() {
+     selected.clear(); UNITS.forEach(function(u) { selected.add(u.actor_id); }); renderUnits(); updateToolbar(); }},
+  {id:'sel.none',         label:'Clear selection',   def:'Escape', run:function() { selectNone(); }},
+  {id:'turn.execute',     label:'Execute turn',      def:'Enter', run:function() {
+     var b = document.getElementById('btn-exec'); if (!b.disabled) executeTurn(); }},
+];
+ACTIONS.forEach(function(a) { DEFAULTS.keys[a.id] = {v:a.def, label:a.label, key:true}; });
+
+function cloneCfg(src) {
+  var out = {};
+  Object.keys(src).forEach(function(g) {
+    out[g] = {};
+    Object.keys(src[g]).forEach(function(k) {
+      out[g][k] = {};
+      Object.keys(src[g][k]).forEach(function(f) { out[g][k][f] = src[g][k][f]; });
+    });
+  });
+  return out;
+}
+var CONFIG = cloneCfg(DEFAULTS);
+// Read a setting's value. Everything below calls this, never a literal.
+function cfg(group, key) { return CONFIG[group][key].v; }
+
+function saveConfig() {
+  try {
+    var flat = {};
+    Object.keys(CONFIG).forEach(function(g) {
+      flat[g] = {};
+      Object.keys(CONFIG[g]).forEach(function(k) { flat[g][k] = CONFIG[g][k].v; });
+    });
+    localStorage.setItem('c2-config', JSON.stringify(flat));
+  } catch (e) { /* storage unavailable — settings stay for this session */ }
+}
+function loadConfig() {
+  try {
+    var raw = localStorage.getItem('c2-config');
+    if (!raw) return;
+    var flat = JSON.parse(raw);
+    Object.keys(flat).forEach(function(g) {
+      if (!CONFIG[g]) return;
+      Object.keys(flat[g]).forEach(function(k) {
+        if (CONFIG[g][k]) CONFIG[g][k].v = flat[g][k];
+      });
+    });
+  } catch (e) { /* ignore malformed storage */ }
+}
+function resetConfig() { CONFIG = cloneCfg(DEFAULTS); applyConfig(); saveConfig(); renderSettings(); showToast('Settings reset'); }
+
+// Layout settings become CSS custom properties, so the stylesheet holds
+// no fixed dimensions either.
+function applyConfig() {
+  var r = document.documentElement.style;
+  r.setProperty('--rail-w',   cfg('layout','railWidth') + 'px');
+  r.setProperty('--dock-hdr', cfg('layout','dockHeader') + 'px');
+  r.setProperty('--row-h',    cfg('density','rowHeight') + 'px');
+  r.setProperty('--build-row-h', cfg('density','buildRowHeight') + 'px');
+  r.setProperty('--seg-grow', cfg('density','segGrow'));
+  updateGrid();
+  if (typeof renderMap === 'function') setTimeout(renderMap, 30);
+}
+
 // ─── State ───
 var selected = new Set(), orders = [], unitFilter = 'all', activeAct = null;
 var feedFilter = 'all', feedSearch = '', unitSearch = '', contactFilter = 'all';
@@ -1249,8 +1391,10 @@ function updateGrid() {
   var lc = document.getElementById('panel-contacts').classList.contains('collapsed');
   var rc = document.getElementById('panel-context').classList.contains('collapsed');
   var bc = document.getElementById('panel-feed').classList.contains('collapsed');
-  ws.style.gridTemplateColumns = (lc ? '36px' : '268px') + ' 1fr ' + (rc ? '36px' : '332px');
-  ws.style.gridTemplateRows = '1fr ' + (bc ? '32px' : '210px');
+  var rail = cfg('layout','railWidth') + 'px';
+  ws.style.gridTemplateColumns = (lc ? rail : cfg('layout','leftWidth') + 'px') + ' 1fr ' +
+    (rc ? rail : cfg('layout','rightWidth') + 'px');
+  ws.style.gridTemplateRows = '1fr ' + (bc ? cfg('layout','dockHeader') + 'px' : cfg('layout','feedHeight') + 'px');
 }
 
 // ═══ DESIGN SYSTEM: indicator primitive ═══
@@ -1294,6 +1438,7 @@ var ICON = {
   intel:  '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/>',
   prod:   '<path d="M2 21V10l6 4V10l6 4V8l8 5v8z"/><path d="M2 21h20"/>',
   cap:    '<path d="M3 18a9 9 0 0118 0"/><path d="M12 18l5-5"/><path d="M3 18h18"/>',
+  settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-1.8-.3 1.6 1.6 0 00-1 1.5V21a2 2 0 11-4 0v-.1A1.6 1.6 0 008 19.4a1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.6 1.6 0 00.3-1.8 1.6 1.6 0 00-1.5-1H2a2 2 0 110-4h.1A1.6 1.6 0 004.6 8a1.6 1.6 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.6 1.6 0 001.8.3H9a1.6 1.6 0 001-1.5V2a2 2 0 114 0v.1a1.6 1.6 0 001 1.5 1.6 1.6 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 00-.3 1.8V9a1.6 1.6 0 001.5 1H22a2 2 0 110 4h-.1a1.6 1.6 0 00-1.5 1z"/>',
 };
 function svgIcon(d) {
   return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
@@ -1320,11 +1465,12 @@ var MENUS = {
        return {n:a.length, attn:a.some(function(x) { return x.tone === 'bad' || x.tone === 'warn'; })};
      }},
     {tab:'force',  label:'Force',  title:'Standing force and lines of effort', icon:ICON.force},
-    {tab:'intel',  label:'Intel',  title:'ISR tracks and tactical analysis', key:'I', icon:ICON.intel,
+    {tab:'intel',  label:'Intel',  title:'ISR tracks and tactical analysis', icon:ICON.intel,
      count:function() {
        var c = liveContacts();
        return {n:c.length, attn:c.some(function(x) { return x.is_visible && x.can_attack; })};
      }},
+    {tab:'settings', label:'Set', head:'Settings', title:'Settings', icon:ICON.settings},
   ]},
   // Sub-menus use the same component; they simply have no rail.
   intel: {sm:true, items: [
@@ -1332,7 +1478,7 @@ var MENUS = {
      count:function() { var c = liveContacts(); return {n:c.length, attn:c.some(function(x) { return x.is_visible && x.can_attack; })}; }},
     {tab:'cnn',    label:'Analysis', title:'CNN tactical analysis',
      count:function() {
-       var h = CNN_DATA.hot_spots.filter(function(x) { return x.score >= 0.8; });
+       var h = CNN_DATA.hot_spots.filter(function(x) { return x.score >= cfg('thresholds','hotspotAlert'); });
        return {n:h.length, attn:h.length > 0};
      }},
   ]},
@@ -1393,6 +1539,7 @@ var TAB_HOOKS = {
     if (k === 'production') renderProduction();
     if (k === 'alerts') renderAlerts();
     if (k === 'force') renderForce();
+    if (k === 'settings') renderSettings();
     if (k === 'cap') renderCapacity();
   },
   prod:  function() { renderProduction(); },
@@ -1572,7 +1719,7 @@ function alertCount(modules) {
 // A turn-based commander needs "what should I do", not "what happened".
 // Every entry below is a condition worth acting on, and every one is a
 // button that takes you to the thing it is talking about.
-function damagedUnits() { return UNITS.filter(function(u) { return u.hp_percent < 0.6; }); }
+function damagedUnits() { return UNITS.filter(function(u) { return u.hp_percent < cfg('thresholds','damagedHp'); }); }
 function idleUnits()    { return UNITS.filter(function(u) { return u.is_idle; }); }
 
 function selectUnits(list, why) {
@@ -1597,31 +1744,31 @@ function attentionItems() {
   var head = ECONOMY.power_provided - ECONOMY.power_drained;
 
   if (idle.length) out.push({
-    tone: idle.length > UNITS.length / 2 ? 'bad' : 'warn',
-    label:'Idle units', detail:'Standing by with no orders',
+    tone: idle.length > UNITS.length * cfg('thresholds','idleShare') ? 'bad' : 'warn',
+    icon:'idle', label:'Idle units', detail:'Standing by with no orders',
     count: idle.length + '/' + UNITS.length, act:'selectIdle()',
   });
   if (hurt.length) out.push({
-    tone:'warn', label:'Damaged units', detail:'Below 60% health — consider withdrawing',
+    tone:'warn', icon:'damaged', label:'Damaged units', detail:'Below ' + Math.round(cfg('thresholds','damagedHp')*100) + '% health — consider withdrawing',
     count:String(hurt.length), act:'selectDamaged()',
   });
   if (idleFacs.length) out.push({
-    tone:'warn', label:'Idle facilities', detail:'Producing nothing this turn',
+    tone:'warn', icon:'factory', label:'Idle facilities', detail:'Producing nothing this turn',
     count:String(idleFacs.length), act:"goProduction('fac')",
   });
-  if (ECONOMY.harvester_count < 2) out.push({
-    tone:'warn', label:'Thin on harvesters', detail:'Income is one loss away from stalling',
+  if (ECONOMY.harvester_count < cfg('thresholds','minHarvesters')) out.push({
+    tone:'warn', icon:'harvest', label:'Thin on harvesters', detail:'Income is one loss away from stalling',
     count:String(ECONOMY.harvester_count), act:"goProduction('cap')",
   });
-  if (head < 25) out.push({
-    tone: head < 0 ? 'bad' : 'warn', label:'Power margin low', detail:'New structures may brown out',
+  if (head < cfg('thresholds','powerMargin')) out.push({
+    tone: head < 0 ? 'bad' : 'warn', icon:'power', label:'Power margin low', detail:'New structures may brown out',
     count:(head >= 0 ? '+' : '') + head, act:"goProduction('cap')",
   });
   if (newContacts.length) out.push({
-    tone:'', label:'New contacts', detail:'Seen this turn', count:String(newContacts.length), act:'goTracks()',
+    tone:'', icon:'contact', label:'New contacts', detail:'Seen this turn', count:String(newContacts.length), act:'goTracks()',
   });
   if (!orders.length) out.push({
-    tone:'bad', label:'No orders queued', detail:'Committing now would waste the turn', count:'0', act:'',
+    tone:'bad', icon:'orders', label:'No orders queued', detail:'Committing now would waste the turn', count:'0', act:'',
   });
   return out;
 }
@@ -1636,8 +1783,9 @@ function renderAlerts() {
 
   html += items.length ? items.map(function(a) {
     var tag = a.act ? 'button' : 'div';
-    return '<' + tag + ' class="lrow att-row"' + (a.act ? ' onclick="' + a.act + '"' : '') + '>' +
+    return '<' + tag + ' class="lrow ico att-row"' + (a.act ? ' onclick="' + a.act + '"' : '') + '>' +
       '<div class="lrow-pip ' + a.tone + '"></div>' +
+      '<div class="lrow-icon">' + glyph(ALERT_ICON[a.icon]) + '</div>' +
       '<div class="lrow-body"><div class="lrow-title">' + a.label + '</div>' +
         '<div class="lrow-meta"><span>' + a.detail + '</span></div></div>' +
       '<div class="lrow-trail ' + a.tone + '">' + a.count + '</div>' +
@@ -1699,12 +1847,15 @@ function renderContacts() {
     // Pip carries intel level; confidence decay dims it as the track ages.
     var conf = contactConfidence(c);
     var tone = c.intel_level >= 4 ? 'bad' : c.intel_level >= 2 ? 'warn' : '';
-    var pipCls = 'lrow-pip ' + tone + (conf < 0.4 ? ' dim' : '');
+    var stale = c.turns_since_seen > cfg('thresholds','staleContact');
+    var pipCls = 'lrow-pip ' + tone + (stale || conf < 0.4 ? ' dim' : '');
     var meta = '<span>' + c.contact_id + '</span><span>' + (INTEL_LABELS[c.intel_level] || '?') + '</span>' +
       (c.hp_percent > 0 ? '<span>HP ' + Math.round(c.hp_percent * 100) + '%</span>' : '') +
       (c.turns_since_seen > 0 ? '<span class="warn">T-' + c.turns_since_seen + '</span>' : '');
-    return '<div class="lrow">' +
+    var ic = c.unit_type && ITEM_ICON[c.unit_type] ? ITEM_ICON[c.unit_type] : UNKNOWN_ICON;
+    return '<div class="lrow ico">' +
       '<div class="' + pipCls + '"></div>' +
+      '<div class="lrow-icon">' + glyph(ic) + '</div>' +
       '<div class="lrow-body"><div class="lrow-title">' + contactName(c) + '</div>' +
         '<div class="lrow-meta">' + meta + '</div></div>' +
       '<div class="lrow-trail">' + c.cell_x + ',' + c.cell_y + '</div>' +
@@ -1858,6 +2009,16 @@ var CAT_ICON = {
   'Infantry':'M2.2 4.6h11.6v6.8H2.2z M2.2 4.6l11.6 6.8M13.8 4.6L2.2 11.4',
   'Vehicle':'M2 10.8h12v3.2H2z M4 7.2h7v3.6H4z M11 8.6h3.4',
   'Aircraft':'M8 1l1.1 6.4 5.7 3.2v1.6L9.2 10.4v2.2l2.2 1.6v.8L8 13.8l-3.4 1.8v-.8l2.2-1.6v-2.2L1.2 12.2v-1.6L6.9 7.4z',
+};
+var UNKNOWN_ICON = 'M8 1.6a6.4 6.4 0 100 12.8A6.4 6.4 0 008 1.6M6.2 6.2a1.9 1.9 0 013.6.7c0 1.3-1.8 1.6-1.8 2.9M8 11.8v.1';
+var ALERT_ICON = {
+  idle:    'M8 1.6a6.4 6.4 0 100 12.8A6.4 6.4 0 008 1.6M8 4.4V8l2.6 1.6',
+  damaged: 'M8 1.4l6.6 11.4H1.4z M8 6v3.2M8 11.2v.1',
+  factory: 'M2 13.6V6.6l3.4 2.6V6.6l3.4 2.6V6l4.8 3.2v4.4z',
+  harvest: 'M1.4 6h7.2v5.8H1.4z M8.6 8.4h3.2l2.6 2.6v.8H8.6M3.2 12.6a1.4 1.4 0 102.8 0M9.8 12.6a1.4 1.4 0 102.8 0',
+  power:   'M9 1.8L4.4 9H8l-1 5.2L12 7H8.4z',
+  contact: 'M8 2.4a5.6 5.6 0 100 11.2A5.6 5.6 0 008 2.4M8 6.2a1.8 1.8 0 100 3.6 1.8 1.8 0 000-3.6',
+  orders:  'M4 2.4h8v11.2H4z M6 5.4h4M6 8h4M6 10.6h2',
 };
 function glyph(d) {
   return '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" ' +
@@ -2021,8 +2182,9 @@ function renderFacilities() {
       tone = 'warn'; trail = 'Idle';
       meta = '<span>#' + b.actor_id + '</span><span>' + b.can_produce.length + ' available</span>';
     }
-    return '<div class="lrow">' +
+    return '<div class="lrow ico">' +
       '<div class="lrow-pip ' + tone + '"></div>' +
+      '<div class="lrow-icon">' + glyph(ITEM_ICON[b.type]) + '</div>' +
       '<div class="lrow-body"><div class="lrow-title">' + name + '</div>' +
         '<div class="lrow-meta">' + meta + '</div></div>' +
       '<div class="lrow-trail ' + tone + '">' + trail + '</div>' +
@@ -2042,8 +2204,9 @@ function renderQueues() {
     var label = db ? db.name : p.item.toUpperCase();
     var eta = Math.max(1, Math.round(p.remaining_ticks / 25));
     var tone = p.paused ? 'warn' : 'ok';
-    return '<div class="lrow">' +
+    return '<div class="lrow ico">' +
       '<div class="lrow-pip ' + tone + '"></div>' +
+      '<div class="lrow-icon">' + glyph(ITEM_ICON[p.item]) + '</div>' +
       '<div class="lrow-body"><div class="lrow-title">' + label + '</div>' +
         '<div class="lrow-meta">' +
           '<span class="lrow-tag">' + p.queue_type.slice(0,3) + '</span>' +
@@ -2062,14 +2225,14 @@ function renderQueues() {
 // appears — this is the slot for anything that needs a home later.
 var CAPACITY_MODULES = [
   {k:'Cash', get:function() {
-    return {v:'$' + ECONOMY.cash.toLocaleString(), tone: ECONOMY.cash < 500 ? 'warn' : 'ok'};
+    return {v:'$' + ECONOMY.cash.toLocaleString(), tone: ECONOMY.cash < cfg('thresholds','lowCash') ? 'warn' : 'ok'};
   }},
   {k:'Power', get:function() {
     var head = ECONOMY.power_provided - ECONOMY.power_drained;
     return {
       v:(head >= 0 ? '+' : '') + head,
       sub: ECONOMY.power_provided + '/' + ECONOMY.power_drained,
-      tone: head < 0 ? 'bad' : head < 25 ? 'warn' : 'ok',
+      tone: head < 0 ? 'bad' : head < cfg('thresholds','powerMargin') ? 'warn' : 'ok',
     };
   }},
   {k:'Silo', get:function() {
@@ -2078,7 +2241,7 @@ var CAPACITY_MODULES = [
   }},
   {k:'Harvesters', get:function() {
     var n = ECONOMY.harvester_count;
-    return {v:String(n), tone: n < 2 ? 'warn' : 'ok'};
+    return {v:String(n), tone: n < cfg('thresholds','minHarvesters') ? 'warn' : 'ok'};
   }},
   {k:'Queues', get:function() {
     var producible = producibleSet();
@@ -2163,13 +2326,13 @@ var STATUS_MODULES = [
     return {
       v:(head >= 0 ? '+' : '') + head,
       sub: ECONOMY.power_provided + ' made, ' + ECONOMY.power_drained + ' used',
-      tone: head < 0 ? 'bad' : head < 25 ? 'warn' : '',
+      tone: head < 0 ? 'bad' : head < cfg('thresholds','powerMargin') ? 'warn' : '',
     };
   }},
   {k:'Units', help:'Your active units', get:function() { return {v:String(MILITARY.active_unit_count)}; }},
   {k:'Idle', help:'Units with no orders — click to select them', get:function() {
     var n = idleUnits().length;
-    return {v:String(n), tone: n > UNITS.length / 2 ? 'bad' : n ? 'warn' : 'ok', act:'selectIdle()'};
+    return {v:String(n), tone: n > UNITS.length * cfg('thresholds','idleShare') ? 'bad' : n ? 'warn' : 'ok', act:'selectIdle()'};
   }},
 ];
 var STATE_MODULES = [
@@ -2439,32 +2602,112 @@ function togglePin(id) {
   });
 });
 
+
+// ═══ SETTINGS ═══
+// The panel is generated from the config schema, so a setting added to
+// DEFAULTS appears here with the right control and no UI work.
+var capturingKey = false;
+function setCfg(group, key, value) {
+  var f = CONFIG[group][key];
+  if (!f.key) {
+    value = parseFloat(value);
+    if (isNaN(value)) return;
+    value = Math.max(f.min, Math.min(f.max, value));
+  }
+  f.v = value;
+  applyConfig(); saveConfig(); renderSettings(); refreshKeyHints();
+  renderUnits(); renderAlerts(); renderContacts(); renderBuildView(); renderProduction(); updateStatusBar();
+}
+function captureKey(id, btn) {
+  if (capturingKey) return;
+  capturingKey = true;
+  btn.classList.add('capturing'); btn.textContent = 'press a key';
+  function done(e) {
+    e.preventDefault(); e.stopPropagation();
+    window.removeEventListener('keydown', done, true);
+    capturingKey = false; btn.classList.remove('capturing');
+    if (e.key !== 'Tab') {
+      // A key can only drive one action, so clear any previous holder.
+      Object.keys(CONFIG.keys).forEach(function(other) {
+        if (other !== id && CONFIG.keys[other].v.toLowerCase() === e.key.toLowerCase()) CONFIG.keys[other].v = '';
+      });
+      CONFIG.keys[id].v = e.key;
+    }
+    setCfg('keys', id, CONFIG.keys[id].v);
+  }
+  window.addEventListener('keydown', done, true);
+}
+var SETTING_GROUPS = [
+  {key:'keys',       label:'Keyboard',   note:'click a key to rebind'},
+  {key:'layout',     label:'Layout',     note:'pixels'},
+  {key:'density',    label:'Density',    note:''},
+  {key:'thresholds', label:'Alert thresholds', note:'when a panel starts warning you'},
+];
+function renderSettings() {
+  var el = document.getElementById('settings-body');
+  if (!el) return;
+  var html = '';
+  SETTING_GROUPS.forEach(function(g) {
+    html += '<div class="grp-label sticky">' + g.label +
+      (g.note ? '<span class="grp-note">' + g.note + '</span>' : '') + '</div>';
+    Object.keys(CONFIG[g.key]).forEach(function(k) {
+      var f = CONFIG[g.key][k];
+      html += '<div class="set-row"><span class="set-label">' + f.label + '</span>';
+      if (f.key) {
+        html += '<button class="set-key" onclick="captureKey(\'' + k + '\', this)">' +
+          (f.v || 'unbound') + '</button>';
+      } else {
+        html += '<input class="set-num" type="number" value="' + f.v + '" min="' + f.min +
+          '" max="' + f.max + '" step="' + f.step + '" ' +
+          'onchange="setCfg(\'' + g.key + '\',\'' + k + '\',this.value)">' +
+          '<span class="set-unit">' + f.unit + '</span>';
+      }
+      html += '</div>';
+    });
+  });
+  html += '<div class="set-actions"><button onclick="resetConfig()">Reset all to defaults</button></div>';
+  el.innerHTML = html;
+}
+
 // ═══ KEYBOARD ═══
 // A tool this dense should be drivable from the keyboard. Hints live in
 // the segment tooltips and the command-bar hint line.
-var KEYS = {
-  '1': function() { showPanel('left', 'units'); },
-  '2': function() { showPanel('left', 'build'); },
-  '3': function() { showPanel('left', 'orders'); },
-  '4': function() { showPanel('left', 'production'); },
-  '5': function() { showPanel('left', 'cap'); },
-  'i': function() { showPanel('right', 'intel'); },
-  'a': function() { showPanel('right', 'alerts'); },
-  'd': function() { selectIdle(); },
-  'a': function() { selected.clear(); UNITS.forEach(function(u) { selected.add(u.actor_id); }); renderUnits(); updateToolbar(); },
-  'Escape': function() { selectNone(); },
-  'Enter': function() { var b = document.getElementById('btn-exec'); if (!b.disabled) executeTurn(); },
-};
+function runAction(id) {
+  for (var i = 0; i < ACTIONS.length; i++) if (ACTIONS[i].id === id) return ACTIONS[i].run();
+}
 document.addEventListener('keydown', function(e) {
   if (e.target.matches('input, select, textarea')) return;
-  if (e.ctrlKey || e.metaKey || e.altKey) return;
-  var fn = KEYS[e.key] || KEYS[e.key.toLowerCase()];
-  if (fn) { e.preventDefault(); fn(); }
+  if (e.ctrlKey || e.metaKey || e.altKey || capturingKey) return;
+  var hit = null;
+  Object.keys(CONFIG.keys).forEach(function(id) {
+    var k = CONFIG.keys[id].v;
+    if (k && (k === e.key || k.toLowerCase() === e.key.toLowerCase())) hit = id;
+  });
+  if (hit) { e.preventDefault(); runAction(hit); }
 });
-document.getElementById('btn-exec').title = 'Commit this turn  (Enter)';
+// Hints name whatever key is bound right now, not a baked-in letter.
+var TAB_ACTION = {'left/units':'panel.units', 'left/build':'panel.build', 'left/orders':'panel.orders',
+  'left/production':'panel.production', 'left/cap':'panel.capacity', 'right/alerts':'panel.alerts',
+  'right/force':'panel.force', 'right/intel':'panel.intel', 'right/settings':'panel.settings'};
+function refreshKeyHints() {
+  document.querySelectorAll('.rail-btn[data-group][data-tab]').forEach(function(el) {
+    var id = TAB_ACTION[el.dataset.group + '/' + el.dataset.tab];
+    var it = menuItem(el.dataset.group, el.dataset.tab);
+    if (!id || !it || !CONFIG.keys[id]) return;
+    el.title = (it.title || it.label) + '  (' + CONFIG.keys[id].v + ')';
+  });
+  var ex = document.getElementById('btn-exec');
+  if (ex) ex.title = 'Commit this turn  (' + CONFIG.keys['turn.execute'].v + ')';
+  var hint = document.getElementById('cmd-hint');
+  if (!hint) return;
+  var k = function(id) { return '<b>' + CONFIG.keys[id].v + '</b>'; };
+  hint.innerHTML = 'Panels ' + ACTIONS.slice(0, 9).map(function(a) { return k(a.id); }).join('') +
+    ' &middot; ' + k('sel.idle') + ' idle &middot; ' + k('sel.all') + ' all &middot; ' +
+    k('sel.none') + ' clear &middot; ' + k('turn.execute') + ' commit';
+}
 
 // ═══ INIT ═══
-mountMenus();
+loadConfig(); mountMenus(); applyConfig(); renderSettings(); refreshKeyHints();
 renderMap(); renderUnits(); renderAlerts(); renderForce(); renderContacts(); renderCNN();
 renderBuildView(); renderProduction(); renderFeed(); syncQueue();
 updateStatusBar(); updateIndicators();
