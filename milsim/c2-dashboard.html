@@ -241,34 +241,75 @@ body {
 .unit-hp-fill { height: 100%; border-radius: 1px; }
 .hp-ok { background: var(--green); } .hp-warn { background: var(--amber); } .hp-crit { background: var(--red); }
 
-/* ═══ KPI GRID — compact metrics ═══ */
-.kpi-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; }
-.kpi-cell { padding: 4px 6px; background: var(--bg); border-radius: 2px; }
-.kpi-k { font-size: 8px; color: var(--t3); text-transform: uppercase; letter-spacing: 0.05em; display: block; line-height: 1.2; }
-.kpi-v { font-family: var(--mono); font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
-.kpi-v.g { color: var(--green); } .kpi-v.r { color: var(--red); } .kpi-v.a { color: var(--amber); }
-
-/* ═══ ISR CONTACT ROWS ═══ */
-.contact-filters { display: flex; gap: 3px; padding: 3px 6px; border-bottom: 1px solid var(--border-subtle); flex-shrink: 0; }
-.contact-row {
-  display: grid; grid-template-columns: 8px 1fr 44px;
-  gap: 5px; align-items: center; padding: 4px 8px;
-  font-size: 10px; cursor: default;
-  border-bottom: 1px solid var(--border-subtle);
+/* ═══ DESIGN SYSTEM: Modular Toolbar ═══
+ * A slot strip for metric modules. Slots wrap and share the width, so a
+ * module appended to the driving array simply appears — there is no
+ * layout to update and no fixed column count to outgrow.
+ * Tone vocabulary shared with the list row: ok / warn / bad.
+ * Customise: --mod-min (slot min width), --mod-gap.
+ */
+.mod-bar {
+  --mod-min: 84px; --mod-gap: 3px;
+  display: flex; flex-wrap: wrap; gap: var(--mod-gap); padding: 8px;
 }
-.contact-row:hover { background: var(--raised); }
-.contact-pip { width: 6px; height: 6px; border-radius: 50%; }
-.contact-pip.lv4 { background: var(--red); }
-.contact-pip.lv3 { background: var(--amber); }
-.contact-pip.lv2 { background: var(--amber); opacity: 0.6; }
-.contact-pip.lv1 { background: var(--t3); }
-.contact-pip.lv0 { background: var(--t3); opacity: 0.4; }
-.contact-pip.stale { opacity: 0.3; }
-.contact-info { min-width: 0; }
-.contact-type { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.contact-meta { font-family: var(--mono); font-size: 8px; color: var(--t3); display: flex; gap: 6px; }
-.contact-conf { font-family: var(--mono); font-size: 8px; }
-.contact-pos { font-family: var(--mono); font-size: 9px; color: var(--t3); text-align: right; font-variant-numeric: tabular-nums; }
+.mod-slot {
+  flex: 1 1 var(--mod-min); min-width: var(--mod-min);
+  background: var(--bg); border: 1px solid var(--border-subtle);
+  border-radius: 3px; padding: 5px 7px;
+}
+.mod-slot.warn { border-color: var(--amber); background: var(--amber-soft); }
+.mod-slot.bad { border-color: var(--red); background: var(--red-soft); }
+.mod-k { display: block; font-size: 8px; color: var(--t3); text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.3; }
+.mod-v { font-family: var(--mono); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.mod-v.ok { color: var(--green); } .mod-v.warn { color: var(--amber); } .mod-v.bad { color: var(--red); }
+.mod-sub { font-family: var(--mono); font-size: 8px; color: var(--t3); margin-left: 4px; }
+
+/* ═══ DESIGN SYSTEM: List Row ═══
+ * The single row used by every scrolling list — ISR tracks, production
+ * queues, facilities. Grid: status pip | body (title + meta) | trailing
+ * value, with an optional hairline progress bar on the bottom edge so a
+ * row can carry progress without growing into a card.
+ * Tone vocabulary shared with the toolbar: ok / warn / bad / dim.
+ * Customise: --lrow-h (min height), --lrow-trail (trailing column).
+ */
+.lrow {
+  --lrow-h: 32px; --lrow-trail: 44px;
+  position: relative;
+  display: grid; grid-template-columns: 8px 1fr var(--lrow-trail);
+  gap: 6px; align-items: center;
+  min-height: var(--lrow-h); padding: 4px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 10px;
+}
+.lrow:hover { background: var(--raised); }
+.lrow-pip { width: 6px; height: 6px; border-radius: 50%; background: var(--t3); }
+.lrow-pip.ok { background: var(--green); }
+.lrow-pip.warn { background: var(--amber); }
+.lrow-pip.bad { background: var(--red); }
+.lrow-pip.dim { opacity: 0.35; }
+.lrow-body { min-width: 0; }
+.lrow-title { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lrow-meta {
+  font-family: var(--mono); font-size: 8px; color: var(--t3);
+  display: flex; align-items: center; gap: 5px;
+  overflow: hidden; white-space: nowrap;
+}
+.lrow-meta .warn { color: var(--amber); }
+.lrow-tag {
+  font-size: 7px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;
+  padding: 0 3px; border-radius: 2px; background: var(--elevated); color: var(--t3); flex-shrink: 0;
+}
+.lrow-trail { font-family: var(--mono); font-size: 9px; color: var(--t3); text-align: right; font-variant-numeric: tabular-nums; }
+.lrow-trail.ok { color: var(--green); }
+.lrow-trail.warn { color: var(--amber); }
+.lrow-trail.bad { color: var(--red); }
+.lrow-prog {
+  position: absolute; left: 0; bottom: 0; height: 2px;
+  background: var(--green); transition: width 300ms var(--ease-decel);
+}
+.lrow-prog.warn { background: var(--amber); }
+.list-empty { font-size: 10px; color: var(--t3); padding: 12px 10px; }
+.contact-filters { display: flex; gap: 3px; padding: 4px 8px; border-bottom: 1px solid var(--border-subtle); flex-shrink: 0; }
 
 /* ═══ CNN TARGET ROWS ═══ */
 .cnn-sub { font-size: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--t3); padding: 5px 0 2px; }
@@ -280,50 +321,7 @@ body {
 .cnn-fill { height: 100%; border-radius: 1px; }
 
 /* ═══ RIGHT PANEL: CONTEXT — collapsible sections ═══ */
-.ctx-section { border-bottom: 1px solid var(--border-subtle); }
-.ctx-section:last-child { border-bottom: none; }
-.ctx-hdr {
-  display: flex; align-items: center; gap: 6px;
-  padding: 6px 10px; cursor: pointer; user-select: none;
-}
-.ctx-hdr:hover { background: var(--raised); }
-.ctx-hdr .ctx-label {
-  font-size: 9px; font-weight: 600; text-transform: uppercase;
-  letter-spacing: 0.06em; color: var(--t3); flex: 1;
-}
-.ctx-hdr .ctx-ct {
-  font-family: var(--mono); font-size: 9px; font-weight: 600;
-  padding: 1px 5px; border-radius: 100px;
-  background: var(--accent-soft); color: var(--accent-text); font-variant-numeric: tabular-nums;
-}
-.ctx-hdr .ctx-ct.empty { background: var(--elevated); color: var(--t3); }
-.ctx-hdr svg { width: 12px; height: 12px; color: var(--t3); transition: transform 200ms var(--ease-decel); }
-.ctx-section.collapsed .ctx-hdr svg { transform: rotate(-90deg); }
-.ctx-body { padding: 0 10px 8px; }
-.ctx-section.collapsed .ctx-body { display: none; }
-.dock-right .ctx-section { flex-shrink: 0; }
-
-/* KPI rows */
-.kpi-row { display: flex; align-items: baseline; gap: 4px; padding: 2px 0; }
-.kpi-label { font-size: 10px; color: var(--t3); flex: 1; }
-.kpi-val { font-family: var(--mono); font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
-
-/* Contacts (hostile) */
-.ct-row { display: flex; align-items: center; gap: 5px; padding: 3px 0; font-size: 10px; }
-.ct-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
-.ct-dot.hostile { background: var(--red); } .ct-dot.unknown { background: var(--amber); }
-.ct-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ct-pos { font-family: var(--mono); font-size: 9px; color: var(--t3); font-variant-numeric: tabular-nums; }
-
-/* CNN Threat */
-.thr-row { padding: 3px 0; }
-.thr-label { font-size: 10px; color: var(--t2); display: flex; align-items: center; justify-content: space-between; }
-.thr-label span { font-family: var(--mono); font-size: 9px; font-weight: 600; }
-.thr-bar { width: 100%; height: 2px; border-radius: 1px; background: var(--elevated); margin-top: 2px; }
-.thr-fill { height: 100%; border-radius: 1px; }
-
-/* Sitrep */
-.sitrep-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; }
+/* Performance dimension bars */
 .sitrep-row { display: flex; align-items: center; gap: 6px; font-size: 10px; }
 .sitrep-label { color: var(--t3); font-size: 9px; min-width: 65px; flex-shrink: 0; }
 .sitrep-val { font-family: var(--mono); font-size: 10px; font-weight: 600; color: var(--t1); font-variant-numeric: tabular-nums; }
@@ -588,41 +586,6 @@ body {
 .build-item.poor { border-color: var(--border-subtle); }
 .build-item.poor .build-item-cost { color: var(--red); }
 
-/* ═══ PRODUCTION MONITOR — ProductionInfoModel + producing buildings ═══ */
-.prod-mon { flex: 1; overflow-y: auto; padding: 8px; min-height: 0; }
-.prod-job {
-  background: var(--raised); border: 1px solid var(--border);
-  border-radius: var(--r); padding: 6px 8px; margin-bottom: 4px;
-}
-.prod-job.paused { border-color: var(--amber); background: var(--amber-soft); }
-.prod-job-top { display: flex; align-items: center; gap: 6px; }
-.prod-q-type {
-  font-family: var(--mono); font-size: 7px; font-weight: 600;
-  text-transform: uppercase; letter-spacing: 0.03em;
-  padding: 1px 4px; border-radius: 2px; background: var(--elevated);
-  color: var(--t3); flex-shrink: 0; min-width: 32px; text-align: center;
-}
-.prod-job-name { font-size: 11px; font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.prod-job-pct { font-family: var(--mono); font-size: 10px; font-weight: 600; color: var(--green); font-variant-numeric: tabular-nums; }
-.prod-job-bar { height: 3px; border-radius: 1px; background: var(--elevated); overflow: hidden; margin-top: 5px; }
-.prod-job-fill { height: 100%; border-radius: 1px; background: var(--green); transition: width 300ms var(--ease-decel); }
-.prod-job.paused .prod-job-fill { background: var(--amber); }
-.prod-job-meta { display: flex; gap: 10px; margin-top: 4px; font-family: var(--mono); font-size: 8px; color: var(--t3); }
-.prod-empty { font-size: 10px; color: var(--t3); padding: 6px 0; }
-
-/* Facility rows — BuildingInfoModel producers */
-.fac-row {
-  display: flex; align-items: center; gap: 6px; padding: 4px 0;
-  font-size: 10px; border-bottom: 1px solid var(--border-subtle);
-}
-.fac-row:last-child { border-bottom: none; }
-.fac-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
-.fac-dot.busy { background: var(--green); }
-.fac-dot.idle { background: var(--t3); }
-.fac-dot.down { background: var(--red); }
-.fac-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fac-state { font-family: var(--mono); font-size: 8px; color: var(--t3); }
-.fac-state.idle { color: var(--amber); }
 
 /* ═══ RESPONSIVE ═══ */
 @media (max-width: 1024px) {
@@ -716,33 +679,29 @@ body {
     <div class="dock-hdr" onclick="event.target.closest('.seg-ctrl') || toggleDock('panel-context')">
       <div class="seg-ctrl" data-group="right">
         <button class="seg-btn active" data-tab="intel">Intel <span class="seg-ct" id="seg-intel-ct"></span></button>
-        <button class="seg-btn" data-tab="prod">Production <span class="seg-ct" id="seg-prod-ct"></span></button>
+        <button class="seg-btn" data-tab="production">Production <span class="seg-ct" id="seg-prod-ct"></span></button>
       </div>
       <svg class="dock-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
     </div>
     <div class="dock-body">
 
-      <!-- TAB: Intel — pinned overview, then [Tracks | Analysis] -->
+      <!-- TAB: Intel — [Overview | Tracks | Analysis] -->
       <div class="tab-view active" data-group="right" data-tab="intel">
-
-        <!-- Overview: EconomyInfo + MilitaryInfo + PerformanceScore -->
-        <div class="ctx-section" id="ctx-sitrep">
-          <div class="ctx-hdr" onclick="toggleCtx('ctx-sitrep')">
-            <span class="ctx-label">Overview</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-          </div>
-          <div class="ctx-body" id="overview-body"></div>
-        </div>
-
         <div class="seg-sub">
           <div class="seg-ctrl sm" data-group="intel">
-            <button class="seg-btn active" data-tab="tracks">Tracks <span class="seg-ct" id="seg-tracks-ct"></span></button>
+            <button class="seg-btn active" data-tab="over">Overview</button>
+            <button class="seg-btn" data-tab="tracks">Tracks <span class="seg-ct" id="seg-tracks-ct"></span></button>
             <button class="seg-btn" data-tab="cnn">Analysis <span class="seg-ct" id="seg-cnn-ct"></span></button>
           </div>
         </div>
 
-        <!-- SUB-TAB: Tracks — ISR contacts, their behaviour and decay -->
-        <div class="tab-view active" data-group="intel" data-tab="tracks">
+        <!-- Force state: MilitaryInfo + PerformanceScore -->
+        <div class="tab-view active" data-group="intel" data-tab="over">
+          <div class="scroll-y" id="overview-body"></div>
+        </div>
+
+        <!-- ISR contacts — their behaviour, decay and last known position -->
+        <div class="tab-view" data-group="intel" data-tab="tracks">
           <div class="contact-filters" id="isr-filters">
             <button class="filter-chip active" data-cf="all" onclick="filterContacts('all')">All</button>
             <button class="filter-chip" data-cf="vehicle" onclick="filterContacts('vehicle')">Veh</button>
@@ -752,16 +711,24 @@ body {
           <div class="scroll-y" id="isr-contact-list"></div>
         </div>
 
-        <!-- SUB-TAB: Analysis — CNN TacticalAnalysis -->
+        <!-- CNN TacticalAnalysis -->
         <div class="tab-view" data-group="intel" data-tab="cnn">
           <div class="scroll-y" id="cnn-body" style="padding:6px 10px 8px"></div>
         </div>
-
       </div>
 
-      <!-- TAB: Production — active queues + producing facilities -->
-      <div class="tab-view" data-group="right" data-tab="prod">
-        <div class="prod-mon" id="prod-monitor"></div>
+      <!-- TAB: Production — [Facilities | Queues | Capacity] -->
+      <div class="tab-view" data-group="right" data-tab="production">
+        <div class="seg-sub">
+          <div class="seg-ctrl sm" data-group="prod">
+            <button class="seg-btn active" data-tab="fac">Facilities <span class="seg-ct" id="seg-fac-ct"></span></button>
+            <button class="seg-btn" data-tab="queues">Queues <span class="seg-ct" id="seg-queues-ct"></span></button>
+            <button class="seg-btn" data-tab="cap">Capacity <span class="seg-ct" id="seg-cap-ct"></span></button>
+          </div>
+        </div>
+        <div class="tab-view active" data-group="prod" data-tab="fac"><div class="scroll-y" id="fac-list"></div></div>
+        <div class="tab-view" data-group="prod" data-tab="queues"><div class="scroll-y" id="queue-list"></div></div>
+        <div class="tab-view" data-group="prod" data-tab="cap"><div class="scroll-y" id="cap-bar"></div></div>
       </div>
 
     </div>
@@ -1056,7 +1023,6 @@ function updateGrid() {
   ws.style.gridTemplateColumns = (lc ? '28px' : '220px') + ' 1fr ' + (rc ? '28px' : '300px');
   ws.style.gridTemplateRows = '1fr ' + (bc ? '28px' : '160px');
 }
-function toggleCtx(id) { document.getElementById(id).classList.toggle('collapsed'); }
 
 // ═══ DESIGN SYSTEM: indicator primitive ═══
 // setIndicator(id, value, attn) — universal count badge writer.
@@ -1080,13 +1046,21 @@ function updateIndicators() {
     catalogFor(c).forEach(function(k) { if (producible[k]) buildable++; });
   });
 
+  var idleFacs = idleFacilityCount();
+  var capAlerts = alertCount(CAPACITY_MODULES);
+
   setIndicator('seg-units-ct', selected.size || getVisibleUnits().length, selected.size > 0);
   setIndicator('seg-build-ct', buildable, false);
   setIndicator('seg-orders-ct', orders.length, orders.length > 0);
+  // Top-level counts roll up: the number shows scale, attn shows that
+  // something inside one of the sub-tabs wants the commander's eye.
   setIndicator('seg-intel-ct', contacts.length, threats.length > 0);
-  setIndicator('seg-prod-ct', ACTIVE_PRODUCTION.length, ACTIVE_PRODUCTION.length > 0);
+  setIndicator('seg-prod-ct', ACTIVE_PRODUCTION.length, idleFacs > 0 || capAlerts > 0);
   setIndicator('seg-tracks-ct', contacts.length, threats.length > 0);
   setIndicator('seg-cnn-ct', hot.length, hot.length > 0);
+  setIndicator('seg-fac-ct', idleFacs, idleFacs > 0);
+  setIndicator('seg-queues-ct', ACTIVE_PRODUCTION.length, false);
+  setIndicator('seg-cap-ct', capAlerts, capAlerts > 0);
 }
 
 // ═══ DESIGN SYSTEM: tab group controller ═══
@@ -1096,7 +1070,9 @@ function updateIndicators() {
 // delegated listener below picks it up with no new JS.
 var TAB_HOOKS = {
   left:  function(k) { if (k === 'build') renderBuildView(); },
-  right: function(k) { if (k === 'prod') renderProductionMonitor(); },
+  right: function(k) { if (k === 'production') renderProduction(); },
+  prod:  function() { renderProduction(); },
+  intel: function(k) { if (k === 'over') renderOverview(); },
 };
 function switchTab(group, key) {
   document.querySelectorAll('.seg-ctrl[data-group="' + group + '"] .seg-btn')
@@ -1219,29 +1195,57 @@ function queueFromCmd() {
   showToast(activeAct.charAt(0).toUpperCase() + activeAct.slice(1) + ' queued'); bounceBadge();
 }
 
-// ═══ RIGHT PANEL — OVERVIEW (EconomyInfo + MilitaryInfo + PerformanceScore) ═══
+// ═══ DESIGN SYSTEM: modular toolbar renderer ═══
+// Renders any array of metric modules. A module is {k, get} where get()
+// returns {v, sub, tone} — self-contained, so a new metric is one entry
+// in the array and nothing else changes.
+function renderModBar(el, modules) {
+  if (!el) return;
+  el.innerHTML = '<div class="mod-bar">' + modules.map(function(m) {
+    var r = m.get() || {};
+    var tone = r.tone || '';
+    return '<div class="mod-slot ' + tone + '">' +
+      '<span class="mod-k">' + m.k + '</span>' +
+      '<span class="mod-v ' + tone + '">' + r.v + '</span>' +
+      (r.sub ? '<span class="mod-sub">' + r.sub + '</span>' : '') +
+    '</div>';
+  }).join('') + '</div>';
+}
+function alertCount(modules) {
+  return modules.filter(function(m) {
+    var t = (m.get() || {}).tone;
+    return t === 'warn' || t === 'bad';
+  }).length;
+}
+
+// ═══ INTEL — OVERVIEW (MilitaryInfo + PerformanceScore) ═══
+// Force state. The means of production live under Production > Capacity.
+var OVERVIEW_MODULES = [
+  {k:'Army Val', get:function() { return {v:'$' + MILITARY.army_value.toLocaleString()}; }},
+  {k:'K/D', get:function() {
+    var kd = MILITARY.units_lost > 0 ? MILITARY.units_killed / MILITARY.units_lost : MILITARY.units_killed;
+    return {v:kd.toFixed(1), tone: kd >= 1 ? 'ok' : 'warn'};
+  }},
+  {k:'Kills $', get:function() { return {v:'$' + MILITARY.kills_cost.toLocaleString(), tone:'ok'}; }},
+  {k:'Losses $', get:function() { return {v:'$' + MILITARY.deaths_cost.toLocaleString()}; }},
+  {k:'Readiness', get:function() {
+    var hp = UNITS.length ? Math.round(UNITS.reduce(function(s,u){ return s + u.hp_percent; }, 0) / UNITS.length * 100) : 0;
+    return {v:hp + '%', tone: hp > 70 ? 'ok' : hp > 40 ? 'warn' : 'bad'};
+  }},
+  {k:'Idle', get:function() {
+    var n = UNITS.filter(function(u){ return u.is_idle; }).length;
+    return {v:n + '/' + UNITS.length, tone: n > UNITS.length / 2 ? 'warn' : ''};
+  }},
+];
+
 function renderOverview() {
   var el = document.getElementById('overview-body');
-  var pw = ECONOMY.power_provided, pd = ECONOMY.power_drained;
-  var pwCls = pw >= pd ? 'g' : 'r';
-  var kdr = MILITARY.units_lost > 0 ? (MILITARY.units_killed / MILITARY.units_lost).toFixed(1) : MILITARY.units_killed + '.0';
-  var avgHp = UNITS.length > 0 ? Math.round(UNITS.reduce(function(s,u){return s + u.hp_percent;},0) / UNITS.length * 100) : 0;
-  var idleCount = UNITS.filter(function(u){return u.is_idle;}).length;
-
-  var html = '<div class="kpi-grid">' +
-    '<div class="kpi-cell"><span class="kpi-k">Cash</span><span class="kpi-v g">$' + ECONOMY.cash.toLocaleString() + '</span></div>' +
-    '<div class="kpi-cell"><span class="kpi-k">Ore</span><span class="kpi-v">' + ECONOMY.ore.toLocaleString() + '</span></div>' +
-    '<div class="kpi-cell"><span class="kpi-k">Power</span><span class="kpi-v ' + pwCls + '">' + pw + '/' + pd + '</span></div>' +
-    '<div class="kpi-cell"><span class="kpi-k">Army Val</span><span class="kpi-v">$' + MILITARY.army_value.toLocaleString() + '</span></div>' +
-    '<div class="kpi-cell"><span class="kpi-k">K/D</span><span class="kpi-v">' + kdr + '</span></div>' +
-    '<div class="kpi-cell"><span class="kpi-k">Kills $</span><span class="kpi-v g">$' + MILITARY.kills_cost.toLocaleString() + '</span></div>' +
-    '<div class="kpi-cell"><span class="kpi-k">Readiness</span><span class="kpi-v ' + (avgHp > 70 ? 'g' : avgHp > 40 ? 'a' : 'r') + '">' + avgHp + '%</span></div>' +
-    '<div class="kpi-cell"><span class="kpi-k">Idle</span><span class="kpi-v ' + (idleCount > 3 ? 'a' : '') + '">' + idleCount + '/' + UNITS.length + '</span></div>' +
-    '<div class="kpi-cell"><span class="kpi-k">Harvesters</span><span class="kpi-v">' + ECONOMY.harvester_count + '</span></div>' +
-  '</div>';
+  if (!el) return;
+  renderModBar(el, OVERVIEW_MODULES);
 
   // Performance dimensions as compact bars
-  html += '<div style="margin-top:6px">';
+  var html = '<div style="padding:0 10px 10px">';
+  html += '<div class="grp-label">Lines of Effort</div>';
   PERF_SCORE.dimensions.forEach(function(d) {
     var pct = Math.round(d.value * 100);
     var col = pct > 65 ? 'var(--green)' : pct > 40 ? 'var(--amber)' : 'var(--red)';
@@ -1254,7 +1258,7 @@ function renderOverview() {
     '</div>';
   });
   html += '</div>';
-  el.innerHTML = html;
+  el.insertAdjacentHTML('beforeend', html);
 }
 
 // ═══ RIGHT PANEL — ISR CONTACTS ═══
@@ -1269,24 +1273,22 @@ function renderContacts() {
   var active = ISR_CONTACTS.filter(function(c) { return !c.is_destroyed; });
   if (contactFilter !== 'all') active = active.filter(function(c) { return c.category === contactFilter; });
 
-  list.innerHTML = active.map(function(c) {
-    var stale = c.turns_since_seen > 5;
-    var pipCls = 'contact-pip lv' + c.intel_level + (stale ? ' stale' : '');
+  list.innerHTML = active.length ? active.map(function(c) {
+    // Pip carries intel level; confidence decay dims it as the track ages.
     var conf = contactConfidence(c);
-    var confPct = Math.round(conf * 100);
-    var confCol = confPct > 60 ? 'var(--green)' : confPct > 30 ? 'var(--amber)' : 'var(--t3)';
-    var label = contactName(c);
-    var meta = INTEL_LABELS[c.intel_level] || '?';
-    if (c.turns_since_seen > 0) meta += ' T-' + c.turns_since_seen;
-    return '<div class="contact-row">' +
-      '<div class="' + pipCls + '"></div>' +
-      '<div class="contact-info"><div class="contact-type">' + label + '</div>' +
-      '<div class="contact-meta"><span>' + c.contact_id + '</span><span>' + meta + '</span>' +
+    var tone = c.intel_level >= 4 ? 'bad' : c.intel_level >= 2 ? 'warn' : '';
+    var pipCls = 'lrow-pip ' + tone + (conf < 0.4 ? ' dim' : '');
+    var meta = '<span>' + c.contact_id + '</span><span>' + (INTEL_LABELS[c.intel_level] || '?') + '</span>' +
       (c.hp_percent > 0 ? '<span>HP ' + Math.round(c.hp_percent * 100) + '%</span>' : '') +
-      '</div></div>' +
-      '<div class="contact-pos">' + c.cell_x + ',' + c.cell_y + '</div>' +
+      (c.turns_since_seen > 0 ? '<span class="warn">T-' + c.turns_since_seen + '</span>' : '');
+    return '<div class="lrow">' +
+      '<div class="' + pipCls + '"></div>' +
+      '<div class="lrow-body"><div class="lrow-title">' + contactName(c) + '</div>' +
+        '<div class="lrow-meta">' + meta + '</div></div>' +
+      '<div class="lrow-trail">' + c.cell_x + ',' + c.cell_y + '</div>' +
+      '<div class="lrow-prog' + (conf < 0.5 ? ' warn' : '') + '" style="width:' + Math.round(conf * 100) + '%"></div>' +
     '</div>';
-  }).join('');
+  }).join('') : '<div class="list-empty">No contacts in this category.</div>';
 
   updateIndicators();
 }
@@ -1416,7 +1418,7 @@ function renderBuildView() {
     }).join('') + '</div>';
   });
 
-  el.innerHTML = html || '<div class="prod-empty">No matching items.</div>';
+  el.innerHTML = html || '<div class="list-empty">No matching items.</div>';
 }
 
 function queueProd(action, item) {
@@ -1427,71 +1429,106 @@ function queueProd(action, item) {
   syncQueue(); showToast(label + ' queued'); bounceBadge();
 }
 
-// ═══ RIGHT PANEL — PRODUCTION MONITOR ═══
-// Active ProductionInfoModel queues plus the BuildingInfoModel
-// structures running them. OpenRA ticks at 25/sec.
-function renderProductionMonitor() {
-  var el = document.getElementById('prod-monitor');
+// ═══ PRODUCTION — FACILITIES ═══
+// BuildingInfoModel structures that can produce, and what they're doing.
+function producingBuildings() {
+  return BUILDINGS.filter(function(b) { return (b.can_produce || []).length > 0; });
+}
+function idleFacilityCount() {
+  return producingBuildings().filter(function(b) { return b.is_powered && !b.is_producing; }).length;
+}
+function renderFacilities() {
+  var el = document.getElementById('fac-list');
   if (!el) return;
-  var html = '';
-
-  html += '<div class="grp-label">Active Queues <span class="ct-pill' +
-    (ACTIVE_PRODUCTION.length ? '' : ' dim') + '">' + ACTIVE_PRODUCTION.length + '</span></div>';
-  if (!ACTIVE_PRODUCTION.length) {
-    html += '<div class="prod-empty">Nothing in production.</div>';
-  } else {
-    html += ACTIVE_PRODUCTION.map(function(p) {
-      var pct = Math.round(p.progress * 100);
-      var db = UNIT_DB[p.item] || BUILDING_DB[p.item];
-      var label = db ? db.name : p.item.toUpperCase();
-      var eta = Math.max(1, Math.round(p.remaining_ticks / 25));
-      return '<div class="prod-job' + (p.paused ? ' paused' : '') + '">' +
-        '<div class="prod-job-top">' +
-          '<span class="prod-q-type">' + p.queue_type.slice(0,3) + '</span>' +
-          '<span class="prod-job-name">' + label + '</span>' +
-          '<span class="prod-job-pct">' + pct + '%</span>' +
-        '</div>' +
-        '<div class="prod-job-bar"><div class="prod-job-fill" style="width:' + pct + '%"></div></div>' +
-        '<div class="prod-job-meta">' +
-          '<span>ETA ' + eta + 's</span>' +
-          '<span>' + p.remaining_ticks + ' ticks</span>' +
-          '<span>$' + p.remaining_cost.toLocaleString() + ' left</span>' +
-          (p.paused ? '<span style="color:var(--amber)">PAUSED</span>' : '') +
-        '</div></div>';
-    }).join('');
-  }
-
-  var facilities = BUILDINGS.filter(function(b) { return (b.can_produce || []).length > 0; });
-  var idle = facilities.filter(function(b) { return b.is_powered && !b.is_producing; }).length;
-  html += '<div class="grp-label">Facilities <span class="ct-pill' + (idle ? '' : ' dim') + '">' +
-    (facilities.length - idle) + '/' + facilities.length + ' busy</span></div>';
-  html += facilities.map(function(b) {
+  var facs = producingBuildings();
+  el.innerHTML = facs.length ? facs.map(function(b) {
     var info = BUILDING_DB[b.type];
     var name = info ? info.name : b.type.toUpperCase();
-    var state, dot;
-    if (!b.is_powered) { state = 'Unpowered'; dot = 'down'; }
-    else if (b.is_producing) {
+    var tone, trail, meta, prog = 0;
+    if (!b.is_powered) {
+      tone = 'bad'; trail = 'Offline';
+      meta = '<span>#' + b.actor_id + '</span><span class="warn">no power</span>';
+    } else if (b.is_producing) {
       var pi = UNIT_DB[b.producing_item] || BUILDING_DB[b.producing_item];
-      state = (pi ? pi.name : b.producing_item) + ' ' + Math.round(b.production_progress * 100) + '%';
-      dot = 'busy';
-    } else { state = 'Idle'; dot = 'idle'; }
-    return '<div class="fac-row">' +
-      '<div class="fac-dot ' + dot + '"></div>' +
-      '<span class="fac-name">' + name + ' <span style="color:var(--t3);font-family:var(--mono);font-size:8px">#' + b.actor_id + '</span></span>' +
-      '<span class="fac-state' + (dot === 'idle' ? ' idle' : '') + '">' + state + '</span>' +
+      prog = Math.round(b.production_progress * 100);
+      tone = 'ok'; trail = prog + '%';
+      meta = '<span>#' + b.actor_id + '</span><span>' + (pi ? pi.name : b.producing_item) + '</span>';
+    } else {
+      tone = 'warn'; trail = 'Idle';
+      meta = '<span>#' + b.actor_id + '</span><span>' + b.can_produce.length + ' available</span>';
+    }
+    return '<div class="lrow">' +
+      '<div class="lrow-pip ' + tone + '"></div>' +
+      '<div class="lrow-body"><div class="lrow-title">' + name + '</div>' +
+        '<div class="lrow-meta">' + meta + '</div></div>' +
+      '<div class="lrow-trail ' + tone + '">' + trail + '</div>' +
+      (prog ? '<div class="lrow-prog" style="width:' + prog + '%"></div>' : '') +
     '</div>';
-  }).join('');
-
-  var pwHead = ECONOMY.power_provided - ECONOMY.power_drained;
-  html += '<div class="grp-label">Capacity</div>';
-  html += '<div class="kpi-grid">' +
-    '<div class="kpi-cell"><span class="kpi-k">Cash</span><span class="kpi-v g">$' + ECONOMY.cash.toLocaleString() + '</span></div>' +
-    '<div class="kpi-cell"><span class="kpi-k">Pwr Head</span><span class="kpi-v ' + (pwHead >= 0 ? 'g' : 'r') + '">' + (pwHead >= 0 ? '+' : '') + pwHead + '</span></div>' +
-    '<div class="kpi-cell"><span class="kpi-k">Harvesters</span><span class="kpi-v ' + (ECONOMY.harvester_count > 1 ? '' : 'a') + '">' + ECONOMY.harvester_count + '</span></div>' +
-  '</div>';
-
-  el.innerHTML = html;
+  }).join('') : '<div class="list-empty">No production facilities.</div>';
 }
+
+// ═══ PRODUCTION — QUEUES ═══
+// ProductionInfoModel entries. OpenRA ticks at 25/sec.
+function renderQueues() {
+  var el = document.getElementById('queue-list');
+  if (!el) return;
+  el.innerHTML = ACTIVE_PRODUCTION.length ? ACTIVE_PRODUCTION.map(function(p) {
+    var pct = Math.round(p.progress * 100);
+    var db = UNIT_DB[p.item] || BUILDING_DB[p.item];
+    var label = db ? db.name : p.item.toUpperCase();
+    var eta = Math.max(1, Math.round(p.remaining_ticks / 25));
+    var tone = p.paused ? 'warn' : 'ok';
+    return '<div class="lrow">' +
+      '<div class="lrow-pip ' + tone + '"></div>' +
+      '<div class="lrow-body"><div class="lrow-title">' + label + '</div>' +
+        '<div class="lrow-meta">' +
+          '<span class="lrow-tag">' + p.queue_type.slice(0,3) + '</span>' +
+          '<span>ETA ' + eta + 's</span>' +
+          '<span>$' + p.remaining_cost.toLocaleString() + '</span>' +
+          (p.paused ? '<span class="warn">PAUSED</span>' : '') +
+        '</div></div>' +
+      '<div class="lrow-trail ' + tone + '">' + pct + '%</div>' +
+      '<div class="lrow-prog' + (p.paused ? ' warn' : '') + '" style="width:' + pct + '%"></div>' +
+    '</div>';
+  }).join('') : '<div class="list-empty">Nothing in production.</div>';
+}
+
+// ═══ PRODUCTION — CAPACITY ═══
+// The means of production, as toolbar modules. Append an entry and it
+// appears — this is the slot for anything that needs a home later.
+var CAPACITY_MODULES = [
+  {k:'Cash', get:function() {
+    return {v:'$' + ECONOMY.cash.toLocaleString(), tone: ECONOMY.cash < 500 ? 'warn' : 'ok'};
+  }},
+  {k:'Power', get:function() {
+    var head = ECONOMY.power_provided - ECONOMY.power_drained;
+    return {
+      v:(head >= 0 ? '+' : '') + head,
+      sub: ECONOMY.power_provided + '/' + ECONOMY.power_drained,
+      tone: head < 0 ? 'bad' : head < 25 ? 'warn' : 'ok',
+    };
+  }},
+  {k:'Silo', get:function() {
+    var pct = ECONOMY.resource_capacity ? Math.round(ECONOMY.ore / ECONOMY.resource_capacity * 100) : 0;
+    return {v:pct + '%', sub: ECONOMY.ore.toLocaleString(), tone: pct > 90 ? 'warn' : ''};
+  }},
+  {k:'Harvesters', get:function() {
+    var n = ECONOMY.harvester_count;
+    return {v:String(n), tone: n < 2 ? 'warn' : 'ok'};
+  }},
+  {k:'Queues', get:function() {
+    var producible = producibleSet();
+    var open = BUILD_CATS.filter(function(c) {
+      return catalogFor(c).some(function(k) { return producible[k]; });
+    }).length;
+    return {v:open + '/' + BUILD_CATS.length, tone: open < BUILD_CATS.length ? 'warn' : 'ok'};
+  }},
+];
+function renderCapacity() {
+  renderModBar(document.getElementById('cap-bar'), CAPACITY_MODULES);
+}
+
+function renderProduction() { renderFacilities(); renderQueues(); renderCapacity(); }
 
 // ═══ ORDER QUEUE ═══
 function syncQueue() {
@@ -1725,6 +1762,6 @@ window.addEventListener('resize', function() { renderMap(); });
 
 // ═══ INIT ═══
 renderMap(); renderUnits(); renderOverview(); renderContacts(); renderCNN();
-renderBuildView(); renderProductionMonitor(); renderFeed(); syncQueue();
+renderBuildView(); renderProduction(); renderFeed(); syncQueue();
 updateStatusBar(); updateIndicators();
 </script>
