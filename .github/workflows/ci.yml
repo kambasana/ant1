@@ -1,0 +1,137 @@
+name: CI
+
+# The only workflow in this repo used to be the unrelated Azure scaffolding,
+# so nothing mechanically stopped the blockers found in the release-gate pass
+# from recurring: milsim's tests being invisible to pytest, `--mode mcp`
+# raising on entry, or the Windows-only encoding faults. This covers those.
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  milsim:
+    # Windows is a first-class target here, not an afterthought — the encoding
+    # and path faults this suite guards against only reproduce there.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ['3.10', '3.12']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install test dependencies
+        run: python -m pip install --upgrade pip pytest pyyaml httpx pydantic
+
+      - name: Run the milsim suite
+        run: python -m pytest milsim/tests -q
+
+      # Guards the two entry-point blockers directly. Both were shipped
+      # broken and neither had a test.
+      - name: milsim entry points resolve
+        shell: python
+        run: |
+          import ast, inspect, pathlib, sys
+          src = pathlib.Path('milsim/__main__.py').read_text(encoding='utf-8')
+          tree = ast.parse(src)
+          fns = {n.name: type(n).__name__
+                 for n in tree.body
+                 if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))}
+          # FastMCP.run() starts its own event loop, so the mode entry point
+          # must not be a coroutine driven by asyncio.run().
+          assert fns.get('run_mcp_server') == 'FunctionDef', (
+              'run_mcp_server must be sync — an async one raises '
+              '"Already running asyncio in this thread" via FastMCP.run()')
+          assert 'openrouter.ai' not in src, (
+              'provider must resolve through milsim.llm_provider, not a '
+              'hardcoded base URL')
+          print('entry points OK')
+
+      - name: Ollama is the default provider and needs no API key
+        shell: python
+        run: |
+          import sys
+          sys.path.insert(0, '.')
+          from milsim.llm_provider import LLMProviderConfig
+          cfg = LLMProviderConfig.load(env={})
+          assert cfg.provider == 'ollama', cfg.provider
+          assert not cfg.api_key, 'local Ollama must need no API key'
+          assert '11434' in cfg.base_url, cfg.base_url
+          print(f'{cfg.provider} / {cfg.model} / {cfg.base_url}')
+
+      # Reproduces the Windows fault class without needing Windows: force the
+      # legacy ANSI codepage and confirm nothing raises UnicodeEncodeError.
+      - name: Bundled data survives a non-UTF-8 locale
+        shell: python
+        env:
+          PYTHONIOENCODING: cp1252
+        run: |
+          import sys, pathlib
+          sys.path.insert(0, '.')
+          from milsim.scenario import ScenarioState  # noqa: F401
+          import milsim.scenario as s
+          bad = []
+          for p in pathlib.Path('milsim').rglob('*.yaml'):
+              try:
+                  p.read_text(encoding='utf-8').encode('cp1252')
+              except UnicodeEncodeError:
+                  bad.append(str(p))
+          print('scenario YAML with non-cp1252 characters:', bad or 'none')
+          # The loader must declare utf-8 explicitly rather than trusting locale.
+          src = pathlib.Path('milsim/scenario.py').read_text(encoding='utf-8')
+          assert 'encoding="utf-8"' in src or "encoding='utf-8'" in src, (
+              'scenario.py must open bundled YAML as utf-8')
+          print('encoding OK')
+
+  dashboard:
+    # The C2 dashboard is a single standalone HTML file with no build step,
+    # so its checks are structural rather than a test run.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dashboard invariants
+        shell: python
+        run: |
+          import pathlib, re
+          html = pathlib.Path('milsim/c2-dashboard.html').read_text(encoding='utf-8')
+          # dashboard.ps1 -Serve uses python -m http.server, which sends no
+          # charset; without this meta the page mojibakes on a cp1252 box.
+          assert '<meta charset' in html.lower(), 'missing <meta charset="utf-8">'
+          # Every rail/segment button must name a group and tab the controller
+          # can resolve, which is what the blank-panel navigation bug violated.
+          groups = set(re.findall(r'data-group="([^"]+)"', html))
+          tabs = set(re.findall(r'data-tab="([^"]+)"', html))
+          assert {'left', 'right'} <= groups, groups
+          for needed in ('units', 'build', 'orders', 'production', 'cap',
+                         'alerts', 'force', 'intel', 'settings'):
+              assert needed in tabs, f'missing tab: {needed}'
+          # The blank-panel bug was a wrong GROUP/TAB PAIR, not a missing tab
+          # name: switchTab('right','production') where production is a left
+          # tab silently emptied the right dock. Check pairs, not names.
+          declared = set(re.findall(
+              r'class="tab-view[^"]*"\s+data-group="([^"]+)"\s+data-tab="([^"]+)"', html))
+          called = set(re.findall(r"switchTab\('([^']+)',\s*'([^']+)'\)", html))
+          called |= set(re.findall(r"showPanel\('([^']+)',\s*'([^']+)'\)", html))
+          missing = called - declared
+          assert not missing, f'navigation to group/tab pairs with no view: {missing}'
+          print(f'{len(declared)} views, {len(called)} navigation pairs, all resolve')
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --upgrade pip ruff
+      - name: Ruff
+        run: python -m ruff check milsim/ --output-format=github
+        continue-on-error: true

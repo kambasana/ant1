@@ -1,0 +1,1219 @@
+diff --git a/config.yaml b/config.yaml
+index 3a0f997..9540ce7 100644
+--- a/config.yaml
++++ b/config.yaml
+@@ -8,7 +8,7 @@
+ 
+ # ── Game Engine ───────────────────────────────────────────────────────
+ game:
+-  openra_path: "/Users/berta/Projects/OpenRA-RL/OpenRA"  # Path to OpenRA installation ($OPENRA_PATH)
++  openra_path: "/home/user/ant1/openra-rl/OpenRA"  # Path to OpenRA installation ($OPENRA_PATH)
+ #   mod: "ra"                         # Game mod (ra, cnc, d2k)
+ #   map_name: "singles.oramap"        # Map to play
+ #   grpc_port: 9999                   # gRPC bridge port
+diff --git a/examples/config-lmstudio.yaml b/examples/config-lmstudio.yaml
+index 3cdccca..685fb00 100644
+--- a/examples/config-lmstudio.yaml
++++ b/examples/config-lmstudio.yaml
+@@ -1,5 +1,10 @@
+ # OpenRA-RL config for LM Studio (local)
+ # Usage: python examples/llm_agent.py --config examples/config-lmstudio.yaml
++#
++# NOTE: llm.base_url is the FULL chat-completions endpoint, path included.
++# openra-rl POSTs to it verbatim — it does not append "/chat/completions".
++# Tools that take a base *prefix* (and append the path themselves) want
++# http://localhost:1234/v1 instead; do not paste this URL into those.
+ 
+ llm:
+   base_url: "http://localhost:1234/v1/chat/completions"
+diff --git a/examples/config-ollama-remote.yaml b/examples/config-ollama-remote.yaml
+new file mode 100644
+index 0000000..ad0098a
+--- /dev/null
++++ b/examples/config-ollama-remote.yaml
+@@ -0,0 +1,26 @@
++# OpenRA-RL config for Ollama running on ANOTHER host (LAN box, Docker, ...)
++# Usage: python examples/llm_agent.py --config examples/config-ollama-remote.yaml --no-api-key
++#
++# NOTE: llm.base_url is the FULL chat-completions endpoint, path included.
++# openra-rl POSTs to it verbatim — it does not append "/chat/completions".
++#
++# Ollama needs no API key wherever it runs. Because this host is not loopback,
++# the CLI's "is this local?" check cannot infer that on its own:
++#   - examples/llm_agent.py  -> pass --no-api-key
++#   - openra-rl play         -> keep `provider: ollama` below; the provider
++#                               preset's needs_key=False is what is consulted.
++provider: ollama
++
++llm:
++  # Replace with your Ollama host: a LAN IP, a Docker service name
++  # (http://ollama:11434/...), or http://host.docker.internal:11434/...
++  base_url: "http://ollama.lan:11434/v1/chat/completions"
++  model: "qwen3:32b"
++  api_key: ""                         # No key needed for Ollama, local or remote
++  max_tokens: 2000
++  extra_headers: {}
++  request_timeout_s: 300.0            # Local models need more time
++
++agent:
++  max_time_s: 3600
++  verbose: true
+diff --git a/examples/config-ollama.yaml b/examples/config-ollama.yaml
+index ed3d35d..4d89e09 100644
+--- a/examples/config-ollama.yaml
++++ b/examples/config-ollama.yaml
+@@ -1,5 +1,10 @@
+ # OpenRA-RL config for Ollama (local)
+ # Usage: python examples/llm_agent.py --config examples/config-ollama.yaml
++#
++# NOTE: llm.base_url is the FULL chat-completions endpoint, path included.
++# openra-rl POSTs to it verbatim — it does not append "/chat/completions".
++# Tools that take a base *prefix* (and append the path themselves) want
++# http://localhost:11434/v1 instead; do not paste this URL into those.
+ 
+ llm:
+   base_url: "http://localhost:11434/v1/chat/completions"
+diff --git a/examples/config-openrouter.yaml b/examples/config-openrouter.yaml
+index b78eb35..4afce99 100644
+--- a/examples/config-openrouter.yaml
++++ b/examples/config-openrouter.yaml
+@@ -1,5 +1,8 @@
+ # OpenRA-RL config for OpenRouter (cloud)
+ # Usage: OPENROUTER_API_KEY=sk-or-... python examples/llm_agent.py --config examples/config-openrouter.yaml
++#
++# NOTE: llm.base_url is the FULL chat-completions endpoint, path included.
++# openra-rl POSTs to it verbatim — it does not append "/chat/completions".
+ 
+ llm:
+   base_url: "https://openrouter.ai/api/v1/chat/completions"
+diff --git a/examples/llm_agent.py b/examples/llm_agent.py
+index 05ecee5..ee70b2b 100644
+--- a/examples/llm_agent.py
++++ b/examples/llm_agent.py
+@@ -25,6 +25,7 @@ load_dotenv()
+ 
+ from openra_env.config import load_config
+ from openra_env.agent import run_agent
++from openra_env.cli.wizard import is_local_endpoint
+ 
+ # Re-export for backwards compatibility
+ from openra_env.agent import (  # noqa: F401
+@@ -78,6 +79,14 @@ def main():
+         default=None,
+         help="API key for LLM endpoint (overrides config llm.api_key)",
+     )
++    parser.add_argument(
++        "--no-api-key",
++        action="store_true",
++        help=(
++            "Endpoint needs no API key. Use for a keyless server that is not on "
++            "localhost (e.g. Ollama on another host or in Docker)."
++        ),
++    )
+     parser.add_argument(
+         "--max-turns",
+         type=int,
+@@ -145,13 +154,16 @@ def main():
+ 
+         builtins.print = _tee_print
+ 
+-    # API key validation: only required for remote endpoints
+-    is_local = any(h in config.llm.base_url for h in ("localhost", "127.0.0.1", "0.0.0.0"))
+-    if not config.llm.api_key and not is_local:
++    # API key validation: only required for remote endpoints.
++    # is_local_endpoint parses the host instead of substring-matching the URL,
++    # so 0.0.0.0/::1/host.docker.internal count as local and a remote host that
++    # merely contains "localhost" does not.
++    if not config.llm.api_key and not args.no_api_key and not is_local_endpoint(config.llm.base_url):
+         print("Error: API key required for remote LLM endpoints.")
+         print("  Set OPENROUTER_API_KEY or LLM_API_KEY environment variable, use --api-key,")
+         print("  or use a config file with llm.api_key set.")
+         print("  For local models (Ollama, LM Studio), use --base-url http://localhost:...")
++        print("  For a keyless server on another host, pass --no-api-key.")
+         sys.exit(1)
+ 
+     try:
+diff --git a/openra_env/cli/commands.py b/openra_env/cli/commands.py
+index 96d364b..84a816a 100644
+--- a/openra_env/cli/commands.py
++++ b/openra_env/cli/commands.py
+@@ -22,9 +22,12 @@ from openra_env.cli.console import dim, error, header, info, step, success, warn
+ from openra_env.cli import docker_manager as docker
+ from openra_env.cli.wizard import (
+     CONFIG_PATH,
++    PROVIDERS,
+     has_saved_config,
+     load_saved_config,
+     merge_cli_into_config,
++    probe_llm_endpoint,
++    requires_api_key,
+     run_wizard,
+ )
+ from openra_env.local.arena_app import start_background_arena_app
+@@ -77,9 +80,9 @@ def cmd_play(
+ 
+     # Validate we have enough config to proceed
+     llm_cfg = config.get("llm", {})
+-    base_url = llm_cfg.get("base_url", "")
+-    is_local_llm = any(h in base_url for h in ("localhost", "127.0.0.1", "0.0.0.0"))
+-    if not llm_cfg.get("api_key") and not is_local_llm:
++    # Whether a key is needed is a property of the provider, not of the URL:
++    # Ollama needs none even when it runs on another host.
++    if requires_api_key(config):
+         error("No API key configured. Run `openra-rl config` or pass --api-key.")
+         sys.exit(1)
+     if not llm_cfg.get("model"):
+@@ -278,9 +281,36 @@ def cmd_doctor() -> None:
+     if has_saved_config():
+         cfg = load_saved_config() or {}
+         provider = cfg.get("provider", "unknown")
+-        model = cfg.get("llm", {}).get("model", "unknown")
++        llm_cfg = cfg.get("llm", {}) or {}
++        model = llm_cfg.get("model", "unknown")
+         success(f"Config: {CONFIG_PATH}")
+         dim(f"  Provider: {provider}, Model: {model}")
++
++        # LLM endpoint — a config that points at a dead Ollama is the single
++        # most common reason `openra-rl play` fails, so check it here rather
++        # than discovering it mid-match.
++        base_url = llm_cfg.get("base_url", "")
++        if not base_url:
++            warn("LLM endpoint: no base_url in config")
++            ok = False
++        else:
++            reachable, detail = probe_llm_endpoint(base_url)
++            if reachable:
++                success(f"LLM endpoint: reachable ({base_url})")
++            else:
++                error(f"LLM endpoint: unreachable ({base_url}) — {detail}")
++                if provider == "ollama":
++                    dim("  Start Ollama with `ollama serve`.")
++                elif provider == "lmstudio":
++                    dim("  In LM Studio: Developer tab -> Start Server.")
++                ok = False
++
++        # API key, judged by provider rather than by URL
++        if requires_api_key(cfg):
++            preset = PROVIDERS.get(provider, {})
++            error(f"LLM API key: missing (required for {preset.get('name', provider)})")
++            dim("  Run `openra-rl config` or pass --api-key.")
++            ok = False
+     else:
+         dim("Config: not yet configured (run `openra-rl play` or `openra-rl config`)")
+ 
+diff --git a/openra_env/cli/wizard.py b/openra_env/cli/wizard.py
+index 25301f1..5a9e0fb 100644
+--- a/openra_env/cli/wizard.py
++++ b/openra_env/cli/wizard.py
+@@ -1,5 +1,9 @@
+ """Interactive first-run setup wizard."""
+ 
++import json
++import urllib.error
++import urllib.parse
++import urllib.request
+ from pathlib import Path
+ from typing import Optional
+ 
+@@ -35,6 +39,137 @@ PROVIDERS = {
+ }
+ 
+ 
++# Hostnames that resolve to the machine the CLI is running on (or, from inside
++# a container, to its host). An endpoint on one of these never needs an API key.
++LOCAL_HOSTS = (
++    "localhost",
++    "127.0.0.1",
++    "0.0.0.0",
++    "::1",
++    "host.docker.internal",
++)
++
++
++def is_local_endpoint(base_url: str) -> bool:
++    """True if ``base_url`` points at a loopback/host-local address.
++
++    Matches on the parsed hostname rather than a raw substring so that a
++    remote host merely *containing* one of the names (e.g.
++    ``https://localhost.example.com``) is not mistaken for a local one.
++    Falls back to substring matching when the URL cannot be parsed.
++    """
++    if not base_url:
++        return False
++    try:
++        host = urllib.parse.urlsplit(base_url).hostname or ""
++    except ValueError:
++        host = ""
++    if host:
++        return host.lower().strip("[]") in LOCAL_HOSTS
++    lowered = base_url.lower()
++    return any(h in lowered for h in LOCAL_HOSTS)
++
++
++def requires_api_key(config: dict) -> bool:
++    """True if this config needs an API key before the agent can run.
++
++    Provider first: ``PROVIDERS[provider]["needs_key"]`` is authoritative, so a
++    remote Ollama host (``http://ollama:11434/...``, a LAN IP, ...) is correctly
++    treated as keyless. Only when the provider is unknown do we fall back to
++    inspecting the URL.
++    """
++    llm_cfg = config.get("llm", {}) or {}
++    if llm_cfg.get("api_key"):
++        return False
++    provider = PROVIDERS.get(config.get("provider", ""))
++    if provider is not None:
++        return bool(provider.get("needs_key"))
++    return not is_local_endpoint(llm_cfg.get("base_url", ""))
++
++
++def _origin(base_url: str) -> str:
++    """Return the scheme://host:port prefix of a full endpoint URL."""
++    parts = urllib.parse.urlsplit(base_url)
++    if not parts.scheme or not parts.netloc:
++        return ""
++    return f"{parts.scheme}://{parts.netloc}"
++
++
++def _http_get_json(url: str, timeout: float = 2.0) -> Optional[dict]:
++    """GET a JSON document. Returns None on any transport or decode failure."""
++    try:
++        req = urllib.request.Request(url, headers={"Accept": "application/json"})
++        with urllib.request.urlopen(req, timeout=timeout) as resp:
++            if resp.status != 200:
++                return None
++            return json.loads(resp.read().decode("utf-8"))
++    except (urllib.error.URLError, OSError, ValueError, json.JSONDecodeError):
++        return None
++
++
++def discover_ollama_models(base_url: str, timeout: float = 2.0) -> Optional[list[str]]:
++    """List models pulled on the Ollama daemon behind ``base_url``.
++
++    Uses Ollama's native ``GET /api/tags``. Returns a (possibly empty) list of
++    model tags when the daemon answers, or None when it is unreachable — the
++    caller needs to tell those two cases apart.
++    """
++    origin = _origin(base_url)
++    if not origin:
++        return None
++    data = _http_get_json(f"{origin}/api/tags", timeout=timeout)
++    if not isinstance(data, dict):
++        return None
++    models = data.get("models")
++    if not isinstance(models, list):
++        return None
++    names = [m.get("name") for m in models if isinstance(m, dict) and m.get("name")]
++    return sorted(str(n) for n in names)
++
++
++def discover_openai_models(base_url: str, timeout: float = 2.0) -> Optional[list[str]]:
++    """List models from an OpenAI-compatible ``GET /v1/models`` endpoint.
++
++    ``base_url`` is the full chat-completions URL; the models URL is derived by
++    swapping the trailing ``/chat/completions`` for ``/models``. Returns None
++    when the server is unreachable or answers with something unexpected.
++    """
++    suffix = "/chat/completions"
++    root = base_url[: -len(suffix)] if base_url.endswith(suffix) else base_url.rstrip("/")
++    if not root:
++        return None
++    data = _http_get_json(f"{root}/models", timeout=timeout)
++    if not isinstance(data, dict):
++        return None
++    entries = data.get("data")
++    if not isinstance(entries, list):
++        return None
++    names = [e.get("id") for e in entries if isinstance(e, dict) and e.get("id")]
++    return sorted(str(n) for n in names)
++
++
++def probe_llm_endpoint(base_url: str, timeout: float = 2.0) -> tuple[bool, str]:
++    """Check that *something* is listening on the LLM endpoint.
++
++    Returns ``(reachable, detail)``. An HTTP error status still counts as
++    reachable — a 401/404 proves a server answered, which is all this check
++    is trying to establish.
++    """
++    origin = _origin(base_url)
++    if not origin:
++        return False, f"unparseable base_url: {base_url!r}"
++    try:
++        req = urllib.request.Request(origin, method="GET")
++        with urllib.request.urlopen(req, timeout=timeout) as resp:
++            return True, f"HTTP {resp.status}"
++    except urllib.error.HTTPError as exc:
++        return True, f"HTTP {exc.code}"
++    except urllib.error.URLError as exc:
++        return False, str(exc.reason)
++    except OSError as exc:
++        return False, str(exc)
++
++
+ def _prompt(question: str, default: str = "") -> str:
+     """Prompt user for input with optional default."""
+     if default:
+@@ -96,6 +231,55 @@ def save_config(config: dict) -> None:
+     success(f"Config saved to {CONFIG_PATH}")
+ 
+ 
++def _select_model(provider_key: str, provider: dict) -> str:
++    """Pick a model, offering what the provider actually has installed.
++
++    For local providers we ask the daemon which models exist rather than making
++    the user recall a tag from memory. If the daemon is not reachable we say so
++    (that is the far more likely reason a later run fails) and fall back to a
++    free-text prompt so the wizard still completes offline.
++    """
++    base_url = provider["base_url"]
++
++    installed: Optional[list[str]] = None
++    if provider_key == "ollama":
++        installed = discover_ollama_models(base_url)
++        if installed is None:
++            print()
++            warn(f"Could not reach Ollama at {_origin(base_url)} — is it running?")
++            dim("  Start it with `ollama serve`, then pull a tool-capable model:")
++            dim(f"    ollama pull {provider.get('default_model', 'qwen3:32b')}")
++        elif not installed:
++            print()
++            warn("Ollama is running but has no models pulled.")
++            dim(f"  Pull one with: ollama pull {provider.get('default_model', 'qwen3:32b')}")
++    elif provider_key == "lmstudio":
++        installed = discover_openai_models(base_url)
++        if installed is None:
++            print()
++            warn(f"Could not reach LM Studio at {_origin(base_url)} — is the server started?")
++            dim("  In LM Studio: Developer tab -> Start Server, then load a model.")
++        elif not installed:
++            print()
++            warn("LM Studio is running but has no model loaded.")
++
++    if installed:
++        return _choose(
++            "Choose a model:",
++            [(m, m) for m in installed],
++            allow_custom=True,
++        )
++
++    if provider.get("models"):
++        return _choose(
++            "Choose a model:",
++            [(m, label) for m, label in provider["models"]],
++            allow_custom=True,
++        )
++
++    return _prompt("Enter model ID", default=provider.get("default_model", ""))
++
++
+ def run_wizard() -> dict:
+     """Run the interactive setup wizard. Returns a config dict."""
+     header("Welcome to OpenRA-RL!")
+@@ -121,15 +305,7 @@ def run_wizard() -> dict:
+         config["llm"]["api_key"] = api_key
+ 
+     # Model selection
+-    if provider.get("models"):
+-        model = _choose(
+-            "Choose a model:",
+-            [(m, label) for m, label in provider["models"]],
+-            allow_custom=True,
+-        )
+-    else:
+-        model = _prompt("Enter model ID", default=provider.get("default_model", ""))
+-
++    model = _select_model(provider_key, provider)
+     config["llm"]["model"] = model
+ 
+     # Ollama: warn about context window
+diff --git a/scripts/test_integration.py b/scripts/integration_check.py
+similarity index 92%
+rename from scripts/test_integration.py
+rename to scripts/integration_check.py
+index 81c452b..600d125 100644
+--- a/scripts/test_integration.py
++++ b/scripts/integration_check.py
+@@ -9,9 +9,9 @@ Prerequisites:
+   - .NET runtime installed
+ 
+ Usage:
+-  $ python scripts/test_integration.py
+-  $ OPENRA_PATH=/path/to/openra python scripts/test_integration.py
+-  $ python scripts/test_integration.py --steps 50 --port 9999
++  $ python scripts/integration_check.py
++  $ OPENRA_PATH=/path/to/openra python scripts/integration_check.py
++  $ python scripts/integration_check.py --steps 50 --port 9999
+ """
+ 
+ import argparse
+@@ -35,7 +35,7 @@ logging.basicConfig(
+ logger = logging.getLogger("integration-test")
+ 
+ 
+-def test_bridge_connection(port: int) -> bool:
++def check_bridge_connection(port: int) -> bool:
+     """Test 1: Can we connect to the gRPC bridge?"""
+     logger.info("--- Test 1: Bridge Connection ---")
+     bridge = BridgeClient(port=port)
+@@ -53,7 +53,7 @@ def test_bridge_connection(port: int) -> bool:
+         bridge.close()
+ 
+ 
+-def test_unary_advance(port: int) -> bool:
++def check_unary_advance(port: int) -> bool:
+     """Test 2: Can we advance the game via unary FastAdvance RPC?"""
+     logger.info("--- Test 2: Unary FastAdvance ---")
+     bridge = BridgeClient(port=port)
+@@ -76,7 +76,7 @@ def test_unary_advance(port: int) -> bool:
+         bridge.close()
+ 
+ 
+-def test_step_cycle(port: int, num_steps: int) -> bool:
++def check_step_cycle(port: int, num_steps: int) -> bool:
+     """Test 3: Can we run a full step cycle (send actions, receive observations)?"""
+     logger.info(f"--- Test 3: Step Cycle ({num_steps} steps) ---")
+     bridge = BridgeClient(port=port)
+@@ -147,7 +147,7 @@ def test_step_cycle(port: int, num_steps: int) -> bool:
+         bridge.close()
+ 
+ 
+-def test_observation_model_parsing(port: int) -> bool:
++def check_observation_model_parsing(port: int) -> bool:
+     """Test 4: Can observation dicts be parsed into Pydantic models?"""
+     logger.info("--- Test 4: Observation Model Parsing ---")
+     bridge = BridgeClient(port=port)
+@@ -216,14 +216,14 @@ def main():
+             logger.info("=== Skipping OpenRA launch (--skip-launch) ===")
+ 
+         # Run tests
+-        results["bridge_connection"] = test_bridge_connection(args.port)
++        results["bridge_connection"] = check_bridge_connection(args.port)
+ 
+         if results["bridge_connection"]:
+-            results["unary_advance"] = test_unary_advance(args.port)
++            results["unary_advance"] = check_unary_advance(args.port)
+ 
+-            results["observation_parsing"] = test_observation_model_parsing(args.port)
++            results["observation_parsing"] = check_observation_model_parsing(args.port)
+ 
+-            results["step_cycle"] = test_step_cycle(args.port, args.steps)
++            results["step_cycle"] = check_step_cycle(args.port, args.steps)
+ 
+     finally:
+         # Clean up
+diff --git a/bench_multi_session.py b/scripts/manual/bench_multi_session.py
+similarity index 95%
+rename from bench_multi_session.py
+rename to scripts/manual/bench_multi_session.py
+index 0f54444..cffe61c 100644
+--- a/bench_multi_session.py
++++ b/scripts/manual/bench_multi_session.py
+@@ -1,6 +1,9 @@
+ #!/usr/bin/env python3
+ """Benchmark latency for multi-session OpenRA daemon.
+ 
++Manual script: requires a built OpenRA (../../OpenRA/bin/OpenRA.dll) and a .NET
++runtime. It spawns the daemon itself on port 9999. Not a pytest test.
++
+ Measures:
+   - Session creation (reset) latency
+   - FastAdvance per-call latency
+@@ -8,7 +11,7 @@ Measures:
+   - Concurrent throughput
+ 
+ Usage:
+-    python bench_multi_session.py [num_sessions] [ticks_per_advance] [num_advances]
++    python scripts/manual/bench_multi_session.py [num_sessions] [ticks_per_advance] [num_advances]
+ 
+ Default: 64 sessions, 50 ticks/advance, 10 advances per session.
+ """
+@@ -21,11 +24,13 @@ import threading
+ import statistics
+ import grpc
+ 
+-sys.path.insert(0, os.path.dirname(__file__))
++# Repo root is two levels up from scripts/manual/
++_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
++sys.path.insert(0, _REPO_ROOT)
+ 
+ from openra_env.generated import rl_bridge_pb2, rl_bridge_pb2_grpc
+ 
+-OPENRA_DIR = os.path.join(os.path.dirname(__file__), "OpenRA")
++OPENRA_DIR = os.path.join(_REPO_ROOT, "OpenRA")
+ GRPC_PORT = 9999
+ MAP_NAME = "singles.oramap"
+ BOTS = "Multi1:rl-agent,Multi0:beginner"
+diff --git a/scripts/manual/smoke_single_session.py b/scripts/manual/smoke_single_session.py
+new file mode 100644
+index 0000000..901cadb
+--- /dev/null
++++ b/scripts/manual/smoke_single_session.py
+@@ -0,0 +1,77 @@
++#!/usr/bin/env python3
++"""Smoke check: create 1 session, advance ticks, destroy.
++
++Manual script: requires an OpenRA multi-session gRPC daemon already listening on
++localhost:9999 (see stress_multi_session.py, which spawns one itself). Not a
++pytest test — it talks to a live server and is run by hand:
++
++    python scripts/manual/smoke_single_session.py
++"""
++import os
++import sys
++import time
++
++import grpc
++
++# Repo root is two levels up from scripts/manual/
++_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
++sys.path.insert(0, _REPO_ROOT)
++
++from openra_env.generated import rl_bridge_pb2, rl_bridge_pb2_grpc
++
++GRPC_PORT = int(os.environ.get("RL_GRPC_PORT", "9999"))
++
++
++def main() -> int:
++    ch = grpc.insecure_channel(
++        f"localhost:{GRPC_PORT}", options=[("grpc.max_receive_message_length", 64 * 1024 * 1024)]
++    )
++    stub = rl_bridge_pb2_grpc.RLBridgeStub(ch)
++
++    print("Creating session...")
++    resp = stub.CreateSession(
++        rl_bridge_pb2.CreateSessionRequest(
++            map_name="singles.oramap", bots="Multi1:rl-agent,Multi0:beginner", seed=42
++        ),
++        timeout=10,
++    )
++    sid = resp.session_id
++    print(f"Session: {sid}")
++
++    # Wait for bridge to be ready
++    for i in range(60):
++        state = stub.GetState(rl_bridge_pb2.StateRequest(session_id=sid), timeout=5)
++        if state.phase not in ("no_bridge", "waiting"):
++            print(f"Ready: phase={state.phase} after {i*0.5:.1f}s")
++            break
++        time.sleep(0.5)
++    else:
++        print(f"Timeout: phase={state.phase}")
++        return 1
++
++    # FastAdvance
++    print("Advancing 50 ticks...")
++    try:
++        obs = stub.FastAdvance(rl_bridge_pb2.FastAdvanceRequest(ticks=50, session_id=sid), timeout=30)
++        print(f"  tick={obs.tick}, done={obs.done}, cash={obs.economy.cash}, units={len(obs.units)}")
++    except Exception as e:
++        print(f"FastAdvance failed: {e}")
++        return 1
++
++    print("Advancing 100 more ticks...")
++    try:
++        obs = stub.FastAdvance(rl_bridge_pb2.FastAdvanceRequest(ticks=100, session_id=sid), timeout=30)
++        print(f"  tick={obs.tick}, done={obs.done}, cash={obs.economy.cash}, units={len(obs.units)}")
++    except Exception as e:
++        print(f"FastAdvance failed: {e}")
++        return 1
++
++    # Destroy
++    stub.DestroySession(rl_bridge_pb2.DestroySessionRequest(session_id=sid), timeout=10)
++    print("Session destroyed")
++    print("SUCCESS")
++    return 0
++
++
++if __name__ == "__main__":
++    sys.exit(main())
+diff --git a/test_multi_session.py b/scripts/manual/stress_multi_session.py
+similarity index 94%
+rename from test_multi_session.py
+rename to scripts/manual/stress_multi_session.py
+index b37623f..0d6fa7b 100644
+--- a/test_multi_session.py
++++ b/scripts/manual/stress_multi_session.py
+@@ -1,8 +1,11 @@
+ #!/usr/bin/env python3
+ """Stress test for multi-session OpenRA daemon.
+ 
++Manual script: requires a built OpenRA (../../OpenRA/bin/OpenRA.dll) and a .NET
++runtime. It spawns the daemon itself on port 9999. Not a pytest test.
++
+ Usage:
+-    python test_multi_session.py [num_sessions]
++    python scripts/manual/stress_multi_session.py [num_sessions]
+ 
+ Default: 2 sessions. Try 2 → 8 → 16 → 64.
+ """
+@@ -14,12 +17,13 @@ import time
+ import threading
+ import grpc
+ 
+-# Add project to path
+-sys.path.insert(0, os.path.dirname(__file__))
++# Repo root is two levels up from scripts/manual/
++_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
++sys.path.insert(0, _REPO_ROOT)
+ 
+ from openra_env.generated import rl_bridge_pb2, rl_bridge_pb2_grpc
+ 
+-OPENRA_DIR = os.path.join(os.path.dirname(__file__), "OpenRA")
++OPENRA_DIR = os.path.join(_REPO_ROOT, "OpenRA")
+ GRPC_PORT = 9999
+ MAP_NAME = "singles.oramap"
+ BOTS = "Multi1:rl-agent,Multi0:beginner"
+diff --git a/test_buildings.py b/test_buildings.py
+deleted file mode 100644
+index 40ba064..0000000
+--- a/test_buildings.py
++++ /dev/null
+@@ -1,61 +0,0 @@
+-#!/usr/bin/env python3
+-"""Debug: check if enemy buildings are visible after moving toward them."""
+-import asyncio
+-import sys
+-sys.path.insert(0, "/home/ubuntu/OpenRA-RL-Training")
+-
+-from openra_env.mcp_ws_client import OpenRAMCPClient
+-from openra_rl_training.training.agent_rollout import _generate_scenario_map
+-
+-
+-async def test():
+-    kwargs = _generate_scenario_map("scenarios/tempo/sprint-lite.yaml", ep_id=99, _ep="DBG")
+-    for k in ["terrain_png", "bounds_x", "bounds_y", "full_map_width", "full_map_height"]:
+-        kwargs.pop(k, None)
+-
+-    # Print building positions from scenario
+-    print("Scenario actors:")
+-    for a in kwargs.get("actors", []):
+-        print(f"  owner={a.get('owner')} type={a.get('type')} pos={a.get('position')}")
+-
+-    env = OpenRAMCPClient("http://localhost:8000", message_timeout_s=60.0)
+-    async with env:
+-        await env.reset(**kwargs)
+-        r = await env.call_tool("advance", ticks=1)
+-        state = await env.call_tool("get_game_state")
+-        units = state.get("units_summary", [])
+-        for u in units:
+-            cx, cy = u.get("cell_x", 0), u.get("cell_y", 0)
+-            print(f"Unit {u['id']} {u['type']} at ({cx},{cy})")
+-
+-        # Move ALL units toward building at ~(40,8)
+-        for u in units:
+-            await env.call_tool("move_units", unit_ids=str(u["id"]), target_x=40, target_y=8)
+-
+-        # Advance and check for buildings
+-        for i in range(10):
+-            r = await env.call_tool("advance", ticks=500)
+-            tick = r.get("tick", 0)
+-            ebs = r.get("enemy_buildings_summary", [])
+-            expl = r.get("explored_percent", 0)
+-            n_ebs = len(ebs) if isinstance(ebs, list) else 0
+-            print(f"  [{i+1}] tick={tick} enemy_bldgs={n_ebs} explored={expl:.1f}%")
+-            if n_ebs > 0:
+-                print(f"  FOUND: {ebs}")
+-                break
+-
+-        # Final check via get_game_state
+-        gs = await env.call_tool("get_game_state")
+-        eb2 = gs.get("enemy_buildings_summary", [])
+-        veb = gs.get("visible_enemy_buildings", [])
+-        print(f"\nFinal state: enemy_bldgs_summary={len(eb2)}, visible_enemy_bldgs={len(veb)}")
+-        if eb2:
+-            for b in eb2:
+-                print(f"  {b}")
+-        if veb:
+-            for b in veb:
+-                print(f"  visible: {b}")
+-
+-
+-if __name__ == "__main__":
+-    asyncio.run(test())
+diff --git a/test_discovery.py b/test_discovery.py
+deleted file mode 100644
+index e7fd2e3..0000000
+--- a/test_discovery.py
++++ /dev/null
+@@ -1,89 +0,0 @@
+-#!/usr/bin/env python3
+-"""Integration test: verify buildings are discoverable in training scenario."""
+-import asyncio
+-import sys
+-sys.path.insert(0, "/home/ubuntu/OpenRA-RL-Training")
+-
+-from openra_env.mcp_ws_client import OpenRAMCPClient
+-from openra_rl_training.training.agent_rollout import _generate_scenario_map
+-
+-
+-async def test():
+-    kwargs = _generate_scenario_map("scenarios/tempo/sprint-lite.yaml", ep_id=0, _ep="T")
+-    for k in ["terrain_png", "bounds_x", "bounds_y", "full_map_width", "full_map_height"]:
+-        kwargs.pop(k, None)
+-
+-    print(f"bot_type: {kwargs.get('bot_type')}")
+-    print(f"n_enemy_buildings: {kwargs.get('n_enemy_buildings')}")
+-
+-    env = OpenRAMCPClient("http://localhost:8000", message_timeout_s=60.0)
+-    async with env:
+-        await env.reset(**kwargs)
+-        r0 = await env.call_tool("advance", ticks=1)
+-
+-        gs = await env.call_tool("get_game_state")
+-        ebs = gs.get("enemy_buildings_summary", [])
+-        veb = gs.get("visible_enemy_buildings", 0)
+-        units = gs.get("units_summary", [])
+-        print(f"\nInitial: {len(units)} units, enemy_bldgs={len(ebs) if isinstance(ebs, list) else ebs}, visible={veb}")
+-        for u in units:
+-            utype = u.get("type", "?")
+-            cx, cy = u.get("cell_x", 0), u.get("cell_y", 0)
+-            print(f"  Unit {u['id']} {utype} at ({cx},{cy})")
+-
+-        # Move all 3 units to 3 different building locations
+-        targets = [(40, 8), (60, 38), (18, 30)]
+-        for i, u in enumerate(units):
+-            t = targets[i % len(targets)]
+-            uid = u["id"]
+-            utype = u.get("type", "?")
+-            await env.call_tool("move_units", unit_ids=str(uid), target_x=t[0], target_y=t[1])
+-            print(f"  Moved {uid} ({utype}) toward {t}")
+-
+-        # Advance in chunks, check for buildings each time
+-        total_found = set()
+-        for chunk in range(20):
+-            r = await env.call_tool("advance", ticks=500)
+-            tick = r.get("tick", 0)
+-            adv_ebs = r.get("enemy_buildings_summary", [])
+-            expl = r.get("explored_percent", 0)
+-
+-            if isinstance(adv_ebs, list):
+-                for b in adv_ebs:
+-                    bid = b.get("id", 0)
+-                    if bid and bid not in total_found:
+-                        total_found.add(bid)
+-                        btype = b.get("type", "?")
+-                        bx, by = b.get("cell_x", 0), b.get("cell_y", 0)
+-                        print(f"  NEW BUILDING at tick {tick}: {btype} id={bid} at ({bx},{by})")
+-
+-            n_adv = len(adv_ebs) if isinstance(adv_ebs, list) else 0
+-            print(f"  [{chunk+1:2d}] tick={tick:5d} expl={expl:5.1f}% visible_bldgs={n_adv} total_found={len(total_found)}")
+-
+-            if len(total_found) >= 3:
+-                print(f"\n  ALL 3 BUILDINGS FOUND at tick {tick}!")
+-                break
+-
+-        # Final state
+-        gs_final = await env.call_tool("get_game_state")
+-        gs_ebs = gs_final.get("enemy_buildings_summary", [])
+-        gs_n = len(gs_ebs) if isinstance(gs_ebs, list) else 0
+-        print(f"\nFinal: total_found={len(total_found)}, gs_enemy_bldgs={gs_n}")
+-        if isinstance(gs_ebs, list):
+-            for b in gs_ebs:
+-                print(f"  {b}")
+-
+-        if len(total_found) == 0:
+-            print("\n*** FAIL: No buildings discovered! ***")
+-            return False
+-        elif len(total_found) < 3:
+-            print(f"\n*** PARTIAL: Found {len(total_found)}/3 buildings ***")
+-            return True
+-        else:
+-            print("\n*** PASS: All 3 buildings discovered ***")
+-            return True
+-
+-
+-if __name__ == "__main__":
+-    result = asyncio.run(test())
+-    sys.exit(0 if result else 1)
+diff --git a/test_interrupt.py b/test_interrupt.py
+deleted file mode 100644
+index c9da67a..0000000
+--- a/test_interrupt.py
++++ /dev/null
+@@ -1,66 +0,0 @@
+-#!/usr/bin/env python3
+-"""Test server-side interrupt detection with a real scenario."""
+-import asyncio
+-import sys
+-import time
+-sys.path.insert(0, "/home/ubuntu/OpenRA-RL-Training")
+-
+-from openra_env.mcp_ws_client import OpenRAMCPClient
+-from openra_rl_training.training.agent_rollout import _generate_scenario_map
+-
+-
+-async def test():
+-    url = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:8000"
+-    print(f"Connecting to {url}...")
+-
+-    # Generate a scenario map with enemies
+-    kwargs = _generate_scenario_map("scenarios/tempo/sprint-lite.yaml", ep_id=0, _ep="TEST")
+-    for k in ["terrain_png", "bounds_x", "bounds_y", "full_map_width", "full_map_height"]:
+-        kwargs.pop(k, None)
+-
+-    env = OpenRAMCPClient(base_url=url, message_timeout_s=120.0)
+-    async with env:
+-        print("Resetting with sprint-lite scenario...")
+-        obs = await env.reset(**kwargs)
+-        print(f"Reset OK. tick={obs.get('tick')}")
+-
+-        # Advance 1 tick to spawn units, then get state
+-        await env.call_tool("advance", ticks=1)
+-        state = await env.call_tool("get_game_state")
+-        units = state.get("units_summary", [])
+-        print(f"Units: {[(u.get('id', u.get('actor_id')), u.get('type')) for u in units]}")
+-
+-        # Move all units toward enemy building locations
+-        print("\n--- Moving units toward enemies ---")
+-        for u in units:
+-            uid = u.get("id", u.get("actor_id", 0))
+-            if uid:
+-                await env.call_tool("move_units", unit_ids=str(uid), target_x=60, target_y=38)
+-
+-        # Advance 1000 ticks — should trigger enemy_spotted or building_discovered
+-        t0 = time.monotonic()
+-        r = await env.call_tool("advance", ticks=1000)
+-        t1 = time.monotonic()
+-        print(f"  Took {t1-t0:.2f}s, tick={r.get('tick')}")
+-        print(f"  interrupted={r.get('interrupted')}")
+-        print(f"  interrupt_reason={r.get('interrupt_reason')}")
+-        print(f"  actual_ticks_advanced={r.get('actual_ticks_advanced')}")
+-        print(f"  explored_percent={r.get('explored_percent'):.1f}%")
+-
+-        if not r.get("interrupted"):
+-            # Try again with more ticks
+-            print("\n--- Advancing 2000 more ticks ---")
+-            t0 = time.monotonic()
+-            r2 = await env.call_tool("advance", ticks=2000)
+-            t1 = time.monotonic()
+-            print(f"  Took {t1-t0:.2f}s, tick={r2.get('tick')}")
+-            print(f"  interrupted={r2.get('interrupted')}")
+-            print(f"  interrupt_reason={r2.get('interrupt_reason')}")
+-            print(f"  actual_ticks_advanced={r2.get('actual_ticks_advanced')}")
+-            print(f"  explored_percent={r2.get('explored_percent'):.1f}%")
+-
+-        print("\nDone!")
+-
+-
+-if __name__ == "__main__":
+-    asyncio.run(test())
+diff --git a/test_interrupt2.py b/test_interrupt2.py
+deleted file mode 100644
+index 5acd9fc..0000000
+--- a/test_interrupt2.py
++++ /dev/null
+@@ -1,56 +0,0 @@
+-#!/usr/bin/env python3
+-"""Detailed interrupt test: step-by-step advances watching for events."""
+-import asyncio
+-import sys
+-import time
+-sys.path.insert(0, "/home/ubuntu/OpenRA-RL-Training")
+-
+-from openra_env.mcp_ws_client import OpenRAMCPClient
+-from openra_rl_training.training.agent_rollout import _generate_scenario_map
+-
+-
+-async def test():
+-    url = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:8000"
+-    kwargs = _generate_scenario_map("scenarios/tempo/sprint-lite.yaml", ep_id=0, _ep="T")
+-    for k in ["terrain_png", "bounds_x", "bounds_y", "full_map_width", "full_map_height"]:
+-        kwargs.pop(k, None)
+-
+-    env = OpenRAMCPClient(base_url=url, message_timeout_s=60.0)
+-    async with env:
+-        await env.reset(**kwargs)
+-        await env.call_tool("advance", ticks=1)
+-        state = await env.call_tool("get_game_state")
+-        units = state.get("units_summary", [])
+-        print(f"Units: {len(units)}")
+-        for u in units:
+-            print(f"  {u.get('id')} {u.get('type')} at ({u.get('cell_x')},{u.get('cell_y')})")
+-
+-        # Move all units toward enemy building at (60,38)
+-        for u in units:
+-            uid = u.get("id", 0)
+-            if uid:
+-                await env.call_tool("move_units", unit_ids=str(uid), target_x=60, target_y=38)
+-        print("Moved all units toward (60,38)")
+-
+-        # Step-by-step advances
+-        for i in range(20):
+-            r = await env.call_tool("advance", ticks=200)
+-            tick = r.get("tick")
+-            intr = r.get("interrupted")
+-            reason = r.get("interrupt_reason", "")
+-            actual = r.get("actual_ticks_advanced")
+-            expl = r.get("explored_percent", 0)
+-            enemies = r.get("enemy_summary", [])
+-            bldgs = r.get("enemy_buildings_summary", [])
+-            n_e = len(enemies) if isinstance(enemies, list) else 0
+-            n_b = len(bldgs) if isinstance(bldgs, list) else 0
+-            marker = " ** INTERRUPT **" if intr else ""
+-            print(f"  [{i+1:2d}] tick={tick:5d} actual={actual:4d} expl={expl:5.1f}% enemies={n_e} bldgs={n_b} intr={intr} {reason}{marker}")
+-            if intr:
+-                break
+-
+-        print("Done!")
+-
+-
+-if __name__ == "__main__":
+-    asyncio.run(test())
+diff --git a/test_interrupt3.py b/test_interrupt3.py
+deleted file mode 100644
+index 7b68a74..0000000
+--- a/test_interrupt3.py
++++ /dev/null
+@@ -1,56 +0,0 @@
+-#!/usr/bin/env python3
+-"""Check if units actually move after move_units command."""
+-import asyncio
+-import sys
+-sys.path.insert(0, "/home/ubuntu/OpenRA-RL-Training")
+-
+-from openra_env.mcp_ws_client import OpenRAMCPClient
+-from openra_rl_training.training.agent_rollout import _generate_scenario_map
+-
+-
+-async def test():
+-    url = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:8000"
+-    kwargs = _generate_scenario_map("scenarios/tempo/sprint-lite.yaml", ep_id=0, _ep="T")
+-    for k in ["terrain_png", "bounds_x", "bounds_y", "full_map_width", "full_map_height"]:
+-        kwargs.pop(k, None)
+-
+-    env = OpenRAMCPClient(base_url=url, message_timeout_s=60.0)
+-    async with env:
+-        await env.reset(**kwargs)
+-        r0 = await env.call_tool("advance", ticks=1)
+-
+-        # Check initial state
+-        state = await env.call_tool("get_game_state")
+-        units = state.get("units_summary", [])
+-        for u in units:
+-            idle = u.get("idle", u.get("is_idle", "?"))
+-            act = u.get("activity", u.get("current_activity", "?"))
+-            print(f"  Unit {u.get('id')} {u.get('type')} at ({u.get('cell_x')},{u.get('cell_y')}) idle={idle} activity={act}")
+-
+-        # Issue move
+-        uid = units[0].get("id")
+-        print(f"\nMoving unit {uid} to (60,38)...")
+-        move_result = await env.call_tool("move_units", unit_ids=str(uid), target_x=60, target_y=38)
+-        print(f"move_units result: {str(move_result)[:300]}")
+-
+-        # Advance and check
+-        r1 = await env.call_tool("advance", ticks=50)
+-        state2 = await env.call_tool("get_game_state")
+-        units2 = state2.get("units_summary", [])
+-        print(f"\nAfter 50 ticks:")
+-        for u in units2:
+-            idle = u.get("idle", u.get("is_idle", "?"))
+-            act = u.get("activity", u.get("current_activity", "?"))
+-            print(f"  Unit {u.get('id')} {u.get('type')} at ({u.get('cell_x')},{u.get('cell_y')}) idle={idle} activity={act}")
+-
+-        # Advance more
+-        r2 = await env.call_tool("advance", ticks=500)
+-        state3 = await env.call_tool("get_game_state")
+-        units3 = state3.get("units_summary", [])
+-        print(f"\nAfter 550 ticks:")
+-        for u in units3:
+-            idle = u.get("idle", u.get("is_idle", "?"))
+-            act = u.get("activity", u.get("current_activity", "?"))
+-            print(f"  Unit {u.get('id')} {u.get('type')} at ({u.get('cell_x')},{u.get('cell_y')}) idle={idle} activity={act}")
+-
+-asyncio.run(test())
+diff --git a/test_load.py b/test_load.py
+deleted file mode 100644
+index 2c7656a..0000000
+--- a/test_load.py
++++ /dev/null
+@@ -1,72 +0,0 @@
+-#!/usr/bin/env python3
+-"""Load test: 64 concurrent episodes across 2 game servers."""
+-import asyncio
+-import sys
+-import time
+-sys.path.insert(0, "/home/ubuntu/OpenRA-RL-Training")
+-
+-from openra_env.mcp_ws_client import OpenRAMCPClient
+-from openra_rl_training.training.agent_rollout import _generate_scenario_map
+-
+-
+-async def run_episode(url: str, ep_id: int):
+-    """Run a single test episode: reset, move, advance 500 ticks."""
+-    kwargs = _generate_scenario_map("scenarios/tempo/sprint-lite.yaml", ep_id=ep_id, _ep=f"LOAD{ep_id}")
+-    for k in ["terrain_png", "bounds_x", "bounds_y", "full_map_width", "full_map_height"]:
+-        kwargs.pop(k, None)
+-
+-    t0 = time.monotonic()
+-    try:
+-        env = OpenRAMCPClient(base_url=url, message_timeout_s=60.0)
+-        async with env:
+-            await env.reset(**kwargs)
+-            await env.call_tool("advance", ticks=1)
+-            state = await env.call_tool("get_game_state")
+-            units = state.get("units_summary", [])
+-
+-            # Issue move commands for all units
+-            for u in units:
+-                uid = u.get("id", 0)
+-                if uid:
+-                    await env.call_tool("move_units", unit_ids=str(uid), target_x=60, target_y=38)
+-
+-            # Advance 500 ticks
+-            r = await env.call_tool("advance", ticks=500)
+-            elapsed = time.monotonic() - t0
+-            return {"ep": ep_id, "ok": True, "elapsed": elapsed, "tick": r.get("tick", 0)}
+-    except Exception as e:
+-        elapsed = time.monotonic() - t0
+-        return {"ep": ep_id, "ok": False, "elapsed": elapsed, "error": str(e)[:100]}
+-
+-
+-async def main():
+-    urls = sys.argv[1:] if len(sys.argv) > 1 else ["http://localhost:8000", "http://localhost:8001"]
+-    n_episodes = 64
+-    print(f"Load test: {n_episodes} episodes across {len(urls)} servers")
+-
+-    # Round-robin distribute
+-    tasks = []
+-    for i in range(n_episodes):
+-        url = urls[i % len(urls)]
+-        tasks.append(run_episode(url, i))
+-
+-    t0 = time.monotonic()
+-    results = await asyncio.gather(*tasks)
+-    total = time.monotonic() - t0
+-
+-    ok = sum(1 for r in results if r["ok"])
+-    fail = sum(1 for r in results if not r["ok"])
+-    times = [r["elapsed"] for r in results if r["ok"]]
+-    avg_t = sum(times) / len(times) if times else 0
+-    max_t = max(times) if times else 0
+-
+-    print(f"\nResults: {ok}/{n_episodes} ok, {fail} failed, total={total:.1f}s")
+-    print(f"Per-episode: avg={avg_t:.1f}s, max={max_t:.1f}s")
+-    if fail > 0:
+-        for r in results:
+-            if not r["ok"]:
+-                print(f"  FAIL ep{r['ep']}: {r['error']}")
+-
+-
+-if __name__ == "__main__":
+-    asyncio.run(main())
+diff --git a/test_move.py b/test_move.py
+deleted file mode 100644
+index e9305cd..0000000
+--- a/test_move.py
++++ /dev/null
+@@ -1,54 +0,0 @@
+-#!/usr/bin/env python3
+-"""Debug: check if move_units actually works."""
+-import asyncio
+-import sys
+-sys.path.insert(0, "/home/ubuntu/OpenRA-RL-Training")
+-
+-from openra_env.mcp_ws_client import OpenRAMCPClient
+-from openra_rl_training.training.agent_rollout import _generate_scenario_map
+-
+-
+-async def test():
+-    kwargs = _generate_scenario_map("scenarios/tempo/sprint-lite.yaml", ep_id=99, _ep="DBG")
+-    for k in ["terrain_png", "bounds_x", "bounds_y", "full_map_width", "full_map_height"]:
+-        kwargs.pop(k, None)
+-
+-    env = OpenRAMCPClient("http://localhost:8000", message_timeout_s=60.0)
+-    async with env:
+-        await env.reset(**kwargs)
+-        await env.call_tool("advance", ticks=1)
+-        state = await env.call_tool("get_game_state")
+-        units = state.get("units_summary", [])
+-        print("Initial units:")
+-        for u in units:
+-            print(f"  {u.get('id')} {u.get('type')} at ({u.get('cell_x')},{u.get('cell_y')}) idle={u.get('idle')}")
+-
+-        # Try move
+-        uid = units[0]["id"]
+-        print(f"\nMoving unit {uid} to (60,38)...")
+-        result = await env.call_tool("move_units", unit_ids=str(uid), target_x=60, target_y=38)
+-        print(f"move_units result keys: {list(result.keys()) if isinstance(result, dict) else type(result)}")
+-        if isinstance(result, dict):
+-            print(f"  commanded_units: {result.get('commanded_units', 'N/A')}")
+-            print(f"  error: {result.get('error', 'none')}")
+-
+-        # Advance 100 ticks and check position
+-        await env.call_tool("advance", ticks=100)
+-        state2 = await env.call_tool("get_game_state")
+-        units2 = state2.get("units_summary", [])
+-        print("\nAfter 100 ticks:")
+-        for u in units2:
+-            print(f"  {u.get('id')} {u.get('type')} at ({u.get('cell_x')},{u.get('cell_y')}) idle={u.get('idle')} activity={u.get('activity','?')}")
+-
+-        # Advance 500 more
+-        await env.call_tool("advance", ticks=500)
+-        state3 = await env.call_tool("get_game_state")
+-        units3 = state3.get("units_summary", [])
+-        expl = state3.get("explored_percent", 0)
+-        print(f"\nAfter 600 ticks (explored={expl:.1f}%):")
+-        for u in units3:
+-            print(f"  {u.get('id')} {u.get('type')} at ({u.get('cell_x')},{u.get('cell_y')}) idle={u.get('idle')} activity={u.get('activity','?')}")
+-
+-
+-if __name__ == "__main__":
+-    asyncio.run(test())
+diff --git a/test_single_session.py b/test_single_session.py
+deleted file mode 100644
+index da5a622..0000000
+--- a/test_single_session.py
++++ /dev/null
+@@ -1,52 +0,0 @@
+-#!/usr/bin/env python3
+-"""Quick test: create 1 session, advance ticks, destroy."""
+-import grpc
+-import time
+-import sys
+-
+-sys.path.insert(0, "/Users/berta/Projects/OpenRA-RL")
+-from openra_env.generated import rl_bridge_pb2, rl_bridge_pb2_grpc
+-
+-ch = grpc.insecure_channel("localhost:9999", options=[("grpc.max_receive_message_length", 64*1024*1024)])
+-stub = rl_bridge_pb2_grpc.RLBridgeStub(ch)
+-
+-print("Creating session...")
+-resp = stub.CreateSession(
+-    rl_bridge_pb2.CreateSessionRequest(map_name="singles.oramap", bots="Multi1:rl-agent,Multi0:beginner", seed=42),
+-    timeout=10,
+-)
+-sid = resp.session_id
+-print(f"Session: {sid}")
+-
+-# Wait for bridge to be ready
+-for i in range(60):
+-    state = stub.GetState(rl_bridge_pb2.StateRequest(session_id=sid), timeout=5)
+-    if state.phase not in ("no_bridge", "waiting"):
+-        print(f"Ready: phase={state.phase} after {i*0.5:.1f}s")
+-        break
+-    time.sleep(0.5)
+-else:
+-    print(f"Timeout: phase={state.phase}")
+-    sys.exit(1)
+-
+-# FastAdvance
+-print("Advancing 50 ticks...")
+-try:
+-    obs = stub.FastAdvance(rl_bridge_pb2.FastAdvanceRequest(ticks=50, session_id=sid), timeout=30)
+-    print(f"  tick={obs.tick}, done={obs.done}, cash={obs.economy.cash}, units={len(obs.units)}")
+-except Exception as e:
+-    print(f"FastAdvance failed: {e}")
+-    sys.exit(1)
+-
+-print("Advancing 100 more ticks...")
+-try:
+-    obs = stub.FastAdvance(rl_bridge_pb2.FastAdvanceRequest(ticks=100, session_id=sid), timeout=30)
+-    print(f"  tick={obs.tick}, done={obs.done}, cash={obs.economy.cash}, units={len(obs.units)}")
+-except Exception as e:
+-    print(f"FastAdvance failed: {e}")
+-    sys.exit(1)
+-
+-# Destroy
+-stub.DestroySession(rl_bridge_pb2.DestroySessionRequest(session_id=sid), timeout=10)
+-print("Session destroyed")
+-print("SUCCESS")
