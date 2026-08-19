@@ -218,7 +218,10 @@ class LLMProviderConfig:
     base_url: str = DEFAULT_OLLAMA_HOST
     model: str = DEFAULT_OLLAMA_MODEL
     api_key: str = ""
-    max_tokens: int = 1024
+    # 1024 is not enough for a reasoning model: gpt-oss:20b spent all 512
+    # tokens thinking before emitting any content, and needed ~811
+    # completion tokens in total to answer a commander briefing.
+    max_tokens: int = 4096
     temperature: Optional[float] = 0.3
     request_timeout_s: float = 300.0
     extra_headers: dict[str, str] = field(default_factory=dict)
@@ -636,7 +639,40 @@ class LLMClient:
 
         if isinstance(data, Mapping) and data.get("error"):
             raise self._bad_status(200, json.dumps(data["error"])[:800])
+        self._check_truncated_reasoning(data)
         return dict(data)
+
+    @staticmethod
+    def _check_truncated_reasoning(data):
+        """Fail loudly when a reasoning model spent the whole budget thinking.
+
+        Reasoning tokens count against ``max_tokens``. gpt-oss and friends
+        return their chain of thought in a separate ``reasoning`` field, so a
+        budget that is ample for the answer alone can be consumed entirely
+        before a single content token is emitted. The response then looks
+        perfectly valid - HTTP 200, a message, no error - with empty content,
+        and the caller silently parses zero orders every turn.
+        """
+        try:
+            choice = data["choices"][0]
+            message = choice["message"]
+        except (KeyError, IndexError, TypeError):
+            return
+        if (message.get("content") or "").strip():
+            return
+        if message.get("tool_calls"):
+            return
+        reasoning = message.get("reasoning") or message.get("reasoning_content") or ""
+        if choice.get("finish_reason") != "length" or not reasoning:
+            return
+        used = (data.get("usage") or {}).get("completion_tokens")
+        raise LLMError(
+            "The model used its entire token budget on reasoning and returned "
+            "no content ({0} completion tokens, finish_reason=length).\n"
+            "  Reasoning models count their chain of thought against max_tokens.\n"
+            "  Raise it, e.g. MILSIM_LLM_MAX_TOKENS=8192, or pick a "
+            "non-reasoning model.".format(used)
+        )
 
     async def complete(
         self,

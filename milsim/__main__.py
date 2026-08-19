@@ -173,7 +173,7 @@ async def run_structured_text(args):
                 {"role": "user", "content": briefing},
             ]
 
-            data = await llm.chat(messages, max_tokens=512, temperature=0.3)
+            data = await llm.chat(messages, temperature=0.3)
             llm_response = extract_message(data).get("content") or ""
             orders = text_cmd.parse_orders(llm_response)
 
@@ -235,7 +235,7 @@ async def run_function_calling(args):
         while not bridge.game_over and turn < args.max_turns * 5:
             turn += 1
 
-            data = await llm.chat(messages, tools=tools, max_tokens=1024, temperature=0.3)
+            data = await llm.chat(messages, tools=tools, temperature=0.3)
             msg = extract_message(data)
             messages.append(msg)
 
