@@ -10,11 +10,18 @@ Validates:
   - Round-trip: format briefing → parse orders
 """
 
+import pytest
 import sys
 import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "openra-rl"))
+
+# openra-rl is a separate checkout (see scripts/openra-rl/README.md), so
+# openra_env is absent from a clean clone — directly here, or pulled in
+# transitively by milsim.commander. Skip visibly rather than dying at
+# collection, which takes the whole file down.
+pytest.importorskip("openra_env", reason="openra-rl is not installed")
 
 from milsim.llm_commander import (
     StructuredTextCommander,

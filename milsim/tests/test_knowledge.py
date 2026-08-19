@@ -9,11 +9,17 @@ Validates:
   - Performance assessment scoring
 """
 
+import pytest
 import sys
 import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "openra-rl"))
+
+# milsim.game_knowledge wraps its openra_env import in try/except and
+# falls back to empty tables, so without openra-rl every unit cost is
+# $0 and these assertions fail on data that was never loaded. Skip.
+pytest.importorskip("openra_env", reason="openra-rl is not installed")
 
 from milsim.game_knowledge import GameKnowledge, UNIT_CATEGORY, THREAT_VALUE
 from milsim.memory import TacticalMemory

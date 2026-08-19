@@ -28,11 +28,39 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
+      # openra-rl is a separate checkout, not part of this repo, so CI has to
+      # fetch it exactly as a real user does. Without it nine milsim modules
+      # cannot import openra_env and the suite is reduced to skips.
+      # No submodules: the OpenRA engine is not needed for the Python tests.
+      - name: Fetch openra-rl
+        run: git clone --depth 1 https://github.com/yxc20089/OpenRA-RL.git openra-rl
+
       - name: Install test dependencies
-        run: python -m pip install --upgrade pip pytest pyyaml httpx pydantic
+        run: |
+          python -m pip install --upgrade pip pytest pyyaml httpx pydantic
+          python -m pip install -e ./openra-rl
 
       - name: Run the milsim suite
         run: python -m pytest milsim/tests -q
+
+      # Guards the graceful-degradation path: without openra-rl the suite must
+      # skip visibly, never die at collection. This regressed once already.
+      - name: Suite degrades to skips without openra-rl
+        shell: bash
+        run: |
+          mv openra-rl /tmp/openra-rl-hidden
+          python -m pip uninstall -y openra-rl-util openenv-core 2>/dev/null || true
+          python - <<'EOF'
+          import subprocess, sys
+          r = subprocess.run([sys.executable, '-m', 'pytest', 'milsim/tests', '-q',
+                              '-p', 'no:cacheprovider'], capture_output=True, text=True)
+          out = r.stdout + r.stderr
+          print(out[-1500:])
+          assert 'errors during collection' not in out, (
+              'a missing openra-rl must skip, not break collection')
+          print('degrades cleanly')
+          EOF
+          mv /tmp/openra-rl-hidden openra-rl
 
       # Guards the two entry-point blockers directly. Both were shipped
       # broken and neither had a test.

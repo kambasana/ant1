@@ -28,6 +28,12 @@ import pytest
 
 from _openra_server import SERVER_URL, require_server_or_explain, start_hint
 
+# openra-rl is a separate checkout (see scripts/openra-rl/README.md), so
+# openra_env is absent from a clean clone — directly here, or pulled in
+# transitively by milsim.commander. Skip visibly rather than dying at
+# collection, which takes the whole file down.
+pytest.importorskip("openra_env", reason="openra-rl is not installed")
+
 from openra_env.client import OpenRAEnv
 from openra_env.models import ActionType, CommandModel
 
