@@ -77,5 +77,26 @@ docker pull --platform linux/amd64 ghcr.io/yxc20089/openra-rl:0.4.1
 docker tag ghcr.io/yxc20089/openra-rl:0.4.1 ghcr.io/yxc20089/openra-rl:latest
 ```
 
-Applied separately from `milsim-fixes.patch` because the two were captured
-against different upstream commits.
+Applied separately from `milsim-fixes.patch`, not because the checkouts differ
+— both sit on `5dadd44` — but because `milsim-fixes.patch` was captured from a
+tree that already had its twenty files applied, while this one was captured from
+a tree that did not. Regenerating either as a combined diff silently drops the
+other. Apply `milsim-fixes.patch` first, then this one.
+
+## Both patches, from a fresh clone
+
+```powershell
+git clone --depth 1 https://github.com/yxc20089/OpenRA-RL.git openra-rl
+cd openra-rl
+git apply ..\scripts\openra-rl\milsim-fixes.patch
+git apply ..\scripts\openra-rl\amd64-image-tag.patch
+```
+
+## The OpenRA submodule
+
+Six tests in `openra-rl/tests` (`test_config.py::TestBotTypeMapping` and
+`test_mcp_tools.py::TestReplayConfig`) build a launch command and need
+`OpenRA.dll` or `launch-rl.sh` to exist. A `--depth 1` clone without
+`--recurse-submodules` leaves `openra-rl/OpenRA/` empty and those six fail
+with `FileNotFoundError`; the other 641 pass. Add `--recurse-submodules` if
+you want that suite fully green — it is a large fetch and nothing else needs it.
