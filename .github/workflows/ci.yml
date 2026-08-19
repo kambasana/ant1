@@ -43,24 +43,6 @@ jobs:
       - name: Run the milsim suite
         run: python -m pytest milsim/tests -q
 
-      # Guards the graceful-degradation path: without openra-rl the suite must
-      # skip visibly, never die at collection. This regressed once already.
-      - name: Suite degrades to skips without openra-rl
-        shell: bash
-        run: |
-          mv openra-rl /tmp/openra-rl-hidden
-          python -m pip uninstall -y openra-rl-util openenv-core 2>/dev/null || true
-          python - <<'EOF'
-          import subprocess, sys
-          r = subprocess.run([sys.executable, '-m', 'pytest', 'milsim/tests', '-q',
-                              '-p', 'no:cacheprovider'], capture_output=True, text=True)
-          out = r.stdout + r.stderr
-          print(out[-1500:])
-          assert 'errors during collection' not in out, (
-              'a missing openra-rl must skip, not break collection')
-          print('degrades cleanly')
-          EOF
-          mv /tmp/openra-rl-hidden openra-rl
 
       # Guards the two entry-point blockers directly. Both were shipped
       # broken and neither had a test.
@@ -152,6 +134,32 @@ jobs:
           assert not missing, f'navigation to group/tab pairs with no view: {missing}'
           print(f'{len(declared)} views, {len(called)} navigation pairs, all resolve')
 
+  degraded:
+    # A clean clone has no openra-rl at all. The suite must skip visibly
+    # rather than die at collection — that regressed twice while being fixed.
+    # Its own job, because proving it requires an environment without
+    # openra-rl and mutating a shared one broke every step downstream.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install only what a bare checkout would have
+        run: python -m pip install --upgrade pip pytest pyyaml httpx pydantic
+      - name: Suite collects and skips without openra-rl
+        shell: bash
+        run: |
+          test ! -d openra-rl || { echo 'openra-rl should not be checked out here'; exit 1; }
+          out=$(python -m pytest milsim/tests -q -p no:cacheprovider 2>&1) || true
+          echo "$out" | tail -20
+          if echo "$out" | grep -q 'errors during collection'; then
+            echo '--- a missing openra-rl must skip, not break collection ---'
+            exit 1
+          fi
+          echo "$out" | grep -qE '[0-9]+ skipped' || { echo 'expected skips'; exit 1; }
+          echo 'degrades cleanly'
+
   powershell:
     # PowerShell Core is cross-platform, so the Windows scripts are parsed and
     # executed here rather than only reviewed. The ubuntu leg proves they are
@@ -166,6 +174,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
+      - name: Fetch openra-rl
+        run: git clone --depth 1 https://github.com/yxc20089/OpenRA-RL.git openra-rl
 
       - name: Parse every script
         shell: pwsh
