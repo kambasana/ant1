@@ -101,35 +101,60 @@ Six tests in `openra-rl/tests` (`test_config.py::TestBotTypeMapping` and
 with `FileNotFoundError`; the other 641 pass. Add `--recurse-submodules` if
 you want that suite fully green — it is a large fetch and nothing else needs it.
 
-## Open: `--difficulty normal` is not a valid engine tier
+## The server holds one session, and a killed client keeps it
 
-`docker_manager.py` passes the CLI difficulty through verbatim as
-`BOT_TYPE={difficulty}` (line ~193), and `cli/main.py` offers
-`easy | normal | hard` with **normal as the default**. But `config.yaml`
-documents the tiers as `beginner / easy / medium / hard / brutal` — `normal`
-is not among them, so a default invocation sets `BOT_TYPE=normal`, a value the
-engine does not list.
+`Server at capacity: 1/1 sessions active. Cannot accept new connections.`
 
-`easy` and `hard` happen to be valid; the default is not. Deliberately not
-"fixed" here: whether the engine silently accepts `normal`, falls back, or
-errors is unverified, and inventing a mapping (`normal` → `medium`) would
-change opponent behaviour on a guess. This needs an upstream answer.
+The server accepts a single concurrent session. A client that is killed
+mid-run — an interrupted pytest, a background probe, a cancelled game —
+leaves that slot occupied, and every later run fails. The symptom is not
+always the capacity message: a reset against an occupied server can surface
+as `websockets.exceptions.ConnectionClosedOK: received 1000 (OK)`, which
+reads like a protocol bug and is not one.
 
-## Open: no enemy is ever visible
+This cost two misdiagnoses in one session. Before believing any connection
+error, clear stray clients and restart:
 
-`milsim/tests/test_isr.py` and `test_spatial.py` fail against a live server
-with `0 total contacts` and `0 corridors found`. Both need an opponent to
-observe.
+```powershell
+Get-Process python | Where-Object {
+  (Get-CimInstance Win32_Process -Filter "ProcessId=$($_.Id)").CommandLine -match 'milsim|pytest'
+} | Stop-Process -Force
+python -m openra_env.cli.main server stop
+python -m openra_env.cli.main server start
+```
 
-Established:
+## The enemy bot does spawn
 
-- `AI_SLOT=Multi0` and `BOT_TYPE` are both set on the container.
-- Setting a *valid* tier (`--difficulty hard`) does **not** change the result,
-  so the tier defect above is not the cause. This was tested, not assumed.
-- The default map is `singles.oramap`, 128×128.
-- The server log carries no bot or player-setup lines to confirm a spawn
-  either way.
+Worth recording, because the absence of contacts suggests otherwise. With a
+session live, the engine's own launch line shows both players:
 
-Unresolved: whether the bot never spawns, or spawns and is simply never
-scouted on a map that size within the test's turn budget. Those have
-different fixes and the evidence so far does not separate them.
+```
+dotnet /opt/openra/bin/OpenRA.dll ... Launch.Map=singles.oramap \
+  Launch.Bots=Multi1:rl-agent,Multi0:normal
+```
+
+`Multi0` is the opponent. The `normal` there is an OpenRA bot name, not the
+`beginner / easy / medium / hard / brutal` tier list in `config.yaml` — those
+are separate vocabularies, and an earlier note here claiming the CLI default
+was an invalid tier was wrong. `--difficulty hard` was tested on a clean
+server and starts a game normally.
+
+The OpenRA process is spawned per session and force-killed when the socket
+closes, so `ps` inside the container shows nothing between runs. That is
+normal, not a crash.
+
+## Open: `test_isr` and `test_spatial` find nothing
+
+`0 total contacts` and `0 corridors found`. Given the bot demonstrably
+spawns, the likely cause is distance: `singles.oramap` is 128×128 and the
+tests do not scout far enough to break fog of war. A smaller map, or an
+explicit scouting phase, would settle it. Not yet confirmed.
+
+## Open: text mode issues orders that never take effect
+
+`--mode text` against a live server produces parsed orders every turn while
+`Units` stays at 1 and `Cash` stays at $5000 — nothing reaches the game.
+`--mode rule` on the same server deploys the MCV and builds correctly, so
+the engine and the session are fine and the fault is in the text order
+path. The model also invents item types (`fac`, `factory`, `har` alongside
+the valid `powr`), which schema validation on the order parser would catch.
