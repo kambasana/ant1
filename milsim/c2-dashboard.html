@@ -79,10 +79,7 @@ body {
 }
 .sb-brand { font-weight: 700; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; }
 .sb-sep { width: 1px; height: 14px; background: var(--border); flex-shrink: 0; }
-.sb-stat { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--t2); white-space: nowrap; }
-.sb-stat .v { font-family: var(--mono); font-weight: 600; font-size: 11px; color: var(--t1); font-variant-numeric: tabular-nums; }
-.sb-stat .v.g { color: var(--green); } .sb-stat .v.r { color: var(--red); }
-.sb-spacer { flex: 1; }
+.sb-spacer { flex: 1; min-width: 8px; }
 .sb-badge { padding: 2px 8px; border-radius: 100px; font-family: var(--mono); font-weight: 600; font-size: 10px; }
 .sb-turn { background: var(--accent-soft); color: var(--accent-text); }
 .sb-phase { text-transform: uppercase; letter-spacing: 0.05em; font-size: 9px; font-weight: 600; }
@@ -154,9 +151,11 @@ body {
 
 /* ═══ LEFT PANEL: CONTACTS ═══ */
 .filter-bar {
-  display: flex; align-items: center; gap: 4px;
+  display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
   padding: 4px 8px; border-bottom: 1px solid var(--border-subtle); flex-shrink: 0;
 }
+.filter-bar.compact { gap: 3px; }
+.filter-bar.compact .filter-chip { padding: 3px 6px; }
 .filter-chip {
   padding: 3px 8px; border-radius: 100px;
   border: 1px solid var(--border); background: transparent;
@@ -263,6 +262,21 @@ body {
 .mod-v { font-family: var(--mono); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .mod-v.ok { color: var(--green); } .mod-v.warn { color: var(--amber); } .mod-v.bad { color: var(--red); }
 .mod-sub { font-family: var(--mono); font-size: 8px; color: var(--t3); margin-left: 4px; }
+
+/* Inline variant — the same modules laid out as a single-line strip,
+ * used by the top menu bar. Slots become label/value pairs on one
+ * baseline, divided by hairlines instead of boxed. */
+.mod-bar.inline { padding: 0; gap: 0; flex-wrap: nowrap; align-items: center; min-width: 0; overflow: hidden; }
+.mod-bar.inline .mod-slot {
+  flex: 0 1 auto; min-width: 0; border: none; background: transparent;
+  border-radius: 0; padding: 0 10px;
+  display: flex; align-items: baseline; gap: 5px; white-space: nowrap;
+  border-left: 1px solid var(--border);
+}
+.mod-bar.inline .mod-slot:first-child { border-left: none; padding-left: 0; }
+.mod-bar.inline .mod-k { display: inline; font-size: 9px; letter-spacing: 0.03em; }
+.mod-bar.inline .mod-v { font-size: 11px; }
+.mod-bar.inline .mod-sub { margin-left: 0; }
 
 /* ═══ DESIGN SYSTEM: List Row ═══
  * The single row used by every scrolling list — ISR tracks, production
@@ -443,7 +457,9 @@ body {
   border-top: 1px solid var(--border);
   display: flex; align-items: center; padding: 0 14px; gap: 10px; flex-shrink: 0; z-index: 10;
 }
-.cmd-queue-count { font-family: var(--mono); font-size: 11px; color: var(--t2); display: flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+.cmd-queue-count { font-family: var(--mono); font-size: 10px; color: var(--t2); display: flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cmd-hint { font-size: 10px; color: var(--t3); }
+.cmd-bar-actions.visible ~ .cmd-hint { display: none; }
 .cmd-queue-count .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); display: none; }
 .cmd-queue-count .dot.has-orders { display: block; animation: pulse 1.5s ease infinite; }
 .cmd-spacer { flex: 1; }
@@ -456,6 +472,8 @@ body {
 .btn-execute:hover { transform: translateY(-1px) scale(1.02); box-shadow: 0 4px 16px rgba(45,114,210,0.3); }
 .btn-execute:active { transform: translateY(0) scale(0.97); }
 .btn-execute:disabled { opacity: 0.3; cursor: not-allowed; transform: none; box-shadow: none; }
+/* Size variant for the top menu bar */
+.btn-execute.sm { padding: 5px 16px; border-radius: var(--r); font-size: 11px; }
 .btn-execute.executing { background: var(--green); animation: exec-pulse 1s var(--ease-standard) infinite; }
 @keyframes exec-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.8; } }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
@@ -482,21 +500,25 @@ body {
  * Customise: --seg-h (height), --seg-r (radius), --seg-font (size).
  */
 .seg-ctrl {
-  --seg-h: 20px; --seg-r: 4px; --seg-font: 9px;
+  --seg-h: 20px; --seg-r: 4px; --seg-font: 9px; --seg-grow: 1.45;
   display: flex; height: var(--seg-h); border-radius: var(--seg-r);
   background: var(--bg); border: 1px solid var(--border);
   overflow: hidden; flex-shrink: 0; flex: 1;
 }
+/* Weighted segments: the active one claims extra width and displaces
+ * its neighbours, so position in the control — not just tint — tells
+ * you which tab you are in. Tune the displacement with --seg-grow. */
 .seg-btn {
-  flex: 1; border: none; background: transparent;
+  flex: 1 1 0; border: none; background: transparent;
   color: var(--t3); font-family: var(--sans); font-size: var(--seg-font); font-weight: 600;
   letter-spacing: 0.03em; cursor: pointer; padding: 0 4px;
-  transition: color 100ms var(--ease-decel), background 100ms var(--ease-decel);
+  transition: flex-grow 260ms var(--ease-emphasized),
+              color 100ms var(--ease-decel), background 100ms var(--ease-decel);
   display: flex; align-items: center; justify-content: center; gap: 3px;
-  white-space: nowrap; min-width: 0;
+  white-space: nowrap; min-width: 0; overflow: hidden;
 }
 .seg-btn:hover { color: var(--t2); background: rgba(255,255,255,0.03); }
-.seg-btn.active { background: var(--accent-soft); color: var(--accent-text); }
+.seg-btn.active { flex-grow: var(--seg-grow); background: var(--accent-soft); color: var(--accent-text); }
 .seg-btn + .seg-btn { border-left: 1px solid var(--border); }
 /* Size variant for nested/second-level menus */
 .seg-ctrl.sm { --seg-h: 18px; --seg-font: 8px; }
@@ -559,6 +581,17 @@ body {
 .ct-pill.dim { background: var(--elevated); color: var(--t3); }
 .grp-note { margin-left: auto; font-family: var(--mono); font-size: 8px; color: var(--t3); text-transform: none; letter-spacing: 0; }
 
+/* Second-level heading inside a group — lighter than .grp-label so the
+ * two levels stay legible in a narrow panel. */
+.role-label {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 7px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--t3); opacity: 0.8;
+  margin: 6px 0 3px;
+}
+.role-label::after { content: ''; flex: 1; height: 1px; background: var(--border-subtle); }
+.role-ct { font-family: var(--mono); opacity: 0.7; }
+
 /* ═══ BUILD VIEW — catalog grid ═══
  * Columns auto-fill, so the grid reflows with panel width and any
  * number of categories/items from the data can be added without
@@ -601,18 +634,20 @@ body {
 }
 </style>
 
-<!-- STATUS BAR -->
+<!-- TOP MENU BAR — brand, status modules, turn control -->
 <div class="status-bar">
   <div class="sb-brand">C2</div>
   <div class="sb-sep"></div>
-  <div class="sb-stat"><span>Credits</span><span class="v g" id="s-credits">2,400</span></div>
-  <div class="sb-stat"><span>Power</span><span class="v" id="s-power">100/200</span></div>
-  <div class="sb-sep"></div>
-  <div class="sb-stat"><span>Units</span><span class="v" id="s-units">12</span></div>
-  <div class="sb-stat"><span>Kills</span><span class="v r" id="s-kills">3</span></div>
+  <div id="status-modules"></div>
   <div class="sb-spacer"></div>
   <span class="sb-badge sb-phase planning" id="phase">Planning</span>
   <span class="sb-badge sb-turn" id="turn">Turn 4</span>
+  <div class="sb-sep"></div>
+  <div class="cmd-queue-count">
+    <div class="dot" id="q-dot"></div>
+    <span id="q-count">0 orders queued</span>
+  </div>
+  <button class="btn-execute sm" id="btn-exec" disabled onclick="executeTurn()">Execute Turn</button>
 </div>
 
 <!-- WORKSPACE — Dock panel layout -->
@@ -645,7 +680,7 @@ body {
       <!-- TAB: Build catalog — category chips + reflowing grid -->
       <div class="tab-view" data-group="left" data-tab="build">
         <div class="dock-search"><input type="text" placeholder="Search catalog..." id="build-search" oninput="searchBuild(this.value)"></div>
-        <div class="filter-bar" id="build-cats"></div>
+        <div class="filter-bar compact" id="build-cats"></div>
         <div class="build-scroll" id="build-scroll"></div>
       </div>
 
@@ -778,12 +813,8 @@ body {
       <button class="cmd-go" onclick="queueFromCmd()">Queue</button>
     </div>
   </div>
-  <div class="cmd-queue-count">
-    <div class="dot" id="q-dot"></div>
-    <span id="q-count">0 orders queued</span>
-  </div>
+  <div class="cmd-hint" id="cmd-hint">Select units to issue orders &mdash; shift-click for a range, ctrl-click to toggle</div>
   <div class="cmd-spacer"></div>
-  <button class="btn-execute" id="btn-exec" disabled onclick="executeTurn()">Execute Turn</button>
 </div>
 
 <script>
@@ -793,53 +824,60 @@ body {
 // PerformanceScore from the OpenRA-RL + MilSim codebase
 // ═══════════════════════════════════════════════════════════════
 
-// Unit type lookup — from game_data.py RA_UNITS / RA_BUILDINGS
+// Unit type lookup — from game_data.py RA_UNITS / RA_BUILDINGS.
+// Each entry carries the production queue it belongs to and the
+// doctrinal role it fills. Queue drives what can be built where; role
+// drives how the catalogue is grouped, so a commander picks by job
+// rather than scanning an alphabetical wall of names.
 var UNIT_DB = {
-  'e1':  {name:'Rifle Infantry',  category:'infantry', cost:100},
-  'e2':  {name:'Grenadier',       category:'infantry', cost:150},
-  'e3':  {name:'Rocket Soldier',  category:'infantry', cost:300},
-  'e4':  {name:'Flamethrower',    category:'infantry', cost:300},
-  'e6':  {name:'Engineer',        category:'infantry', cost:400},
-  'e7':  {name:'Tanya',           category:'infantry', cost:1800},
-  'spy': {name:'Spy',             category:'infantry', cost:500},
-  'dog': {name:'Attack Dog',      category:'infantry', cost:200},
-  'medi':{name:'Medic',           category:'infantry', cost:200},
-  'shok':{name:'Shock Trooper',   category:'infantry', cost:350},
-  '1tnk':{name:'Light Tank',      category:'vehicle',  cost:700},
-  '2tnk':{name:'Medium Tank',     category:'vehicle',  cost:850},
-  '3tnk':{name:'Heavy Tank',      category:'vehicle',  cost:1150},
-  '4tnk':{name:'Mammoth Tank',    category:'vehicle',  cost:2000},
-  'arty':{name:'Artillery',       category:'vehicle',  cost:850},
-  'v2rl':{name:'V2 Launcher',     category:'vehicle',  cost:900},
-  'jeep':{name:'Ranger',          category:'vehicle',  cost:500},
-  'apc': {name:'APC',             category:'vehicle',  cost:850},
-  'harv':{name:'Ore Truck',       category:'vehicle',  cost:1100},
-  'mcv': {name:'MCV',             category:'vehicle',  cost:2000},
-  'mnly':{name:'Minelayer',       category:'vehicle',  cost:800},
-  'ttnk':{name:'Tesla Tank',      category:'vehicle',  cost:1350},
-  'heli':{name:'Longbow',         category:'aircraft', cost:2000},
-  'hind':{name:'Hind',            category:'aircraft', cost:1200},
-  'mig': {name:'MiG-29',          category:'aircraft', cost:2000},
-  'yak': {name:'Yak',             category:'aircraft', cost:800},
+  'e1':  {name:'Rifle Infantry',  queue:'Infantry', role:'Anti-Infantry', cost:100},
+  'dog': {name:'Attack Dog',      queue:'Infantry', role:'Anti-Infantry', cost:200},
+  'e3':  {name:'Rocket Soldier',  queue:'Infantry', role:'Anti-Armor',    cost:300},
+  'e2':  {name:'Grenadier',       queue:'Infantry', role:'Assault',       cost:150},
+  'e4':  {name:'Flamethrower',    queue:'Infantry', role:'Assault',       cost:300},
+  'shok':{name:'Shock Trooper',   queue:'Infantry', role:'Assault',       cost:350},
+  'e6':  {name:'Engineer',        queue:'Infantry', role:'Support',       cost:400},
+  'medi':{name:'Medic',           queue:'Infantry', role:'Support',       cost:200},
+  'e7':  {name:'Tanya',           queue:'Infantry', role:'Special',       cost:1800},
+  'spy': {name:'Spy',             queue:'Infantry', role:'Special',       cost:500},
+
+  '1tnk':{name:'Light Tank',      queue:'Vehicle',  role:'Armor',     cost:700},
+  '2tnk':{name:'Medium Tank',     queue:'Vehicle',  role:'Armor',     cost:850},
+  '3tnk':{name:'Heavy Tank',      queue:'Vehicle',  role:'Armor',     cost:1150},
+  '4tnk':{name:'Mammoth Tank',    queue:'Vehicle',  role:'Armor',     cost:2000},
+  'ttnk':{name:'Tesla Tank',      queue:'Vehicle',  role:'Armor',     cost:1350},
+  'arty':{name:'Artillery',       queue:'Vehicle',  role:'Artillery', cost:850},
+  'v2rl':{name:'V2 Launcher',     queue:'Vehicle',  role:'Artillery', cost:900},
+  'jeep':{name:'Ranger',          queue:'Vehicle',  role:'Recon',     cost:500},
+  'apc': {name:'APC',             queue:'Vehicle',  role:'Transport', cost:850},
+  'harv':{name:'Ore Truck',       queue:'Vehicle',  role:'Economy',   cost:1100},
+  'mcv': {name:'MCV',             queue:'Vehicle',  role:'Support',   cost:2000},
+  'mnly':{name:'Minelayer',       queue:'Vehicle',  role:'Support',   cost:800},
+
+  'heli':{name:'Longbow',         queue:'Aircraft', role:'Gunship', cost:2000},
+  'hind':{name:'Hind',            queue:'Aircraft', role:'Gunship', cost:1200},
+  'mig': {name:'MiG-29',          queue:'Aircraft', role:'Strike',  cost:2000},
+  'yak': {name:'Yak',             queue:'Aircraft', role:'Strike',  cost:800},
 };
 var BUILDING_DB = {
-  'fact':{name:'Construction Yard', cost:2000, power:0},
-  'powr':{name:'Power Plant',       cost:300,  power:100},
-  'apwr':{name:'Adv. Power Plant',  cost:500,  power:200},
-  'barr':{name:'Soviet Barracks',   cost:500,  power:-20},
-  'tent':{name:'Allied Barracks',   cost:500,  power:-20},
-  'proc':{name:'Ore Refinery',      cost:1400, power:-30},
-  'weap':{name:'War Factory',       cost:2000, power:-30},
-  'dome':{name:'Radar Dome',        cost:1500, power:-40},
-  'fix': {name:'Service Depot',     cost:1200, power:-30},
-  'hpad':{name:'Helipad',           cost:1500, power:-10},
-  'afld':{name:'Airfield',          cost:1500, power:-30},
-  'atek':{name:'Allied Tech',       cost:1500, power:-200},
-  'stek':{name:'Soviet Tech',       cost:1500, power:-200},
-  'sam': {name:'SAM Site',          cost:750,  power:-20},
-  'tsla':{name:'Tesla Coil',        cost:1500, power:-150},
-  'gun': {name:'Turret',            cost:600,  power:0},
-  'ftur':{name:'Flame Tower',       cost:600,  power:0},
+  'fact':{name:'Construction Yard', queue:'Building', role:'Command',    cost:2000, power:0},
+  'powr':{name:'Power Plant',       queue:'Building', role:'Power',      cost:300,  power:100},
+  'apwr':{name:'Adv. Power Plant',  queue:'Building', role:'Power',      cost:500,  power:200},
+  'proc':{name:'Ore Refinery',      queue:'Building', role:'Economy',    cost:1400, power:-30},
+  'barr':{name:'Soviet Barracks',   queue:'Building', role:'Production', cost:500,  power:-20},
+  'tent':{name:'Allied Barracks',   queue:'Building', role:'Production', cost:500,  power:-20},
+  'weap':{name:'War Factory',       queue:'Building', role:'Production', cost:2000, power:-30},
+  'hpad':{name:'Helipad',           queue:'Building', role:'Production', cost:1500, power:-10},
+  'afld':{name:'Airfield',          queue:'Building', role:'Production', cost:1500, power:-30},
+  'dome':{name:'Radar Dome',        queue:'Building', role:'Support',    cost:1500, power:-40},
+  'fix': {name:'Service Depot',     queue:'Building', role:'Support',    cost:1200, power:-30},
+  'atek':{name:'Allied Tech',       queue:'Building', role:'Tech',       cost:1500, power:-200},
+  'stek':{name:'Soviet Tech',       queue:'Building', role:'Tech',       cost:1500, power:-200},
+
+  'gun': {name:'Turret',            queue:'Defense', role:'Anti-Armor',    cost:600,  power:0},
+  'tsla':{name:'Tesla Coil',        queue:'Defense', role:'Anti-Armor',    cost:1500, power:-150},
+  'ftur':{name:'Flame Tower',       queue:'Defense', role:'Anti-Infantry', cost:600,  power:0},
+  'sam': {name:'SAM Site',          queue:'Defense', role:'Anti-Air',      cost:750,  power:-20},
 };
 
 // Stance mapping — matches UnitInfoModel.stance (0-3)
@@ -863,7 +901,7 @@ var UNITS = [
 
 // ─── Own Buildings (BuildingInfoModel fields) ───
 var BUILDINGS = [
-  {actor_id:100, type:'fact', cell_x:8, cell_y:17, hp_percent:1.0, is_producing:true, production_progress:0.4, producing_item:'weap', is_powered:true, power_amount:0, can_produce:['powr','apwr','barr','tent','proc','weap','dome','fix']},
+  {actor_id:100, type:'fact', cell_x:8, cell_y:17, hp_percent:1.0, is_producing:true, production_progress:0.4, producing_item:'weap', is_powered:true, power_amount:0, can_produce:['powr','apwr','barr','tent','proc','weap','dome','fix','gun','ftur','sam']},
   {actor_id:101, type:'powr', cell_x:6, cell_y:18, hp_percent:1.0, is_producing:false, production_progress:0.0, producing_item:'', is_powered:true, power_amount:100, can_produce:[]},
   {actor_id:102, type:'powr', cell_x:6, cell_y:16, hp_percent:1.0, is_producing:false, production_progress:0.0, producing_item:'', is_powered:true, power_amount:100, can_produce:[]},
   {actor_id:103, type:'barr', cell_x:9, cell_y:19, hp_percent:0.85, is_producing:true, production_progress:0.72, producing_item:'e3', is_powered:true, power_amount:-20, can_produce:['e1','e2','e3','e4','e6','dog']},
@@ -981,7 +1019,7 @@ function unitName(u) {
 }
 function unitCategory(u) {
   var db = UNIT_DB[u.type];
-  return db ? db.category : 'vehicle';
+  return db ? db.queue.toLowerCase() : 'vehicle';
 }
 function contactName(c) {
   if (c.unit_type && UNIT_DB[c.unit_type]) return UNIT_DB[c.unit_type].name;
@@ -1199,9 +1237,9 @@ function queueFromCmd() {
 // Renders any array of metric modules. A module is {k, get} where get()
 // returns {v, sub, tone} — self-contained, so a new metric is one entry
 // in the array and nothing else changes.
-function renderModBar(el, modules) {
+function renderModBar(el, modules, variant) {
   if (!el) return;
-  el.innerHTML = '<div class="mod-bar">' + modules.map(function(m) {
+  el.innerHTML = '<div class="mod-bar ' + (variant || '') + '">' + modules.map(function(m) {
     var r = m.get() || {};
     var tone = r.tone || '';
     return '<div class="mod-slot ' + tone + '">' +
@@ -1356,13 +1394,25 @@ function renderCNN() {
 // or a whole new queue type here — shows up in the UI with no layout
 // or render changes.
 var BUILD_CATS = [
-  {key:'Building', label:'Structures', short:'Str', db:BUILDING_DB, action:'build'},
-  {key:'Infantry', label:'Infantry',   short:'Inf', db:UNIT_DB, cat:'infantry', action:'train'},
-  {key:'Vehicle',  label:'Vehicles',   short:'Veh', db:UNIT_DB, cat:'vehicle',  action:'train'},
-  {key:'Aircraft', label:'Aircraft',   short:'Air', db:UNIT_DB, cat:'aircraft', action:'train'},
+  {key:'Building', label:'Structures', short:'Bld', db:BUILDING_DB, action:'build'},
+  {key:'Defense',  label:'Defenses',   short:'Def', db:BUILDING_DB, action:'build'},
+  {key:'Infantry', label:'Infantry',   short:'Inf', db:UNIT_DB, action:'train'},
+  {key:'Vehicle',  label:'Vehicles',   short:'Veh', db:UNIT_DB, action:'train'},
+  {key:'Aircraft', label:'Aircraft',   short:'Air', db:UNIT_DB, action:'train'},
 ];
 function catalogFor(c) {
-  return Object.keys(c.db).filter(function(k) { return !c.cat || c.db[k].category === c.cat; });
+  return Object.keys(c.db).filter(function(k) { return c.db[k].queue === c.key; });
+}
+// Groups a queue's items by role, preserving DB order so roles appear
+// in the order they were declared rather than alphabetically.
+function rolesFor(cat, keys) {
+  var order = [], byRole = {};
+  keys.forEach(function(k) {
+    var role = cat.db[k].role || 'Other';
+    if (!byRole[role]) { byRole[role] = []; order.push(role); }
+    byRole[role].push(k);
+  });
+  return order.map(function(r) { return {role:r, items:byRole[r]}; });
 }
 
 // What the base can actually produce right now, from the can_produce
@@ -1394,6 +1444,20 @@ function renderBuildView() {
   var shown = BUILD_CATS.filter(function(c) { return buildFilter === 'all' || buildFilter === c.key; });
   var html = '';
 
+  function itemBtn(cat, key) {
+    var info = cat.db[key];
+    var facility = producible[key];
+    var poor = !!facility && info.cost > ECONOMY.cash;
+    var cls = 'build-item' + (facility ? (poor ? ' poor' : '') : ' locked');
+    var tip = facility
+      ? info.name + ' — $' + info.cost + ' from ' + (BUILDING_DB[facility] ? BUILDING_DB[facility].name : facility) + (poor ? ' (insufficient cash)' : '')
+      : info.name + ' — no powered facility can produce this';
+    return '<button class="' + cls + '"' + (facility ? '' : ' disabled') +
+      ' onclick="queueProd(\'' + cat.action + '\',\'' + key + '\')" title="' + tip + '">' +
+      '<span class="build-item-name">' + info.name + '</span>' +
+      '<span class="build-item-cost">$' + info.cost + '</span></button>';
+  }
+
   shown.forEach(function(cat) {
     var items = catalogFor(cat).filter(function(k) {
       if (!buildSearch) return true;
@@ -1403,19 +1467,11 @@ function renderBuildView() {
     var open = items.filter(function(k) { return producible[k]; }).length;
     html += '<div class="grp-label">' + cat.label +
       '<span class="ct-pill' + (open ? '' : ' dim') + '">' + open + '/' + items.length + '</span></div>';
-    html += '<div class="build-grid">' + items.map(function(key) {
-      var info = cat.db[key];
-      var facility = producible[key];
-      var poor = !!facility && info.cost > ECONOMY.cash;
-      var cls = 'build-item' + (facility ? (poor ? ' poor' : '') : ' locked');
-      var tip = facility
-        ? info.name + ' — $' + info.cost + ' from ' + (BUILDING_DB[facility] ? BUILDING_DB[facility].name : facility) + (poor ? ' (insufficient cash)' : '')
-        : info.name + ' — no powered facility can produce this';
-      return '<button class="' + cls + '"' + (facility ? '' : ' disabled') +
-        ' onclick="queueProd(\'' + cat.action + '\',\'' + key + '\')" title="' + tip + '">' +
-        '<span class="build-item-name">' + info.name + '</span>' +
-        '<span class="build-item-cost">$' + info.cost + '</span></button>';
-    }).join('') + '</div>';
+    // Within a queue, group by doctrinal role.
+    rolesFor(cat, items).forEach(function(g) {
+      html += '<div class="role-label">' + g.role + ' <span class="role-ct">' + g.items.length + '</span></div>';
+      html += '<div class="build-grid">' + g.items.map(function(k) { return itemBtn(cat, k); }).join('') + '</div>';
+    });
   });
 
   el.innerHTML = html || '<div class="list-empty">No matching items.</div>';
@@ -1584,15 +1640,27 @@ function syncQueue() {
 function rmOrder(i) { orders.splice(i, 1); syncQueue(); }
 function clearOrders() { orders = []; syncQueue(); }
 
-// ═══ STATUS BAR UPDATE ═══
+// ═══ TOP MENU BAR — status modules ═══
+// The same module contract as Overview and Capacity, rendered inline.
+// Adding a global readout is one entry here.
+var STATUS_MODULES = [
+  {k:'Credits', get:function() {
+    return {v:'$' + ECONOMY.cash.toLocaleString(), tone: ECONOMY.cash < 500 ? 'warn' : 'ok'};
+  }},
+  {k:'Power', get:function() {
+    var head = ECONOMY.power_provided - ECONOMY.power_drained;
+    return {
+      v: ECONOMY.power_provided + '/' + ECONOMY.power_drained,
+      tone: head < 0 ? 'bad' : head < 25 ? 'warn' : '',
+    };
+  }},
+  {k:'Units', get:function() { return {v:String(MILITARY.active_unit_count)}; }},
+  {k:'Kills', get:function() {
+    return {v:MILITARY.units_killed + '/' + MILITARY.units_lost, sub:'k/l'};
+  }},
+];
 function updateStatusBar() {
-  document.getElementById('s-credits').textContent = '$' + ECONOMY.cash.toLocaleString();
-  var pwOk = ECONOMY.power_provided >= ECONOMY.power_drained;
-  var pwEl = document.getElementById('s-power');
-  pwEl.textContent = ECONOMY.power_provided + '/' + ECONOMY.power_drained;
-  pwEl.className = 'v' + (pwOk ? '' : ' r');
-  document.getElementById('s-units').textContent = MILITARY.active_unit_count;
-  document.getElementById('s-kills').textContent = MILITARY.units_killed;
+  renderModBar(document.getElementById('status-modules'), STATUS_MODULES, 'inline');
 }
 
 // ═══ EXECUTE TURN ═══
