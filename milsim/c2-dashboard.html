@@ -133,6 +133,23 @@ body {
 .dock.collapsed .dock-chevron { transform: rotate(-90deg); }
 
 
+/* Pin control — the only chrome left in the header now that the rail
+   owns navigation and open/closed. */
+.dock-pin {
+  width: 20px; height: 20px; flex-shrink: 0;
+  border: none; border-radius: 3px; background: transparent;
+  color: var(--accent-text); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.dock-pin::before {
+  content: ''; width: 8px; height: 8px; border-radius: 50%;
+  background: currentColor; box-shadow: 0 0 0 2px var(--accent-soft);
+}
+.dock.unpinned .dock-pin { color: var(--t3); }
+.dock.unpinned .dock-pin::before { background: transparent; border: 1.5px solid currentColor; box-shadow: none; }
+.dock-pin:hover { background: var(--elevated); }
+.dock-pin:focus-visible { outline: 2px solid var(--accent); outline-offset: -1px; }
+
 /* ═══ DESIGN SYSTEM: Icon Rail ═══
  * What a segmented menu becomes when its panel is collapsed. Same tab
  * contract (data-group / data-tab), same selected treatment turned
@@ -707,7 +724,7 @@ div.att-row { cursor: default; }
  */
 .build-scroll { flex: 1; overflow-y: auto; min-height: 0; }
 .build-row {
-  display: grid; grid-template-columns: 18px minmax(0,1fr) auto;
+  display: grid; grid-template-columns: 20px minmax(0,1fr) auto;
   gap: 8px; align-items: center; width: 100%;
   padding: 4px 10px; min-height: 26px;
   border: none; border-bottom: 1px solid var(--border-subtle);
@@ -718,7 +735,9 @@ div.att-row { cursor: default; }
 .build-row:hover { background: var(--raised); color: var(--t1); }
 .build-row:active { background: var(--accent-soft); }
 .build-role { display: flex; align-items: center; justify-content: center; color: var(--t3); }
-.build-role svg { width: 15px; height: 15px; }
+.build-role svg { width: 16px; height: 16px; }
+.filter-chip.icon { padding: 3px 7px; display: flex; align-items: center; }
+.filter-chip.icon svg { width: 15px; height: 15px; display: block; }
 .build-row:hover .build-role { color: var(--accent-text); }
 /* Prerequisite takes the trailing slot on locked rows, so it can never
    push past the panel edge the way an inline note did. */
@@ -780,12 +799,14 @@ div.att-row { cursor: default; }
     <div class="dock-rail" data-dock="panel-contacts">
       <button class="rail-btn active" data-group="left" data-tab="units"></button>
       <button class="rail-btn" data-group="left" data-tab="build"></button>
+      <button class="rail-btn" data-group="left" data-tab="production"></button>
+      <button class="rail-btn" data-group="left" data-tab="cap"></button>
       <button class="rail-btn" data-group="left" data-tab="orders"></button>
     </div>
     <div class="dock-main">
-    <div class="dock-hdr" onclick="toggleDock('panel-contacts')">
+    <div class="dock-hdr">
       <span class="dock-title" id="title-left">Units</span>
-      <svg class="dock-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      <button class="dock-pin" onclick="togglePin('panel-contacts')" title="Unpin to auto-hide"></button>
     </div>
     <div class="dock-body">
 
@@ -808,6 +829,21 @@ div.att-row { cursor: default; }
         <div class="filter-bar compact" id="build-roles" style="display:none"></div>
         <div class="build-scroll" id="build-scroll"></div>
       </div>
+
+      <!-- TAB: Production — [Facilities | Queues | Capacity] -->
+      <div class="tab-view" data-group="left" data-tab="production">
+        <div class="seg-sub">
+          <div class="seg-ctrl sm" data-group="prod">
+            <button class="seg-btn active" data-tab="fac"></button>
+            <button class="seg-btn" data-tab="queues"></button>
+          </div>
+        </div>
+        <div class="tab-view active" data-group="prod" data-tab="fac"><div class="scroll-y" id="fac-list"></div></div>
+        <div class="tab-view" data-group="prod" data-tab="queues"><div class="scroll-y" id="queue-list"></div></div>
+      </div>
+
+      <!-- TAB: Capacity — the means of production, as toolbar modules -->
+      <div class="tab-view" data-group="left" data-tab="cap"><div class="scroll-y" id="cap-bar"></div></div>
 
       <!-- TAB: Orders queue -->
       <div class="tab-view" data-group="left" data-tab="orders">
@@ -850,13 +886,11 @@ div.att-row { cursor: default; }
       <button class="rail-btn active" data-group="right" data-tab="alerts"></button>
       <button class="rail-btn" data-group="right" data-tab="force"></button>
       <button class="rail-btn" data-group="right" data-tab="intel"></button>
-      <button class="rail-btn" data-group="right" data-tab="production"></button>
-      <button class="rail-btn" data-group="right" data-tab="cap"></button>
     </div>
     <div class="dock-main">
-    <div class="dock-hdr" onclick="toggleDock('panel-context')">
+    <div class="dock-hdr">
       <span class="dock-title" id="title-right">Alerts</span>
-      <svg class="dock-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      <button class="dock-pin" onclick="togglePin('panel-context')" title="Unpin to auto-hide"></button>
     </div>
     <div class="dock-body">
 
@@ -896,20 +930,7 @@ div.att-row { cursor: default; }
         </div>
       </div>
 
-      <!-- TAB: Production — [Facilities | Queues | Capacity] -->
-      <div class="tab-view" data-group="right" data-tab="production">
-        <div class="seg-sub">
-          <div class="seg-ctrl sm" data-group="prod">
-            <button class="seg-btn active" data-tab="fac"></button>
-            <button class="seg-btn" data-tab="queues"></button>
-          </div>
-        </div>
-        <div class="tab-view active" data-group="prod" data-tab="fac"><div class="scroll-y" id="fac-list"></div></div>
-        <div class="tab-view" data-group="prod" data-tab="queues"><div class="scroll-y" id="queue-list"></div></div>
-      </div>
 
-      <!-- TAB: Capacity — the means of production, as toolbar modules -->
-      <div class="tab-view" data-group="right" data-tab="cap"><div class="scroll-y" id="cap-bar"></div></div>
 
       </div>
     </div>
@@ -1280,7 +1301,11 @@ var MENUS = {
     {tab:'units',  label:'Units',  key:'1', icon:ICON.units,
      count:function() { return {n:selected.size || getVisibleUnits().length, attn:selected.size > 0}; }},
     {tab:'build',  label:'Build',  key:'2', icon:ICON.build},
-    {tab:'orders', label:'Orders', key:'3', icon:ICON.orders,
+    {tab:'production', label:'Prod', head:'Production', title:'Production facilities and queues', key:'3', icon:ICON.prod,
+     count:function() { return {n:ACTIVE_PRODUCTION.length, attn:idleFacilityCount() > 0}; }},
+    {tab:'cap',    label:'Cap',    head:'Capacity', key:'4', title:'Capacity — the means of production', icon:ICON.cap,
+     count:function() { var n = alertCount(CAPACITY_MODULES); return {n:n, attn:n > 0}; }},
+    {tab:'orders', label:'Orders', key:'5', icon:ICON.orders,
      count:function() { return {n:orders.length, attn:orders.length > 0}; }},
   ]},
   right: {title:'title-right', items: [
@@ -1295,10 +1320,6 @@ var MENUS = {
        var c = liveContacts();
        return {n:c.length, attn:c.some(function(x) { return x.is_visible && x.can_attack; })};
      }},
-    {tab:'production', label:'Prod', head:'Production', title:'Production facilities and queues', key:'P', icon:ICON.prod,
-     count:function() { return {n:ACTIVE_PRODUCTION.length, attn:idleFacilityCount() > 0}; }},
-    {tab:'cap',    label:'Cap',    head:'Capacity', title:'Capacity — the means of production', icon:ICON.cap,
-     count:function() { var n = alertCount(CAPACITY_MODULES); return {n:n, attn:n > 0}; }},
   ]},
   // Sub-menus use the same component; they simply have no rail.
   intel: {sm:true, items: [
@@ -1391,8 +1412,12 @@ document.addEventListener('click', function(e) {
   var rail = e.target.closest('.rail-btn');
   if (rail) {
     var dock = rail.closest('.dock');
+    var wasActive = rail.classList.contains('active');
+    var wasOpen = !dock.classList.contains('collapsed');
     switchTab(rail.dataset.group, rail.dataset.tab);
-    if (dock.classList.contains('collapsed')) toggleDock(dock.id);
+    // Same icon again closes the panel; any other icon opens it there.
+    if (wasActive && wasOpen) toggleDock(dock.id);
+    else if (!wasOpen) toggleDock(dock.id);
     return;
   }
   var btn = e.target.closest('.seg-btn');
@@ -1753,45 +1778,6 @@ var BUILD_CATS = [
   {key:'Vehicle',  label:'Vehicles',   short:'Veh', db:UNIT_DB, action:'train'},
   {key:'Aircraft', label:'Aircraft',   short:'Air', db:UNIT_DB, action:'train'},
 ];
-// Doctrinal shorthand for the row tag. AT/AP/AA are the standing
-// anti-tank / anti-personnel / anti-air abbreviations.
-var ROLE_ABBR = {
-  'Command':'CMD', 'Power':'PWR', 'Economy':'ECO', 'Production':'PRD',
-  'Support':'SUP', 'Tech':'TEK',
-  'Anti-Armor':'AT', 'Anti-Infantry':'AP', 'Anti-Air':'AA',
-  'Armor':'ARM', 'Artillery':'ART', 'Recon':'RCN', 'Transport':'TPT',
-  'Assault':'ASL', 'Special':'SPC', 'Gunship':'GSP', 'Strike':'STK',
-};
-function roleAbbr(r) { return ROLE_ABBR[r] || r.slice(0, 3).toUpperCase(); }
-
-// Role glyphs. The combat roles borrow APP-6 unit symbology, which is
-// what these shapes already mean to anyone who reads a military map:
-// crossed box = infantry, oval = armour, filled dot = artillery,
-// single diagonal = reconnaissance. The rest are plain pictograms.
-var ROLE_ICON = {
-  'Command':      '<path d="M4 2v12M4 2.8h8l-2 2.6 2 2.6H4"/>',
-  'Power':        '<path d="M9 2L4.4 9H8l-1 5 4.6-7H8z"/>',
-  'Economy':      '<path d="M2.5 5.5h11v5h-11z"/><path d="M2.5 8h11"/>',
-  'Production':   '<path d="M2 13.5V7l4 2.5V7l4 2.5V6l4 2.5v5z"/>',
-  'Support':      '<path d="M8 3.5v9M3.5 8h9"/>',
-  'Tech':         '<path d="M5.5 5.5h5v5h-5z"/><path d="M8 2v3.5M8 10.5V14M2 8h3.5M10.5 8H14"/>',
-  'Anti-Infantry':'<path d="M2.5 4.5h11v7h-11z"/><path d="M2.5 4.5l11 7M13.5 4.5l-11 7"/>',
-  'Anti-Armor':   '<path d="M4 5.5h6a2.5 2.5 0 010 5H4a2.5 2.5 0 010-5z"/><path d="M13.5 3.5l-11 9"/>',
-  'Anti-Air':     '<path d="M2 12a6 6 0 0112 0"/><path d="M8 13.5V4M5 7l3-3 3 3"/>',
-  'Armor':        '<path d="M4 5h7a3 3 0 010 6H4a3 3 0 010-6z"/>',
-  'Artillery':    '<path d="M2.5 4.5h11v7h-11z"/><circle cx="8" cy="8" r="2.2" fill="currentColor"/>',
-  'Recon':        '<path d="M2.5 4.5h11v7h-11z"/><path d="M13.5 4.5l-11 7"/>',
-  'Transport':    '<path d="M1.5 5h8v5.5h-8z"/><path d="M9.5 7h2.6L14.5 9.3v1.2h-5z"/><circle cx="4" cy="12" r="1.3"/><circle cx="11.5" cy="12" r="1.3"/>',
-  'Assault':      '<path d="M8 1.8c2.2 2.8 4.2 4.2 4.2 7a4.2 4.2 0 01-8.4 0c0-1.8.9-2.9 2-4 .2 1 .7 1.5 1.2 1.5 0-2 .4-3.2 1-4.5z"/>',
-  'Special':      '<path d="M8 1.8l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6z"/>',
-  'Gunship':      '<path d="M1.5 3.5h13M8 3.5v3"/><path d="M4.5 6.5h7l1 6h-9z"/>',
-  'Strike':       '<path d="M8 1.5l1.2 7.2 5.3 2.3v1.5L8 10.8l-6.5 1.7v-1.5l5.3-2.3z"/>',
-};
-function roleIcon(r) {
-  return '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" ' +
-    'stroke-linejoin="round">' + (ROLE_ICON[r] || '<circle cx="8" cy="8" r="4"/>') + '</svg>';
-}
-
 // Which building type produces what, independent of what is currently
 // standing. Lets a locked row say how to get to yes instead of just no.
 var PRODUCED_BY = {
@@ -1809,6 +1795,67 @@ function requiredFor(item) {
     if (PRODUCED_BY[b].indexOf(item) !== -1) names.push(BUILDING_DB[b] ? BUILDING_DB[b].name : b);
   });
   return names;
+}
+
+// One glyph per catalogue entry. Grouping by role gave five identical
+// factory marks in a row; a build list is scanned by silhouette, so
+// every item needs its own. Role still rides the tooltip.
+var ITEM_ICON = {
+  'fact':'M2.5 14h11M4 14V5h6v9M4 5h8M12 5v3.5',
+  'powr':'M9 1.8L4.4 9H8l-1 5.2L12 7H8.4z',
+  'apwr':'M6.6 1.8L3 7.5h2.4l-.7 4.2L8.2 6.3H6z M12.2 3.2l-2.4 3.9h1.7l-.5 3L14 6.4h-1.7z',
+  'proc':'M2.5 3h11l-4 5.2V13L6.5 14.2V8.2z',
+  'barr':'M1.8 13.2L8 3.4l6.2 9.8z M8 7.6l.7 1.4 1.5.2-1.1 1 .3 1.5L8 11l-1.4.7.3-1.5-1.1-1 1.5-.2z',
+  'tent':'M1.8 13.2L8 3.4l6.2 9.8z M8 3.8v9.4',
+  'weap':'M2 13.6V6.6l3.4 2.6V6.6l3.4 2.6V6l4.8 3.2v4.4z',
+  'hpad':'M8 1.6a6.4 6.4 0 100 12.8 6.4 6.4 0 000-12.8z M5.8 4.8v6.4M10.2 4.8v6.4M5.8 8h4.4',
+  'afld':'M3.4 14.2L6 1.8h4l2.6 12.4z M8 3.6v9.4M5.4 8h5.2',
+  'dome':'M1.8 13.4h12.4M3.8 13.4a4.2 4.2 0 018.4 0M8 4.4V1.6M9.8 2.6l2.4-1.6M6.2 2.6L3.8 1',
+  'fix':'M11.6 1.8a3.2 3.2 0 00-4.4 4.2L2.4 10.8v2.6h2.6l4.8-4.8a3.2 3.2 0 001.8-6.8z',
+  'atek':'M6 1.8v4.4L2.6 13.6h10.8L10 6.2V1.8M4.6 1.8h6.8M4.4 10h7.2',
+  'stek':'M6.6 8a1.4 1.4 0 102.8 0 1.4 1.4 0 00-2.8 0M2.6 4.4c4.2-2.4 10.8.2 10.8 3.6M13.4 11.6c-4.2 2.4-10.8-.2-10.8-3.6',
+  'gun':'M2.6 11.4h10.8v2.8H2.6z M5.4 11.4V7.8h5.2v3.6M8 7.8V2.4',
+  'tsla':'M8 14.2V9M5.4 9h5.2M6.4 6.8h3.2M7 4.6h2M8 2.6V1M4.6 3.6l2.2 1.4M11.4 3.6L9.2 5',
+  'ftur':'M5.6 14.2h4.8V9.4H5.6z M8 9.4c1.8-1.8 2.8-2.8 2.8-4.6C10.8 3 8 .8 8 .8S5.2 3 5.2 4.8c0 1.8 1 2.8 2.8 4.6z',
+  'sam':'M8 1.2l2.2 4.4v5.2H5.8V5.6z M5.8 10.8L3.4 14.2h9.2l-2.4-3.4M8 14.2v-1.4',
+  'e1':'M8 2a1.6 1.6 0 100 3.2A1.6 1.6 0 008 2M5.8 6h4.4v4.4H5.8z M6.2 10.4l-1.2 3.8M9.8 10.4l1.2 3.8M10.2 7.2l3.6-2.4',
+  'dog':'M2.2 8.6l1.6-2.6 2 1h4.6l1.6-2 1.6 2.6v3.2H4.4z M5 11.8v2.4M11.4 11.8v2.4M13.6 6l1.2-2.2',
+  'e3':'M8 1.8a1.5 1.5 0 100 3 1.5 1.5 0 000-3M5.8 5.6h4.4V10H5.8z M6.2 10l-1.2 4.2M9.8 10l1.2 4.2M3 6.4h10.4',
+  'e2':'M8 4.6a4.2 4.2 0 100 8.4 4.2 4.2 0 000-8.4M6.8 2.6h2.4v2H6.8z M9.2 3.2L12 1.4',
+  'e4':'M1.6 7.4h5.6v2.6H1.6z M7.2 9.6c2.2-.8 4-1.6 4-3.6 0-1.6-1.6-3.2-1.6-3.2s.4 2.2-1 2.8c0 0-.6-1.6-2-2.2',
+  'shok':'M8 1.8a1.5 1.5 0 100 3 1.5 1.5 0 000-3M5.8 5.6h4.4V10H5.8z M6.2 10l-1.2 4.2M9.8 10l1.2 4.2M13.6 4.2l-2.6 3.2h1.8l-1.2 3',
+  'e6':'M2.6 10.4h10.8M4.4 10.4V8a3.6 3.6 0 017.2 0v2.4M8 4.4V2.6M5.6 11.4v2.8M10.4 11.4v2.8',
+  'medi':'M8 1.8a6.2 6.2 0 100 12.4A6.2 6.2 0 008 1.8M8 4.8v6.4M4.8 8h6.4',
+  'e7':'M8 1.4l1.9 4 4.4.6-3.2 3.1.8 4.4L8 11.4l-3.9 2.1.8-4.4L1.7 6l4.4-.6z',
+  'spy':'M1.6 6.6h12.8M4.2 6.6C4.2 3.4 5.8 2.2 8 2.2s3.8 1.2 3.8 4.4M3.6 10.2a2 2 0 104 0 2 2 0 00-4 0M8.4 10.2a2 2 0 104 0 2 2 0 00-4 0M7.6 10.6h.8',
+  '1tnk':'M2.6 11.4h10.8v2.6H2.6z M4.4 8.4h6.2v3H4.4z M10.6 9.8h3.2',
+  '2tnk':'M2 11h12v3.2H2z M4 7.4h7v3.6H4z M11 8.8h3.6M6.4 7.4V5.8',
+  '3tnk':'M1.4 10.8h13.2v3.4H1.4z M4 6.8h7.2v4H4z M11.2 8.4h3.6M5.6 6.8V5',
+  '4tnk':'M1.4 10.8h13.2v3.4H1.4z M4 6.6h7.2v4.2H4z M11.2 7.8h3.6M11.2 10h3.6',
+  'ttnk':'M2 11.4h12v2.8H2z M4 8.2h7v3.2H4z M8.6 8.2L6.4 4.4h2.4L7.4 1.4',
+  'arty':'M1.8 11.8h9.4v2.6H1.8z M4 9h5v2.8H4z M8 9.6l6.2-5.2',
+  'v2rl':'M1.8 11.8h11.4v2.6H1.8z M3.4 11L11 5.4M11 5.4l3.2-2-1.4 3.6',
+  'jeep':'M1.4 10.2h13.2v2.2H1.4z M3 10.2V7.4h4.2L9.4 10 M3.6 12.6a1.4 1.4 0 102.8 0M9.6 12.6a1.4 1.4 0 102.8 0',
+  'apc':'M1.4 7.6h11.2v4.8H1.4z M12.6 9.2h1.8l.4 3.2h-2.2 M3.4 12.6a1.3 1.3 0 102.6 0M8.8 12.6a1.3 1.3 0 102.6 0',
+  'harv':'M1.4 6h7.2v5.8H1.4z M8.6 8.4h3.2l2.6 2.6v.8H8.6 M3.2 12.6a1.4 1.4 0 102.8 0M9.8 12.6a1.4 1.4 0 102.8 0',
+  'mcv':'M1.6 9.2h6.2V4.6h4L14.4 9v3.2H1.6z M3.6 12.8a1.4 1.4 0 102.8 0M9.6 12.8a1.4 1.4 0 102.8 0',
+  'mnly':'M1.4 6.6h9v4.6h-9z M10.4 8.6h2.6l1.6 2.6h-4.2 M3 13.4a1.1 1.1 0 102.2 0M9.8 13.4a1.1 1.1 0 102.2 0M3.6 9h1M5.8 9h1M8 9h1',
+  'heli':'M1.2 3.2h13.6M8 3.2v2.6 M4.4 5.8h7l1.8 3.2-1.8 2.8h-6L3.8 9z M11.4 9h3.4M3.4 14.2h6.4',
+  'hind':'M1.6 3.8h12.8M8 3.8v2.2 M4.8 6h5.4l3.2 3.2v2.4H4.8L2.6 9.2z M13.4 11.6l1.6 2.2M3.6 13.8h7',
+  'mig':'M8 1l1.1 6.4 5.7 3.2v1.6L9.2 10.4v2.2l2.2 1.6v.8L8 13.8l-3.4 1.8v-.8l2.2-1.6v-2.2L1.2 12.2v-1.6L6.9 7.4z',
+  'yak':'M8 1.4v13.2M1.4 8.2h13.2M6.6 4c0-1.4.6-2.6 1.4-2.6S9.4 2.6 9.4 4M5.2 13.4h5.6M1.4 7v2.4M14.6 7v2.4',
+};
+var CAT_ICON = {
+  'all':'M2 2h5.2v5.2H2zM8.8 2H14v5.2H8.8zM2 8.8h5.2V14H2zM8.8 8.8H14V14H8.8z',
+  'Building':'M3 14.2V4L8 1.8 13 4v10.2M6.2 14.2v-4.4h3.6v4.4',
+  'Defense':'M8 1.4l5.6 2.4v4.2c0 3.6-2.4 6.4-5.6 7.2-3.2-.8-5.6-3.6-5.6-7.2V3.8z',
+  'Infantry':'M8 1.8a1.7 1.7 0 100 3.4 1.7 1.7 0 000-3.4M5.6 6.2h4.8v5.2H5.6z M6 11.4l-1.2 3M10 11.4l1.2 3',
+  'Vehicle':'M2 10.8h12v3.2H2z M4 7.2h7v3.6H4z M11 8.6h3.4',
+  'Aircraft':'M8 1l1.1 6.4 5.7 3.2v1.6L9.2 10.4v2.2l2.2 1.6v.8L8 13.8l-3.4 1.8v-.8l2.2-1.6v-2.2L1.2 12.2v-1.6L6.9 7.4z',
+};
+function glyph(d) {
+  return '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" ' +
+    'stroke-linejoin="round" stroke-linecap="round">' + (d ? '<path d="' + d + '"/>' : '') + '</svg>';
 }
 
 function catalogFor(c) {
@@ -1843,9 +1890,11 @@ function renderBuildView() {
   var producible = producibleSet();
 
   var chips = document.getElementById('build-cats');
-  chips.innerHTML = ['<button class="filter-chip' + (buildFilter === 'all' ? ' active' : '') + '" data-bc="all">All</button>']
+  chips.innerHTML = ['<button class="filter-chip icon' + (buildFilter === 'all' ? ' active' : '') +
+      '" data-bc="all" title="Everything">' + glyph(CAT_ICON.all) + '</button>']
     .concat(BUILD_CATS.map(function(c) {
-      return '<button class="filter-chip' + (buildFilter === c.key ? ' active' : '') + '" data-bc="' + c.key + '">' + c.short + '</button>';
+      return '<button class="filter-chip icon' + (buildFilter === c.key ? ' active' : '') +
+        '" data-bc="' + c.key + '" title="' + c.label + '">' + glyph(CAT_ICON[c.key]) + '</button>';
     })).join('');
   chips.querySelectorAll('.filter-chip').forEach(function(b) {
     b.onclick = function() { buildFilter = b.dataset.bc; buildRole = 'all'; renderBuildView(); };
@@ -1906,7 +1955,7 @@ function renderBuildView() {
       : '<span class="build-need">' + (needKey ? needKey.toUpperCase() : 'MCV') + '</span>';
     return '<button class="' + cls + '"' + (facility ? '' : ' disabled') +
       ' onclick="queueProd(\'' + cat.action + '\',\'' + key + '\')" title="' + tip + '">' +
-      '<span class="build-role" title="' + info.role + '">' + roleIcon(info.role) + '</span>' +
+      '<span class="build-role" title="' + info.role + '">' + glyph(ITEM_ICON[key]) + '</span>' +
       '<span class="build-name">' + info.name + '</span>' + trail + '</button>';
   }
 
@@ -2352,6 +2401,26 @@ function renderMap() {
   }
 }
 window.addEventListener('resize', function() { renderMap(); });
+
+// ═══ PIN / AUTO-HIDE ═══
+// Pinned panels stay put. Unpinned ones behave like an auto-hiding tool
+// window: they fall shut when the pointer leaves and reopen on a rail
+// hover, so the rail alone is enough to work the panel.
+function togglePin(id) {
+  var d = document.getElementById(id);
+  var pinned = !d.classList.toggle('unpinned');
+  d.querySelector('.dock-pin').title = pinned ? 'Unpin to auto-hide' : 'Pin open';
+  showToast(pinned ? 'Panel pinned' : 'Panel auto-hides');
+}
+['panel-contacts', 'panel-context'].forEach(function(id) {
+  var d = document.getElementById(id);
+  d.addEventListener('mouseleave', function() {
+    if (d.classList.contains('unpinned') && !d.classList.contains('collapsed')) toggleDock(id);
+  });
+  d.querySelector('.dock-rail').addEventListener('mouseenter', function() {
+    if (d.classList.contains('unpinned') && d.classList.contains('collapsed')) toggleDock(id);
+  });
+});
 
 // ═══ KEYBOARD ═══
 // A tool this dense should be drivable from the keyboard. Hints live in
