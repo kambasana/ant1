@@ -17,6 +17,7 @@ The commander issues:
   - Stance directives (aggressive, defensive, hold)
 """
 
+import sys
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional
@@ -166,12 +167,32 @@ class Commander:
         Returns:
             (TurnResult with BDA, next turn's briefing)
         """
+        obs = self._wego.get_situation().observation
+
+        # Drop orders aimed at units that do not exist, and say so.
+        #
+        # Nothing downstream validates actor_id: _translate_order builds a
+        # CommandModel for every id it is given, the engine finds no such
+        # actor, and the turn passes with no error anywhere. An LLM that
+        # invents ids -- numbering units 1, 2, 3 instead of using the actor_ids
+        # in the briefing -- therefore produces a run that reports orders
+        # issued every turn while nothing moves and cash never changes.
+        orders, dropped = self._drop_unknown_units(orders, obs)
+        if dropped:
+            units = sorted(u.actor_id for u in obs.units)
+            buildings = sorted(b.actor_id for b in obs.buildings)
+            print(
+                f"  WARNING: ignored {len(dropped)} order(s) naming "
+                f"{sorted(dropped)} - no such actor. "
+                f"Own units: {units or 'none'}  buildings: {buildings or 'none'}",
+                file=sys.stderr,
+            )
+
         commands = []
         for order in orders:
             commands.extend(self._translate_order(order))
 
         # Auto-place any completed buildings
-        obs = self._wego.get_situation().observation
         place_cmds = self._auto_place(obs)
         commands.extend(place_cmds)
 
@@ -207,6 +228,29 @@ class Commander:
     def get_aar(self) -> str:
         """Get After Action Review."""
         return self._wego.generate_aar_summary()
+
+    @staticmethod
+    def _drop_unknown_units(orders, obs):
+        """Filter orders down to units we actually own.
+
+        Returns the surviving orders and the set of ids that were discarded.
+        Orders that name no units at all (build, train, global stance) pass
+        through untouched; only unit-targeted ones are checked.
+        """
+        own = {u.actor_id for u in obs.units}
+        own.update(b.actor_id for b in obs.buildings)
+
+        kept, dropped = [], set()
+        for order in orders:
+            if not order.unit_ids:
+                kept.append(order)
+                continue
+            valid = [uid for uid in order.unit_ids if uid in own]
+            dropped.update(uid for uid in order.unit_ids if uid not in own)
+            if valid:
+                order.unit_ids = valid
+                kept.append(order)
+        return kept, dropped
 
     def _translate_order(self, order: TacticalOrder) -> list[CommandModel]:
         """Convert a tactical order into game commands."""
