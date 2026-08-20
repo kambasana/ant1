@@ -65,6 +65,10 @@ def parse_args():
     p.add_argument("--quiet", action="store_true", help="Suppress turn-by-turn output")
 
     # LLM options (for text/fc modes)
+    p.add_argument("--dashboard", nargs="?", const=8321, type=int, default=None,
+                    metavar="PORT",
+                    help="Serve live game state for the C2 dashboard "
+                         "(default port 8321)")
     p.add_argument("--provider", default="",
                     help="LLM provider: ollama (default), openai, openrouter, lmstudio")
     p.add_argument("--model", default="", help="LLM model name")
@@ -309,6 +313,10 @@ def run_mcp_server(args):
 
 def main():
     args = parse_args()
+
+    if args.dashboard:
+        from milsim.dashboard_feed import state_path
+        print(f"  publishing state for the C2 dashboard: {state_path()}")
 
     match args.mode:
         case "rule":

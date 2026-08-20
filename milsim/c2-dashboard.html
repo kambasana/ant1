@@ -79,7 +79,7 @@ body {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
 
-/* ═══ STATUS BAR ═══ */
+/* â•â•â• STATUS BAR â•â•â• */
 .status-bar {
   height: var(--status-h); background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -88,8 +88,41 @@ body {
 .sb-brand { font-weight: 700; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; }
 .sb-sep { width: 1px; height: 14px; background: var(--border); flex-shrink: 0; }
 .sb-spacer { flex: 1; min-width: 8px; }
+/* Whether the panels are showing a real game or the built-in sample data is
+   the first thing a reader needs to know, so it sits beside the brand. */
+.live-badge {
+  font-family: var(--mono); font-size: 8px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 2px 6px; border-radius: 100px; white-space: nowrap;
+  border: 1px solid transparent;
+}
+.live-badge.on { background: var(--green-soft); color: var(--green); border-color: var(--green); }
+.live-badge.waiting { background: var(--amber-soft); color: var(--amber); border-color: var(--amber); }
+.live-badge.off { background: var(--elevated); color: var(--t3); }
+.live-badge.bad { background: var(--red-soft); color: var(--red); border-color: var(--red); }
 
-/* ═══ WORKSPACE — Dock panel grid ═══ */
+/* Game controls. Starting and stopping a run is the one thing the dashboard
+   could not do, which made every ended game look like a broken page. */
+.game-ctl { display: flex; align-items: center; gap: 4px; }
+.game-ctl select, .game-ctl input {
+  height: 22px; padding: 0 5px; border-radius: 3px;
+  border: 1px solid var(--border); background: var(--bg); color: var(--t1);
+  font-family: var(--mono); font-size: 10px; outline: none;
+}
+.game-ctl input { width: 92px; }
+.game-ctl select:focus, .game-ctl input:focus { border-color: var(--accent); }
+.ctl-btn {
+  height: 22px; padding: 0 10px; border-radius: 3px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--raised); color: var(--t1);
+  font-family: var(--sans); font-size: 10px; font-weight: 600; white-space: nowrap;
+}
+.ctl-btn.go { border-color: var(--accent); color: var(--accent-text); }
+.ctl-btn.go:hover:not(:disabled) { background: var(--accent); color: #fff; }
+.ctl-btn.stop:hover:not(:disabled) { border-color: var(--red); color: var(--red); }
+.ctl-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.ctl-note { font-family: var(--mono); font-size: 9px; color: var(--t3); white-space: nowrap; }
+
+/* â•â•â• WORKSPACE — Dock panel grid â•â•â• */
 .workspace {
   flex: 1; display: grid; overflow: hidden;
   grid-template-columns: 268px 1fr 332px;
@@ -97,7 +130,7 @@ body {
   grid-template-areas: "left map right" "left feed feed";
 }
 
-/* ═══ DOCK PANELS ═══ */
+/* â•â•â• DOCK PANELS â•â•â• */
 .dock { display: flex; overflow: hidden; background: var(--surface); }
 .dock-left { flex-direction: row; }
 .dock-right { flex-direction: row-reverse; }
@@ -173,7 +206,7 @@ body {
 /* Settings sits at the foot of the rail, as tool palettes conventionally do */
 .rail-btn.rail-end { margin-top: auto; }
 
-/* ═══ DESIGN SYSTEM: Icon Rail ═══
+/* â•â•â• DESIGN SYSTEM: Icon Rail â•â•â•
  * What a segmented menu becomes when its panel is collapsed. Same tab
  * contract (data-group / data-tab), same selected treatment turned
  * ninety degrees — raised surface plus an accent bar on the leading
@@ -225,7 +258,7 @@ body {
 .dock-bottom { grid-area: feed; border-top: 1px solid var(--border); }
 .map-center { grid-area: map; position: relative; overflow: hidden; background: var(--bg); }
 
-/* ═══ SEARCH INPUT (reused in panels) ═══ */
+/* â•â•â• SEARCH INPUT (reused in panels) â•â•â• */
 .dock-search {
   padding: 6px 8px; border-bottom: 1px solid var(--border-subtle); flex-shrink: 0;
 }
@@ -237,7 +270,7 @@ body {
 .dock-search input:focus { border-color: var(--accent); }
 .dock-search input::placeholder { color: var(--t3); }
 
-/* ═══ MAP ═══ */
+/* â•â•â• MAP â•â•â• */
 #map-canvas { width: 100%; height: 100%; display: block; }
 .map-legend {
   position: absolute; bottom: 8px; left: 8px; z-index: 2;
@@ -250,7 +283,7 @@ body {
 .legend-sw { width: 9px; height: 9px; border-radius: 2px; border: 1px solid rgba(255,255,255,0.12); flex-shrink: 0; }
 .legend-sep { width: 1px; height: 12px; background: rgba(255,255,255,0.14); }
 
-/* ═══ LEFT PANEL: CONTACTS ═══ */
+/* â•â•â• LEFT PANEL: CONTACTS â•â•â• */
 .filter-bar {
   display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
   padding: 4px 8px; border-bottom: 1px solid var(--border-subtle); flex-shrink: 0;
@@ -267,7 +300,7 @@ body {
 .filter-chip:active { transform: scale(0.95); }
 .filter-chip.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-text); }
 
-/* ═══ CMD BAR ACTIONS — action buttons in bottom command bar ═══ */
+/* â•â•â• CMD BAR ACTIONS — action buttons in bottom command bar â•â•â• */
 .cmd-bar-actions {
   display: none; align-items: center; gap: 3px; margin-right: 10px;
 }
@@ -344,7 +377,7 @@ body {
 .unit-hp-fill { height: 100%; border-radius: 1px; }
 .hp-ok { background: var(--green); } .hp-warn { background: var(--amber); } .hp-crit { background: var(--red); }
 
-/* ═══ DESIGN SYSTEM: Modular Toolbar ═══
+/* â•â•â• DESIGN SYSTEM: Modular Toolbar â•â•â•
  * A slot strip for metric modules. Slots wrap and share the width, so a
  * module appended to the driving array simply appears — there is no
  * layout to update and no fixed column count to outgrow.
@@ -363,7 +396,7 @@ body {
 .mod-slot.warn { border-color: var(--amber); background: var(--amber-soft); }
 .mod-slot.bad { border-color: var(--red); background: var(--red-soft); }
 button.mod-slot { font-family: var(--sans); text-align: left; cursor: pointer; }
-button.mod-slot::after { content: ' ›'; color: var(--t3); font-size: 10px; }
+button.mod-slot::after { content: ' â€º'; color: var(--t3); font-size: 10px; }
 button.mod-slot:hover { border-color: var(--accent); }
 button.mod-slot:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .mod-k { display: block; font-size: 8px; color: var(--t3); text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.3; }
@@ -386,7 +419,7 @@ button.mod-slot:focus-visible { outline: 2px solid var(--accent); outline-offset
 .mod-bar.inline .mod-v { font-size: 11px; }
 .mod-bar.inline .mod-sub { margin-left: 0; }
 
-/* ═══ DESIGN SYSTEM: List Row ═══
+/* â•â•â• DESIGN SYSTEM: List Row â•â•â•
  * The single row used by every scrolling list — ISR tracks, production
  * queues, facilities. Grid: status pip | body (title + meta) | trailing
  * value, with an optional hairline progress bar on the bottom edge so a
@@ -441,7 +474,7 @@ button.mod-slot:focus-visible { outline: 2px solid var(--accent); outline-offset
 .list-empty { font-size: 10px; color: var(--t3); padding: 12px 10px; }
 .contact-filters { display: flex; gap: 3px; padding: 4px 8px; border-bottom: 1px solid var(--border-subtle); flex-shrink: 0; }
 
-/* ═══ CNN TARGET ROWS ═══ */
+/* â•â•â• CNN TARGET ROWS â•â•â• */
 .cnn-sub { font-size: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--t3); padding: 5px 0 2px; }
 .cnn-row { display: flex; align-items: center; gap: 5px; padding: 2px 0; font-size: 10px; }
 .cnn-rank { font-family: var(--mono); font-size: 8px; color: var(--t3); width: 14px; flex-shrink: 0; }
@@ -450,7 +483,7 @@ button.mod-slot:focus-visible { outline: 2px solid var(--accent); outline-offset
 .cnn-bar { width: 40px; height: 2px; border-radius: 1px; background: var(--elevated); flex-shrink: 0; }
 .cnn-fill { height: 100%; border-radius: 1px; }
 
-/* ═══ RIGHT PANEL: CONTEXT — collapsible sections ═══ */
+/* â•â•â• RIGHT PANEL: CONTEXT — collapsible sections â•â•â• */
 /* Attention rows are .lrow used as buttons — same anatomy, actionable. */
 .att-row {
   width: 100%; background: transparent; color: inherit;
@@ -536,7 +569,7 @@ div.att-row { cursor: default; }
 }
 .orders-actions button:hover { background: var(--raised); color: var(--t1); }
 
-/* ═══ BOTTOM PANEL: FEED ═══ */
+/* â•â•â• BOTTOM PANEL: FEED â•â•â• */
 .feed-bar {
   display: flex; align-items: center; gap: 4px;
   padding: 0 10px; flex-shrink: 0;
@@ -597,7 +630,7 @@ div.att-row { cursor: default; }
 .f-row.warning .f-msg { color: var(--amber); font-weight: 500; }
 .f-row.info .f-msg { color: var(--t1); }
 
-/* ═══ CMD BAR ═══ */
+/* â•â•â• CMD BAR â•â•â• */
 .cmd-bar {
   height: var(--cmd-h); background: var(--surface);
   border-top: 1px solid var(--border);
@@ -653,7 +686,7 @@ div.att-row { cursor: default; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
 @keyframes badge-pop { 0% { transform: scale(1); } 40% { transform: scale(1.25); } 100% { transform: scale(1); } }
 
-/* ═══ DESIGN SYSTEM: Segmented Control ═══
+/* â•â•â• DESIGN SYSTEM: Segmented Control â•â•â•
  * Composable tab-switcher component.
  * Usage: .seg-ctrl > .seg-btn[data-tab] > label + optional .seg-ct
  * Indicator: .seg-ct shows inline count suffix.
@@ -697,7 +730,7 @@ div.att-row { cursor: default; }
   border-bottom: 1px solid var(--border-subtle);
 }
 
-/* ═══ DESIGN SYSTEM: Inline Count Indicator ═══
+/* â•â•â• DESIGN SYSTEM: Inline Count Indicator â•â•â•
  * Composable badge for any tab/segment/header.
  * .seg-ct           — neutral inline count, reduced opacity
  * .seg-ct.attn      — attention state: dot prefix, full opacity, accent tint
@@ -724,7 +757,7 @@ div.att-row { cursor: default; }
 .seg-ct.empty { display: none; }
 .seg-ct.bounce { animation: badge-pop 400ms var(--ease-spring); }
 
-/* ═══ DESIGN SYSTEM: Tab View Container ═══
+/* â•â•â• DESIGN SYSTEM: Tab View Container â•â•â•
  * Generic switchable content panel.
  * .tab-view         — hidden by default
  * .tab-view.active  — visible, fills parent
@@ -732,7 +765,7 @@ div.att-row { cursor: default; }
 .tab-view { flex: 1; display: none; flex-direction: column; overflow: hidden; min-height: 0; }
 .tab-view.active { display: flex; }
 
-/* ═══ DESIGN SYSTEM: Group Label ═══
+/* â•â•â• DESIGN SYSTEM: Group Label â•â•â•
  * Section heading used inside any scrolling panel body.
  */
 .grp-label {
@@ -759,7 +792,7 @@ div.att-row { cursor: default; }
   border-bottom: 1px solid var(--border-subtle);
 }
 
-/* ═══ BUILD VIEW — catalog rows ═══
+/* â•â•â• BUILD VIEW — catalog rows â•â•â•
  * A single column, because two columns at this panel width leave ~58px
  * for a name and truncate almost every one of them. Rows are separated
  * by a hairline rather than boxed, which removes 43 borders' worth of
@@ -805,7 +838,7 @@ div.att-row { cursor: default; }
 .build-row.locked:hover { background: transparent; }
 
 
-/* ═══ RESPONSIVE ═══ */
+/* â•â•â• RESPONSIVE â•â•â• */
 @media (max-width: 1024px) {
   .workspace {
     grid-template-columns: 1fr;
@@ -822,6 +855,18 @@ div.att-row { cursor: default; }
 <!-- TOP MENU BAR — brand, status modules, turn control -->
 <div class="status-bar">
   <div class="sb-brand">C2</div>
+  <span class="live-badge off" id="live-badge">connecting</span>
+  <div class="game-ctl">
+    <select id="ctl-mode" title="Commander driving the game">
+      <option value="rule">Rule AI</option>
+      <option value="text">LLM (text)</option>
+      <option value="fc">LLM (tools)</option>
+    </select>
+    <input id="ctl-model" type="text" value="gemma3:4b" title="Ollama model, LLM modes only">
+    <button class="ctl-btn go" id="ctl-start" onclick="startGame()">New Game</button>
+    <button class="ctl-btn stop" id="ctl-stop" onclick="stopGame()">Stop</button>
+    <span class="ctl-note" id="ctl-note"></span>
+  </div>
   <div class="sb-sep"></div>
   <div id="status-modules"></div>
   <div class="sb-spacer"></div>
@@ -1037,11 +1082,11 @@ div.att-row { cursor: default; }
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // REAL GAME DATA — modeled on UnitInfoModel, EconomyInfo,
 // MilitaryInfo, ISR Contact, TacticalAnalysis, ProductionInfoModel,
 // PerformanceScore from the OpenRA-RL + MilSim codebase
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 // Unit type lookup — from game_data.py RA_UNITS / RA_BUILDINGS.
 // Each entry carries the production queue it belongs to and the
@@ -1102,7 +1147,7 @@ var BUILDING_DB = {
 // Stance mapping — matches UnitInfoModel.stance (0-3)
 var STANCES = ['HLD','RET','DEF','ATK'];
 
-// ─── Own Units (UnitInfoModel fields) ───
+// â”€â”€â”€ Own Units (UnitInfoModel fields) â”€â”€â”€
 var UNITS = [
   {actor_id:42, type:'2tnk', cell_x:14, cell_y:18, hp_percent:0.95, is_idle:false, current_activity:'Move', stance:2, speed:72, attack_range:5120, can_attack:true, experience_level:1, facing:512},
   {actor_id:43, type:'2tnk', cell_x:12, cell_y:16, hp_percent:0.80, is_idle:true,  current_activity:'', stance:2, speed:72, attack_range:5120, can_attack:true, experience_level:0, facing:256},
@@ -1118,7 +1163,7 @@ var UNITS = [
   {actor_id:53, type:'arty', cell_x:8,  cell_y:20, hp_percent:1.00, is_idle:true,  current_activity:'', stance:1, speed:54,  attack_range:8192, can_attack:true, experience_level:0, facing:512},
 ];
 
-// ─── Own Buildings (BuildingInfoModel fields) ───
+// â”€â”€â”€ Own Buildings (BuildingInfoModel fields) â”€â”€â”€
 var BUILDINGS = [
   {actor_id:100, type:'fact', cell_x:8, cell_y:17, hp_percent:1.0, is_producing:true, production_progress:0.4, producing_item:'weap', is_powered:true, power_amount:0, can_produce:['powr','apwr','barr','tent','proc','weap','dome','fix','gun','ftur','sam']},
   {actor_id:101, type:'powr', cell_x:6, cell_y:18, hp_percent:1.0, is_producing:false, production_progress:0.0, producing_item:'', is_powered:true, power_amount:100, can_produce:[]},
@@ -1128,7 +1173,7 @@ var BUILDINGS = [
   {actor_id:105, type:'weap', cell_x:10, cell_y:16, hp_percent:1.0, is_producing:false, production_progress:0.0, producing_item:'', is_powered:true, power_amount:-30, can_produce:['1tnk','2tnk','3tnk','4tnk','arty','v2rl','apc','harv','jeep','mnly']},
 ];
 
-// ─── Economy (EconomyInfo fields) ───
+// â”€â”€â”€ Economy (EconomyInfo fields) â”€â”€â”€
 var ECONOMY = {
   cash: 2400,
   ore: 1200,
@@ -1138,7 +1183,7 @@ var ECONOMY = {
   harvester_count: 1,
 };
 
-// ─── Military (MilitaryInfo fields) ───
+// â”€â”€â”€ Military (MilitaryInfo fields) â”€â”€â”€
 var MILITARY = {
   units_killed: 3,
   units_lost: 1,
@@ -1153,7 +1198,7 @@ var MILITARY = {
   order_count: 28,
 };
 
-// ─── ISR Contacts (isr.py Contact dataclass) ───
+// â”€â”€â”€ ISR Contacts (isr.py Contact dataclass) â”€â”€â”€
 var ISR_CONTACTS = [
   {contact_id:'C-001', actor_id:201, intel_level:4, cell_x:62, cell_y:28, category:'vehicle', unit_type:'1tnk', hp_percent:0.90, stance:3, is_visible:true, turns_since_seen:0, first_seen_turn:3, last_seen_turn:4, turns_observed:2, is_destroyed:false, can_attack:true, speed:113, attack_range:5120, current_activity:'Move'},
   {contact_id:'C-002', actor_id:202, intel_level:4, cell_x:55, cell_y:30, category:'infantry', unit_type:'e1', hp_percent:1.0, stance:2, is_visible:true, turns_since_seen:0, first_seen_turn:2, last_seen_turn:4, turns_observed:3, is_destroyed:false, can_attack:true, speed:56, attack_range:3072, current_activity:''},
@@ -1166,7 +1211,7 @@ var ISR_CONTACTS = [
   {contact_id:'C-009', actor_id:0,   intel_level:0, cell_x:85, cell_y:22, category:'unknown', unit_type:'', hp_percent:0.0, stance:-1, is_visible:false, turns_since_seen:3, first_seen_turn:1, last_seen_turn:1, turns_observed:1, is_destroyed:false, can_attack:false, speed:0, attack_range:0, current_activity:''},
 ];
 
-// ─── CNN Tactical Analysis (cnn.py TacticalAnalysis) ───
+// â”€â”€â”€ CNN Tactical Analysis (cnn.py TacticalAnalysis) â”€â”€â”€
 var CNN_DATA = {
   attack_priorities: [
     {x:62, y:28, score:0.87, target_type:'vehicle', approach_quality:0.72, risk:0.35},
@@ -1189,7 +1234,7 @@ var CNN_DATA = {
   recommended_rally_point: [13, 20],
 };
 
-// ─── Active Production (ProductionInfoModel) ───
+// â”€â”€â”€ Active Production (ProductionInfoModel) â”€â”€â”€
 var ACTIVE_PRODUCTION = [
   {queue_type:'Building', item:'weap', progress:0.40, remaining_ticks:180, remaining_cost:1200, paused:false},
   {queue_type:'Infantry', item:'e3',   progress:0.72, remaining_ticks:45,  remaining_cost:84,   paused:false},
@@ -1208,7 +1253,7 @@ var DIM_HELP = {
   outcome:'Win/loss terminal reward',
 };
 
-// ─── Performance Score (assessment.py PerformanceScore) ───
+// â”€â”€â”€ Performance Score (assessment.py PerformanceScore) â”€â”€â”€
 var PERF_SCORE = {
   scalar: 0.62,
   dimensions: [
@@ -1223,7 +1268,7 @@ var PERF_SCORE = {
   ],
 };
 
-// ─── Battle Feed (from BattleDamageAssessment + game events) ───
+// â”€â”€â”€ Battle Feed (from BattleDamageAssessment + game events) â”€â”€â”€
 // Messages are written for a commander, not for the wire format. Field
 // names stay in the data; the strings say what happened in plain terms.
 // `hp` renders an inline health bar, coordinates become map links.
@@ -1243,12 +1288,12 @@ var FEED_DATA = [
 ];
 
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // CONFIG — every tunable in one place. Nothing below reads a literal
 // dimension, threshold or key; they all come from here, the settings
 // panel edits this object, and applyConfig pushes the layout values
 // out as CSS custom properties. Persisted per browser.
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 var DEFAULTS = {
   layout: {
     leftWidth:   {v:268, min:180, max:420, step:4,  label:'Left panel width',  unit:'px'},
@@ -1353,7 +1398,7 @@ function applyConfig() {
   if (typeof renderMap === 'function') setTimeout(renderMap, 30);
 }
 
-// ─── State ───
+// â”€â”€â”€ State â”€â”€â”€
 var selected = new Set(), orders = [], unitFilter = 'all', activeAct = null;
 var feedFilter = 'all', feedSearch = '', unitSearch = '', contactFilter = 'all';
 var buildFilter = 'all', buildSearch = '', buildRole = 'all';
@@ -1380,7 +1425,7 @@ function contactConfidence(c) {
   return Math.max(0.0, base - decay);
 }
 
-// ═══ TOAST ═══
+// â•â•â• TOAST â•â•â•
 function showToast(msg) {
   var t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
@@ -1395,7 +1440,7 @@ function bounceBadge(id) {
   b.classList.remove('bounce'); void b.offsetWidth; b.classList.add('bounce');
 }
 
-// ═══ DOCK PANELS ═══
+// â•â•â• DOCK PANELS â•â•â•
 function toggleDock(id) {
   document.getElementById(id).classList.toggle('collapsed');
   updateGrid(); setTimeout(renderMap, 60);
@@ -1411,7 +1456,7 @@ function updateGrid() {
   ws.style.gridTemplateRows = '1fr ' + (bc ? cfg('layout','dockHeader') + 'px' : cfg('layout','feedHeight') + 'px');
 }
 
-// ═══ DESIGN SYSTEM: indicator primitive ═══
+// â•â•â• DESIGN SYSTEM: indicator primitive â•â•â•
 // setIndicator(id, value, attn) — universal count badge writer.
 // value 0/null hides the badge; attn raises it to the dot+accent state.
 function setIndicator(id, value, attn) {
@@ -1436,7 +1481,7 @@ function updateIndicators() {
   });
 }
 
-// ═══ DESIGN SYSTEM: Menu ═══
+// â•â•â• DESIGN SYSTEM: Menu â•â•â•
 // A menu is declared once, here, and mounted into as many presentations
 // as a panel needs: the segmented control when the dock is open, the
 // icon rail when it is collapsed, and the count on both. Each item is
@@ -1542,7 +1587,7 @@ function mountMenus() {
   document.querySelectorAll('.seg-ctrl[data-group] .seg-btn[data-tab]').forEach(mountSegItem);
 }
 
-// ═══ DESIGN SYSTEM: tab group controller ═══
+// â•â•â• DESIGN SYSTEM: tab group controller â•â•â•
 // One controller drives every segmented menu. A group is a .seg-ctrl
 // plus the .tab-view elements sharing its data-group; buttons and views
 // pair up on data-tab. Adding a menu anywhere is markup only — the
@@ -1597,7 +1642,7 @@ document.addEventListener('click', function(e) {
   if (ctrl && ctrl.dataset.group) switchTab(ctrl.dataset.group, btn.dataset.tab);
 });
 
-// ═══ LEFT PANEL: OWN UNITS ═══
+// â•â•â• LEFT PANEL: OWN UNITS â•â•â•
 function searchUnits(q) { unitSearch = q.toLowerCase(); renderUnits(); }
 
 function getVisibleUnits() {
@@ -1707,7 +1752,7 @@ function queueFromCmd() {
   showToast(act.charAt(0).toUpperCase() + act.slice(1) + ' queued'); bounceBadge();
 }
 
-// ═══ DESIGN SYSTEM: modular toolbar renderer ═══
+// â•â•â• DESIGN SYSTEM: modular toolbar renderer â•â•â•
 // Renders any array of metric modules. A module is {k, get} where get()
 // returns {v, sub, tone} — self-contained, so a new metric is one entry
 // in the array and nothing else changes.
@@ -1734,7 +1779,7 @@ function alertCount(modules) {
   }).length;
 }
 
-// ═══ INTEL — OVERVIEW ═══
+// â•â•â• INTEL — OVERVIEW â•â•â•
 // A turn-based commander needs "what should I do", not "what happened".
 // Every entry below is a condition worth acting on, and every one is a
 // button that takes you to the thing it is talking about.
@@ -1851,7 +1896,7 @@ function renderForce() {
   el.insertAdjacentHTML('beforeend', loe);
 }
 
-// ═══ RIGHT PANEL — ISR CONTACTS ═══
+// â•â•â• RIGHT PANEL — ISR CONTACTS â•â•â•
 function filterContacts(f) {
   contactFilter = f;
   document.querySelectorAll('#isr-filters .filter-chip').forEach(function(b) { b.classList.toggle('active', b.dataset.cf === f); });
@@ -1886,7 +1931,7 @@ function renderContacts() {
   updateIndicators();
 }
 
-// ═══ RIGHT PANEL — CNN ANALYSIS ═══
+// â•â•â• RIGHT PANEL — CNN ANALYSIS â•â•â•
 function renderCNN() {
   var el = document.getElementById('cnn-body');
   var html = '';
@@ -1943,7 +1988,7 @@ function renderCNN() {
   el.innerHTML = html;
 }
 
-// ═══ BUILD CATALOG ═══
+// â•â•â• BUILD CATALOG â•â•â•
 // Categories are the four ProductionInfoModel.queue_type values. Each
 // draws its items from a DB by category, so adding a unit to UNIT_DB —
 // or a whole new queue type here — shows up in the UI with no layout
@@ -2174,7 +2219,7 @@ function queueProd(action, item) {
   syncQueue(); showToast(label + ' queued'); bounceBadge();
 }
 
-// ═══ PRODUCTION — FACILITIES ═══
+// â•â•â• PRODUCTION — FACILITIES â•â•â•
 // BuildingInfoModel structures that can produce, and what they're doing.
 function producingBuildings() {
   return BUILDINGS.filter(function(b) { return (b.can_produce || []).length > 0; });
@@ -2213,7 +2258,7 @@ function renderFacilities() {
   }).join('') : '<div class="list-empty">No production facilities.</div>';
 }
 
-// ═══ PRODUCTION — QUEUES ═══
+// â•â•â• PRODUCTION — QUEUES â•â•â•
 // ProductionInfoModel entries. OpenRA ticks at 25/sec.
 function renderQueues() {
   var el = document.getElementById('queue-list');
@@ -2240,7 +2285,7 @@ function renderQueues() {
   }).join('') : '<div class="list-empty">Nothing in production.</div>';
 }
 
-// ═══ PRODUCTION — CAPACITY ═══
+// â•â•â• PRODUCTION — CAPACITY â•â•â•
 // The means of production, as toolbar modules. Append an entry and it
 // appears — this is the slot for anything that needs a home later.
 var CAPACITY_MODULES = [
@@ -2277,7 +2322,7 @@ function renderCapacity() {
 
 function renderProduction() { renderFacilities(); renderQueues(); renderCapacity(); }
 
-// ═══ ORDER QUEUE ═══
+// â•â•â• ORDER QUEUE â•â•â•
 function syncQueue() {
   var cards = document.getElementById('order-cards');
   var empty = document.getElementById('orders-empty');
@@ -2331,7 +2376,7 @@ function syncQueue() {
 function rmOrder(i) { orders.splice(i, 1); syncQueue(); }
 function clearOrders() { orders = []; syncQueue(); }
 
-// ═══ TOP MENU BAR — status modules ═══
+// â•â•â• TOP MENU BAR — status modules â•â•â•
 // The same module contract as Overview and Capacity, rendered inline.
 // Adding a global readout is one entry here.
 // "200/80" gave no clue which side was supply and which was demand — the
@@ -2366,7 +2411,7 @@ function updateStatusBar() {
   renderModBar(document.getElementById('status-modules'), STATUS_MODULES, 'inline');
 }
 
-// ═══ EXECUTE TURN ═══
+// â•â•â• EXECUTE TURN â•â•â•
 // Committing a turn is irreversible, so idle units get one interception
 // before it happens. The first click arms; the second commits.
 var execArmed = false;
@@ -2394,7 +2439,7 @@ function executeTurn() {
   }, 1500);
 }
 
-// ═══ FEED — searchable, filterable ═══
+// â•â•â• FEED — searchable, filterable â•â•â•
 function searchFeed(q) { feedSearch = q.toLowerCase(); renderFeed(); }
 function renderFeed() {
   var scroll = document.getElementById('feed-scroll');
@@ -2452,7 +2497,7 @@ function filterFeed(f) {
   renderFeed();
 }
 
-// ═══ MAP — procedural terrain, full-bleed canvas ═══
+// â•â•â• MAP — procedural terrain, full-bleed canvas â•â•â•
 var MAP_W = 108, MAP_H = 50;
 function _mh(x, y, s) {
   var n = Math.sin(x * 127.1 + y * 311.7 + s * 73.3) * 43758.5453;
@@ -2603,7 +2648,7 @@ function showPanel(group, tab) {
   if (d) armAutoHide(d);
 }
 
-// ═══ PIN / AUTO-HIDE ═══
+// â•â•â• PIN / AUTO-HIDE â•â•â•
 // Pinned panels stay put. Unpinned ones behave like an auto-hiding tool
 // window: they fall shut when the pointer leaves and reopen on a rail
 // hover, so the rail alone is enough to work the panel.
@@ -2654,7 +2699,7 @@ function armAutoHide(d) {
 });
 
 
-// ═══ SETTINGS ═══
+// â•â•â• SETTINGS â•â•â•
 // The panel is generated from the config schema, so a setting added to
 // DEFAULTS appears here with the right control and no UI work.
 var capturingKey = false;
@@ -2720,7 +2765,7 @@ function renderSettings() {
   el.innerHTML = html;
 }
 
-// ═══ KEYBOARD ═══
+// â•â•â• KEYBOARD â•â•â•
 // A tool this dense should be drivable from the keyboard. Hints live in
 // the segment tooltips and the command-bar hint line.
 function runAction(id) {
@@ -2762,9 +2807,213 @@ function refreshKeyHints() {
     k('sel.none') + ' clear &middot; ' + k('turn.execute') + ' commit';
 }
 
-// ═══ INIT ═══
+// â•â•â• LIVE FEED â•â•â•
+// Everything above runs on the sample data declared at the top of this file.
+// When a game is running with --dashboard, it publishes its observation each
+// turn and this replaces those arrays with the real thing. Until then the
+// sample data stands in, so the page is never blank.
+//
+// The game publishes rather than the page connecting, because the OpenRA-RL
+// server accepts one session and the running game already holds it.
+// What each building type produces, by definition. Mirrors PRODUCED_BY in
+// milsim/commander.py; used when the live feed leaves can_produce empty.
+var PRODUCES_BY_TYPE = {
+  fact: ['powr','apwr','barr','tent','proc','weap','dome','fix','hpad','afld',
+         'atek','stek','gun','ftur','sam','tsla'],
+  barr: ['e1','e2','e3','e4','e6','dog','medi','shok','e7','spy'],
+  tent: ['e1','e2','e3','e4','e6','dog','medi','shok','e7','spy'],
+  weap: ['1tnk','2tnk','3tnk','4tnk','ttnk','arty','v2rl','jeep','apc','harv','mcv','mnly'],
+  hpad: ['heli','hind'],
+  afld: ['mig','yak'],
+};
+
+var LIVE = {
+  url: 'http://127.0.0.1:8321/state',
+  ms: 1000,
+  connected: false,
+  turn: -1,
+  misses: 0,
+  everLive: false,
+};
+
+function setLiveBadge(state, detail) {
+  var el = document.getElementById('live-badge');
+  if (!el) return;
+  el.className = 'live-badge ' + state;
+  el.textContent = detail;
+}
+
+function applyLive(s) {
+  if (!s || !s.connected) return false;
+
+  UNITS = (s.units || []).map(function(u) {
+    return {
+      actor_id: u.actor_id, type: u.type, cell_x: u.cell_x, cell_y: u.cell_y,
+      hp_percent: u.hp_percent, is_idle: u.is_idle,
+      current_activity: u.current_activity, stance: u.stance,
+      can_attack: u.can_attack, experience_level: u.experience_level,
+      speed: 0, attack_range: 0, facing: 0,
+    };
+  });
+  BUILDINGS = (s.buildings || []).map(function(b) {
+    // The server reports can_produce empty for every building, including the
+    // construction yard and barracks. Left as-is that empties the Facilities
+    // list and shows the whole catalogue as locked, so fall back to what the
+    // building type produces by definition.
+    var produces = (b.can_produce && b.can_produce.length)
+      ? b.can_produce
+      : (PRODUCES_BY_TYPE[b.type] || []);
+    return {
+      actor_id: b.actor_id, type: b.type, cell_x: b.cell_x, cell_y: b.cell_y,
+      hp_percent: b.hp_percent, is_producing: b.is_producing,
+      production_progress: b.production_progress, producing_item: b.producing_item,
+      is_powered: b.is_powered, power_amount: b.power_amount,
+      can_produce: produces,
+    };
+  });
+  if (s.economy) ECONOMY = s.economy;
+  if (s.military) MILITARY = s.military;
+  ACTIVE_PRODUCTION = s.production || [];
+
+  // Visible enemies become ISR contacts. The engine only reports what is
+  // currently in sight, so anything previously seen and now out of sight is
+  // simply absent -- the decay model in the mock data has no live equivalent.
+  var enemies = (s.enemies || []).concat(s.enemy_buildings || []);
+  ISR_CONTACTS = enemies.map(function(e, i) {
+    return {
+      contact_id: 'C-' + String(i + 1).padStart(3, '0'),
+      actor_id: e.actor_id, intel_level: 4,
+      cell_x: e.cell_x, cell_y: e.cell_y,
+      category: e.can_produce ? 'building' : (UNIT_DB[e.type] ? UNIT_DB[e.type].queue.toLowerCase() : 'unknown'),
+      unit_type: e.type, hp_percent: e.hp_percent, stance: e.stance || 0,
+      is_visible: true, turns_since_seen: 0,
+      first_seen_turn: s.turn, last_seen_turn: s.turn, turns_observed: 1,
+      is_destroyed: false, can_attack: !!e.can_attack,
+      speed: 0, attack_range: 0, current_activity: e.current_activity || '',
+    };
+  });
+
+  if (s.map && s.map.width) { MAP_W = s.map.width; MAP_H = s.map.height; }
+
+  gameTurn = s.turn || 0;
+  return true;
+}
+
+function renderAll() {
+  renderMap(); renderUnits(); renderAlerts(); renderForce();
+  renderContacts(); renderCNN(); renderBuildView(); renderProduction();
+  renderFeed(); syncQueue(); updateStatusBar(); updateIndicators();
+}
+
+function ctl(id) { return document.getElementById(id); }
+
+function setControls(status, s) {
+  var running = status === 'running';
+  ctl('ctl-start').disabled = running;
+  ctl('ctl-stop').disabled = !running;
+  ctl('ctl-mode').disabled = running;
+  ctl('ctl-model').disabled = running;
+
+  var note = '';
+  if (running) {
+    var secs = s.elapsed_s || 0;
+    note = ((s.config && s.config.mode) || '?') + ' · ' +
+      Math.floor(secs / 60) + 'm' + String(secs % 60).padStart(2, '0') + 's';
+    if (!s.connected) note += ' · starting';
+  } else if (status === 'ended') {
+    note = 'finished at T' + (s.turn || 0);
+  } else if (status === 'stopped') {
+    note = 'stopped at T' + (s.turn || 0);
+  } else if (s && s.error) {
+    note = s.error;
+  }
+  ctl('ctl-note').textContent = note;
+}
+
+// One request drives the badge, the controls and the panels. Status comes
+// from the control server, which outlives any single game, so "no game
+// running" is a state the page can show and act on rather than a dead
+// connection it has to guess about.
+function pollLive() {
+  fetch(LIVE.url, {cache: 'no-store'})
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(s) {
+      if (!s) throw new Error('no payload');
+      LIVE.misses = 0;
+      setControls(s.status, s);
+
+      if (s.status === 'running' && s.connected) {
+        LIVE.everLive = true;
+        var first = !LIVE.connected;
+        LIVE.connected = true;
+        if (s.turn !== LIVE.turn || first) {
+          LIVE.turn = s.turn;
+          if (applyLive(s)) renderAll();
+        }
+        setLiveBadge('on', 'LIVE T' + s.turn);
+        return;
+      }
+
+      LIVE.connected = false;
+      if (s.status === 'running') {
+        setLiveBadge('waiting', 'STARTING');
+      } else if (s.has_state && (s.status === 'ended' || s.status === 'stopped')) {
+        // Keep the real final state on screen. Reverting to sample data would
+        // replace a finished game with fiction, which is what made an ended
+        // run look like a broken dashboard.
+        if (s.turn !== LIVE.turn) { LIVE.turn = s.turn; if (applyLive(s)) renderAll(); }
+        setLiveBadge('off', (s.status === 'ended' ? 'ENDED' : 'STOPPED') + ' · T' + s.turn);
+      } else {
+        setLiveBadge('waiting', 'NO GAME — press New Game');
+      }
+    })
+    .catch(function() {
+      LIVE.misses++;
+      LIVE.connected = false;
+      setControls('idle', {});
+      ctl('ctl-note').textContent = 'start it with: python -m milsim.control';
+      setLiveBadge('bad', LIVE.misses > 2 ? 'NO CONTROL SERVER' : 'connecting');
+    });
+}
+
+function postControl(body, label) {
+  ctl('ctl-note').textContent = label + '...';
+  fetch(LIVE.url.replace('/state', '/control'), {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body),
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      if (!res.ok) { ctl('ctl-note').textContent = res.error || 'failed'; return; }
+      showToast(label + ' ok');
+      pollLive();
+    })
+    .catch(function() {
+      ctl('ctl-note').textContent = 'control server not reachable';
+    });
+}
+
+function startGame() {
+  // A new game is a new world; drop the previous one's numbers rather than
+  // letting them linger on screen while the next one spins up.
+  LIVE.turn = -1;
+  postControl({
+    action: 'start',
+    mode: ctl('ctl-mode').value,
+    model: ctl('ctl-model').value.trim(),
+    provider: 'ollama',
+    turns: 2000,
+  }, 'Starting game');
+}
+
+function stopGame() { postControl({action: 'stop'}, 'Stopping game'); }
+
+// â•â•â• INIT â•â•â•
 loadConfig(); mountMenus(); applyConfig(); renderSettings(); refreshKeyHints();
-renderMap(); renderUnits(); renderAlerts(); renderForce(); renderContacts(); renderCNN();
-renderBuildView(); renderProduction(); renderFeed(); syncQueue();
-updateStatusBar(); updateIndicators();
+renderAll();
+setLiveBadge('off', 'connecting');
+pollLive();
+setInterval(pollLive, LIVE.ms);
 </script>
+

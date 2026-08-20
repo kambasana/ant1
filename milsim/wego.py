@@ -208,6 +208,19 @@ class WEGOTurnManager:
 
     def get_situation(self) -> Situation:
         """Get the current battlefield situation."""
+        # Mirror the observation to the C2 dashboard feed. Every mode reaches
+        # this method, so one hook covers rule, text, fc and the tests, and it
+        # is the only point that sees state without opening a connection --
+        # the server allows a single session and this process already holds
+        # it, so the dashboard cannot fetch its own. Publishing is a dict copy
+        # into memory and a no-op when the feed was never started.
+        if self._current_obs is not None:
+            try:
+                from milsim.dashboard_feed import publish
+                publish(self._current_obs, self._turn)
+            except Exception:
+                pass  # the dashboard must never be able to break a game
+
         return Situation(
             turn_number=self._turn,
             game_tick=self._current_obs.tick if self._current_obs else 0,

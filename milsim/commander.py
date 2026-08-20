@@ -196,6 +196,9 @@ class Commander:
         place_cmds = self._auto_place(obs)
         commands.extend(place_cmds)
 
+        # And deploy the MCV, for the same reason placement is automatic.
+        commands.extend(self._auto_deploy(obs))
+
         if not commands:
             commands = [CommandModel(action=ActionType.NO_OP)]
 
@@ -359,6 +362,34 @@ class Commander:
                 self._placement_counter += 1
         return commands
 
+    def _auto_deploy(self, obs) -> list[CommandModel]:
+        """Deploy the MCV while we still have no construction yard.
+
+        This is a prerequisite, not a decision. Until the MCV is deployed
+        there is no construction yard, so every build and train order is
+        discarded and the game cannot start -- and asking the model to do it
+        does not work. gpt-oss:20b was told three ways at once: the doctrine
+        line in the system prompt, DEPLOY in the order syntax, and a
+        REQUIRED FIRST ACTION block at the top of the briefing naming the
+        exact order and actor id. Across eight turns it issued build powr six
+        times, reconnoiter seven, even build fac once -- trying to build the
+        very thing the MCV becomes -- and DEPLOY zero times, leaving Units at
+        1 and Cash at $5000 throughout.
+
+        Placement of finished buildings is already automatic for the same
+        reason, so this keeps the two consistent: the engine's mechanical
+        prerequisites are handled here, and the model is left to make the
+        decisions that are actually decisions.
+        """
+        if any(b.type == "fact" for b in obs.buildings):
+            return []
+        mcv = next((u for u in obs.units if u.type == "mcv"), None)
+        if not mcv:
+            return []
+        print(f"  Auto-deploying MCV #{mcv.actor_id} (no construction yard yet)",
+              file=sys.stderr)
+        return [CommandModel(action=ActionType.DEPLOY, actor_id=mcv.actor_id)]
+
     def _placement_pos(self, cy: BuildingInfoModel) -> tuple[int, int]:
         cx = cy.pos_x // 1024
         cy_y = cy.pos_y // 1024
@@ -450,6 +481,15 @@ class Commander:
             "",
             b.sitrep,
             "",
+        ]
+
+        # A REQUIRED FIRST ACTION block naming "DEPLOY <id>" used to sit here.
+        # It was measured and it did not work -- the model ignored it as
+        # thoroughly as it ignored the doctrine line and the order syntax --
+        # so deployment is handled by _auto_deploy instead and this no longer
+        # has anything to say.
+
+        lines += [
             "AVAILABLE ORDERS:",
             f"  Can build: {', '.join(b.available_production[:12])}",
             "",

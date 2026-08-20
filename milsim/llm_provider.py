@@ -218,10 +218,15 @@ class LLMProviderConfig:
     base_url: str = DEFAULT_OLLAMA_HOST
     model: str = DEFAULT_OLLAMA_MODEL
     api_key: str = ""
-    # 1024 is not enough for a reasoning model: gpt-oss:20b spent all 512
-    # tokens thinking before emitting any content, and needed ~811
-    # completion tokens in total to answer a commander briefing.
-    max_tokens: int = 4096
+    # Sized for a reasoning model against a real briefing, measured rather
+    # than guessed -- twice, because the first guess came from a briefing I
+    # wrote by hand and was wrong. gpt-oss:20b needed ~811 completion tokens
+    # on a synthetic prompt but exhausted 4096 on the real one, returning no
+    # content at all; 16384 completes it. Non-reasoning models want a
+    # fraction of this and should set MILSIM_LLM_MAX_TOKENS to suit -- the
+    # cost of overshooting is a cap that is never reached, the cost of
+    # undershooting is a commander that silently issues nothing.
+    max_tokens: int = 16384
     temperature: Optional[float] = 0.3
     request_timeout_s: float = 300.0
     extra_headers: dict[str, str] = field(default_factory=dict)
